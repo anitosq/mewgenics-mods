@@ -1,6 +1,9 @@
 # Improved Inventory release readiness
 
-Status: 0.1.0 published from the user-tested beta.2 implementation; only
+Current development: [0.2.0 candidate](../../docs/releases/improved-inventory/0.2.0-candidate.md).
+Its adventure/equipment checks are recorded separately below.
+
+Status of the previous release: 0.1.0 published from the user-tested beta.2 implementation; only
 version metadata and release documentation changed. Nexus scan passed; its download verification is blocked by Edge. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
@@ -93,3 +96,13 @@ tracks published 0.1.0 and pending download verification. Source inspection for 
 installed extension's `testMod`/`installMod` and `testMewjectorMod` functions,
 installer registration order, plus the loader research. Do not redistribute
 the extension implementation. [Extension author page](https://www.nexusmods.com/site/mods/1691).
+
+## 0.2.0 adventure regression coverage
+
+- [x] Retained native references reject unreadable, recycled and destructing objects.
+- [x] Equipment search, type/rarity/set filtering, scrolling and empty results.
+- [x] Equip/unequip with a filter active; counts and backgrounds refresh.
+- [x] Cat switching and equipment Lock In to route selection.
+- [ ] House inventory to cat Lock In without a crash.
+- [ ] Release archive startup with only Mewjector and Improved Inventory.
+- [ ] Vortex upgrade from 0.1.0; user acceptance before publication.

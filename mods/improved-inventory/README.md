@@ -32,6 +32,12 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
+The 0.2.0 candidate fixes the Adventure / Lock In crash and adds the same search
+and filters to equipment selection before an adventure. Its Storage grid shows
+up to six columns and five rows, with scrolling for the rest. The Backpack
+screen during an adventure is unchanged. Version 0.1.0 remains the published
+release. See the [0.2.0 test record](../../docs/releases/improved-inventory/0.2.0-candidate.md).
+
 Run commands from the repository root. Python 3.10+, Node.js and Windows x64
 are used for development. The pinned native compiler is Zig 0.15.2; download
 it into the ignored `work/` directory with:

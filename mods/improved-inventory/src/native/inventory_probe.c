@@ -63,6 +63,7 @@ static void report(const char* message) {
 
 #include "inventory_layout.h"
 #include "inventory_controls.h"
+#include "inventory_equipment.h"
 #include "inventory_hooks.h"
 
 static int iq_file_matches(const wchar_t* path,const unsigned char expected[32]) {
@@ -192,10 +193,14 @@ static DWORD WINAPI initialize(void* ignored) {
         {ITEM_CLICK_RVA,EXPECTED_ITEM_CLICK_BYTES,(void*)iq_click,(void**)&original_item_click,"ImprovedInventory.Click"},
         {ITEM_BIND_RVA,EXPECTED_ITEM_BIND_BYTES,(void*)iq_bind,(void**)&original_bind_item,"ImprovedInventory.Metadata"},
         {MOUSE_POSITION_RVA,EXPECTED_MOUSE_POSITION_BYTES,(void*)iq_mouse_position,(void**)&original_mouse_position,"ImprovedInventory.MousePosition"},
-        {BUTTON_HIT_RVA,EXPECTED_BUTTON_HIT_BYTES,(void*)iq_button_hit,(void**)&original_button_hit,"ImprovedInventory.PopupHitTest"}
+        {BUTTON_HIT_RVA,EXPECTED_BUTTON_HIT_BYTES,(void*)iq_button_hit,(void**)&original_button_hit,"ImprovedInventory.PopupHitTest"},
+        {EQUIPMENT_GRID_RVA,EXPECTED_EQUIPMENT_GRID_BYTES,(void*)iq_equipment_grid,(void**)&original_equipment_grid,"ImprovedInventory.EquipmentGrid"},
+        {EQUIPMENT_UPDATE_RVA,EXPECTED_EQUIPMENT_UPDATE_BYTES,(void*)iq_equipment_update,(void**)&original_equipment_update,"ImprovedInventory.EquipmentUpdate"},
+        {EQUIPMENT_DRAWER_RVA,EXPECTED_EQUIPMENT_DRAWER_BYTES,(void*)iq_equipment_drawer_update,(void**)&original_equipment_drawer_update,"ImprovedInventory.EquipmentDrawer"},
+        {EQUIPMENT_BIND_RVA,EXPECTED_EQUIPMENT_BIND_BYTES,(void*)iq_equipment_bind,(void**)&original_equipment_bind,"ImprovedInventory.EquipmentMetadata"}
     };
     int active=0;
-    int status=iq_install_plan(base,hooks,session_mode==2?8:2,install,&active);
+    int status=iq_install_plan(base,hooks,session_mode==2?sizeof(hooks)/sizeof(hooks[0]):2,install,&active);
     if(status!=1) {
         report(status<0 ? "Incompatible hook entry; Improved Inventory inactive." :
                "Hook installation failed; installed callbacks remain pass-through.");

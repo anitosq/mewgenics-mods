@@ -1,4 +1,4 @@
-typedef struct {void* renderer;uint64_t generation; wchar_t cached[12][200];void* feedback[2][18];int feedback_count;} IQControl;
+typedef struct {void* renderer;uint64_t generation;IQReference reference; wchar_t cached[12][200];void* feedback[2][18];int feedback_count;} IQControl;
 enum { IQ_RARITY_COUNT=5, IQ_POPUP_COUNT=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4 };
 static const double iq_rarity_popup_scale=0.70;
 static struct {
@@ -16,6 +16,8 @@ static void iq_refilter(void);
 static void iq_feedback_update(void);
 static int iq_control_valid(IQControl* c);
 static void iq_overlay_camera(IQControl* c);
+static int iq_control_point(IQControl* c,double* output);
+static double iq_control_units(void) {return iq.equipment?1.0:32.0;}
 static int iq_popup_index(void) {
     return filter_popup==1?active_filter.rarity:filter_popup==2?IQ_RARITY_COUNT+active_filter.type:IQ_RARITY_COUNT+IQ_TYPE_COUNT+iq_search.set_mode;
 }
@@ -66,7 +68,7 @@ static void iq_focus_set(int focus) {
     if(!focus){iq_text_window=NULL;iq_started_text=0;}
     iq_cursor=(int)wcslen(focus==2?iq_set_query:iq_search.query);iq_select_all=0;
 }
-static int iq_control_valid(IQControl* c) {return c->renderer && iq_generation(c->renderer)==c->generation;}
+static int iq_control_valid(IQControl* c) {return iq_reference_valid(c->reference);}
 static void iq_control_hide(IQControl* c) {if(iq_control_valid(c))*((unsigned char*)c->renderer+0x51)=0;}
 static void iq_hide_all(void) {
     for(int i=0;i<IQ_TYPE_COUNT*IQ_RARITY_COUNT;i++)iq_control_hide(&iq_controls.bars[i]);
@@ -81,22 +83,23 @@ static void iq_ui_capture(void) {
         iq_hide_all();iq_focus_set(0);memset(&iq_controls,0,sizeof(iq_controls));
         iq_controls.owner=iq.owner;iq_controls.generation=iq_generation(iq.owner);filter_popup=0;
     }
-    void* t=iq_ptr(iq.panels[0],0x60);
+    void* t=iq_panel_transform(0);
     iq_controls.offset_x=iq.left[0]-iq_double(t,0x80);
     iq_controls.offset_y=iq.bottom[0]+iq.span[0]-iq_double(t,0x88);
     iq_controls.scale=iq.span[0]/600.0;
     for(int side=0;side<2;side++) {
-        t=iq_ptr(iq.panels[side],0x60);
+        t=iq_panel_transform(side);
         iq_controls.grid_x[side]=iq.left[side]-iq_double(t,0x80);
         iq_controls.grid_y[side]=iq.bottom[side]-iq_double(t,0x88);
     }
 }
 static void iq_control_show(IQControl* c,const char* name,double x,double y) {
     if(!iq_control_valid(c)) {
-        void* scene=iq_ptr(iq.panels[0],0x20);
+        void* scene=iq.scene_ref.pointer;
         void* entity=((void*(__cdecl*)(void*))(void*)(game_base+0x96b3e0))(scene);
         if(!entity)return;
         c->renderer=original_renderer(scene,entity,name);if(!c->renderer)return;
+        c->reference=iq_reference(c->renderer);
         c->generation=iq_generation(c->renderer);memset(c->cached,0,sizeof(c->cached));
         c->feedback_count=0;memset(c->feedback,0,sizeof(c->feedback));
         int popup=!strncmp(name,"IQRarity",8) || !strncmp(name,"IQType",6) || !strncmp(name,"IQSets",6);
@@ -121,8 +124,9 @@ static void iq_control_show(IQControl* c,const char* name,double x,double y) {
         }
     }
     void* t=iq_ptr(c->renderer,0x40);if(!t)return;
+    if(iq.equipment)y=2*iq.bottom[0]+iq.span[0]-y;
     iq_write_double(t,0x80,x);iq_write_double(t,0x88,y);
-    iq_write_double(t,0x98,iq_controls.scale*32);iq_write_double(t,0xa0,iq_controls.scale*32);
+    iq_write_double(t,0x98,iq_controls.scale*iq_control_units());iq_write_double(t,0xa0,iq_controls.scale*iq_control_units());
     for(int i=0;i<c->feedback_count;i++)for(int p=0;p<2;p++)*((unsigned char*)c->feedback[p][i]+8)&=(unsigned char)~0x20;
     *((unsigned char*)c->renderer+0x51)=1;
 }
@@ -133,14 +137,14 @@ static void iq_rarity_art(double x,double y,double s) {
         if(filter_popup!=1){iq_control_hide(art);continue;}
         int tile=i+1,col=tile%2,row=tile/2;
         /* Native rarity symbols have different local registration points. */
-        double symbol_x=(i==1)?4:14;
-        double symbol_y=(i==0)?9:18;
+        double symbol_x=iq.equipment?0:(i==1?4:14);
+        double symbol_y=iq.equipment?0:(i==0?9:18);
         double rs=s*iq_rarity_popup_scale;
         iq_control_show(art,"HeadItemIcon",x+238*s+(85+col*160+symbol_x)*rs,y-82*s-(126+row*160+75+symbol_y)*rs);
         if(!iq_control_valid(art))continue;
         iq_control_layer(art,41);
         void* t=iq_ptr(art->renderer,0x40);
-        iq_write_double(t,0x98,rs*32*0.85);iq_write_double(t,0xa0,rs*32*0.85);
+        iq_write_double(t,0x98,rs*iq_control_units()*0.85);iq_write_double(t,0xa0,rs*iq_control_units()*0.85);
         iq_overlay_camera(art);
         if(art->cached[0][0])continue;
         void* clip=iq_ptr(art->renderer,0x80);
@@ -170,8 +174,8 @@ static void iq_rarity_art(double x,double y,double s) {
     iq_control_show(labels_control,"IQRarityLabels",x+238*s,y-82*s);
     iq_control_layer(labels_control,42);
     void* t=iq_ptr(labels_control->renderer,0x40);
-    iq_write_double(t,0x98,s*32*iq_rarity_popup_scale);
-    iq_write_double(t,0xa0,s*32*iq_rarity_popup_scale);
+    iq_write_double(t,0x98,s*iq_control_units()*iq_rarity_popup_scale);
+    iq_write_double(t,0xa0,s*iq_control_units()*iq_rarity_popup_scale);
     iq_overlay_camera(labels_control);
 }
 /* Layers 35..40 and 41..46 use different native cameras. Convert overlay
@@ -187,6 +191,26 @@ static void* iq_layer_camera(void* renderer,int layer) {
         if(mask && ((unsigned)iq_int(mask,(size_t)(layer/32)*4)&(1u<<(layer%32))))return camera;
     }
     return NULL;
+}
+/* Use the same camera and current panel transform as the visible grid. */
+static int iq_wheel_side(void) {
+    double point[2];
+    if(!iq_control_point(&iq_controls.search[iq_focus==1],point))return -1;
+    double s=iq_controls.scale;
+    if(!isfinite(s) || s<=0)return -1;
+    for(int side=0;side<(iq.equipment?1:2);side++) {
+        double x=0,top=103.2,width=540,height=width*iq_rows(side)/iq.columns[side];
+        if(side) {
+            void* first=iq_panel_transform(0);void* other=iq_panel_transform(side);
+            x=(iq_double(other,0x80)+iq_controls.grid_x[side]-
+               iq_double(first,0x80)-iq_controls.offset_x)/s;
+            top=(iq_double(first,0x88)+iq_controls.offset_y-
+                 iq_double(other,0x88)-iq_controls.grid_y[side]-iq.span[side])/s;
+            width=height=iq.span[side]/s;
+        }
+        if(point[0]>=x && point[0]<x+width && point[1]>=top && point[1]<top+height)return side;
+    }
+    return -1;
 }
 static void iq_overlay_camera(IQControl* c) {
     if(!iq_control_valid(c))return;
@@ -227,14 +251,14 @@ static void iq_ui_update(void) {
     for(int i=0;i<IQ_POPUP_COUNT;i++)if(!filter_popup || i!=iq_popup_index())iq_control_hide(&iq_controls.popups[i]);
     for(int side=0;side<2;side++)for(int dir=0;dir<2;dir++) {
         IQControl* arrow=&iq_controls.arrows[side][dir];
-        int maxrow=iq_max_row(iq.items[side],iq.columns[side]);
+        int maxrow=side && iq.equipment?0:iq_scroll_limit(side);
         if(!(dir?iq.row[side]<maxrow:iq.row[side]>0)){iq_control_hide(arrow);continue;}
-        void* t=iq_ptr(iq.panels[side],0x60);
+        void* t=iq_panel_transform(side);
         double ax=iq_double(t,0x80)+iq_controls.grid_x[side]+(side?-38*iq_controls.scale:iq.span[side]*0.9+6*iq_controls.scale);
         double ay=iq_double(t,0x88)+iq_controls.grid_y[side]+iq.span[side]*(dir?0.48:0.58);
         iq_control_show(arrow,dir?"IQDown":"IQUp",ax,ay);
     }
-    void* t=iq_ptr(iq.panels[0],0x60);
+    void* t=iq_panel_transform(0);
     double x=iq_double(t,0x80)+iq_controls.offset_x,y=iq_double(t,0x88)+iq_controls.offset_y,s=iq_controls.scale;
     char name[24];wchar_t label[200];
     int focused=iq_focus==1;iq_control_hide(&iq_controls.search[!focused]);
@@ -249,15 +273,16 @@ static void iq_ui_update(void) {
     else swprintf(label,200,L"%ls",iq_search.set_mode==1?L"Any set":iq_search.set_mode==2?L"No set":L"All sets");
     iq_text(&iq_controls.bars[selected],0,"sets",label);
     iq_control_show(&iq_controls.count,"IQCount",x+12*s,y-80*s);
-    swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
+    if(iq.equipment)swprintf(label,200,L"Storage: %d%ls",iq.items[0],iq.items[0]==0?L"    No matches":L"");
+    else swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
     iq_text(&iq_controls.count,0,"count",label);
     if(filter_popup==1 || filter_popup==2) {
         snprintf(name,sizeof(name),filter_popup==1?"IQRarity%d":"IQType%d",filter_popup==1?active_filter.rarity:active_filter.type);
         iq_control_show(&iq_controls.popups[iq_popup_index()],name,x+(filter_popup==1?238:0)*s,y-82*s);
         if(filter_popup==1) {
             void* t=iq_ptr(iq_controls.popups[iq_popup_index()].renderer,0x40);
-            iq_write_double(t,0x98,s*32*iq_rarity_popup_scale);
-            iq_write_double(t,0xa0,s*32*iq_rarity_popup_scale);
+            iq_write_double(t,0x98,s*iq_control_units()*iq_rarity_popup_scale);
+            iq_write_double(t,0xa0,s*iq_control_units()*iq_rarity_popup_scale);
         }
     }
     if(filter_popup==3) {
@@ -393,7 +418,7 @@ static int iq_keyboard(void* event,int type) {
 static int iq_ui_event(void* event) {
     int type=iq_int(event,0);
     if(type==1026 && iq_controls.captured_click){iq_controls.captured_click=0;return 1;}
-    if(!iq_is_open()){if(iq_focus)iq_focus_set(0);return 0;}
+    if(!iq_is_open()){iq_hide_all();filter_popup=0;if(iq_focus)iq_focus_set(0);return 0;}
     if(iq_keyboard(event,type))return 1;
     if(type==768 && filter_popup && iq_int(event,0x18)==41){iq_sound(IQ_SOUND_CLOSE);filter_popup=0;iq_ui_update();return 1;}
     if(type==1027 && filter_popup) {
@@ -448,7 +473,7 @@ static int iq_ui_event(void* event) {
     }
     if(iq_focus){iq_focus_set(0);iq_controls.captured_click=1;iq_ui_update();return 1;}
     for(int side=0;side<2;side++)for(int dir=0;dir<2;dir++) {
-        int maxrow=iq_max_row(iq.items[side],iq.columns[side]);if(!(dir?iq.row[side]<maxrow:iq.row[side]>0))continue;
+        int maxrow=side && iq.equipment?0:iq_scroll_limit(side);if(!(dir?iq.row[side]<maxrow:iq.row[side]>0))continue;
         if(iq_control_point(&iq_controls.arrows[side][dir],p) && p[0]>=0 && p[0]<32 && p[1]>=0 && p[1]<36){iq_controls.captured_click=1;iq_sound(IQ_SOUND_SELECT);iq_scroll(side,dir?1:-1);iq_ui_update();return 1;}
     }
     return 0;

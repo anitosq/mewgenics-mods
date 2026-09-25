@@ -36,7 +36,7 @@ def payload(version, commit, game_hash):
         'ImprovedInventory/CHANGELOG.md': (MOD / 'CHANGELOG.md').read_bytes(),
         'ImprovedInventory/description.json': json_bytes({
             'title': 'Improved Inventory', 'author': 'anitosq', 'version': version,
-            'description': 'Scrolling Storage/Trash, search and filters. Requires Mewjector API v3; see INSTALL.md.',
+            'description': 'Scrolling Storage, Trash and pre-adventure equipment, with search and filters. Requires Mewjector API v3; see INSTALL.md.',
             'url': 'https://github.com/anitosq/mewgenics-mods',
         }),
         'ImprovedInventory/build-info.json': json_bytes({

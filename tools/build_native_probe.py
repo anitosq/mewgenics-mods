@@ -32,7 +32,9 @@ grid_signature = None
 bootstrap_rva = 0x9B9970  # Actual validated bridge constant; its older comment is stale.
 bootstrap_signature = None
 extra = {'DRAWER_UPDATE':0x213ac0, 'MOUSE_EVENT':0xc36110, 'ITEM_CLICK':0x213dc0,
-         'ITEM_BIND':0x2137e0, 'MOUSE_POSITION':0x9796d0, 'BUTTON_HIT':0x97f0e0}
+         'ITEM_BIND':0x2137e0, 'MOUSE_POSITION':0x9796d0, 'BUTTON_HIT':0x97f0e0,
+         'EQUIPMENT_GRID':0x34be50, 'EQUIPMENT_UPDATE':0x34d130,
+         'EQUIPMENT_DRAWER':0x34e280, 'EQUIPMENT_BIND':0x34dd90}
 extra_signatures = {}
 for index in range(struct.unpack_from('<H', binary, pe + 6)[0]):
     start = pe + 24 + optional + index * 40

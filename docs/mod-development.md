@@ -66,6 +66,10 @@ For inventory-style controls:
   mouse-leave cleanup so blocked items don't leave tooltips stuck onscreen.
 - Reapply popup layering after native drawer creation, transfers and sorting.
   A high layer at initial creation alone was insufficient.
+- Validate retained native objects across scene destruction and pool reuse.
+  Global input hooks outlive individual screens; readable memory alone does not
+  prove an object is still alive. Test leaving the house for an adventure after
+  opening inventory, and test each screen that shares a hooked drawer class.
 - Test empty, exact-capacity, first-overflow and shrinking grids. For our
   36-cell view, moving from 36 to 37 items and back exposed missing Trash
   backgrounds, delayed scrolling and unclamped offsets.

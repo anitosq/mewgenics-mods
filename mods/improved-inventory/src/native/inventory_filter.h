@@ -3,10 +3,11 @@ enum { IQ_ALL, IQ_WEAPON_CONSUMABLES, IQ_ITEM_CONSUMABLES, IQ_WORN, IQ_BROKEN,
        IQ_REUSABLE_WEAPONS, IQ_TYPE_COUNT };
 typedef struct { int type; int rarity; } IQFilter;
 typedef struct { int consumable, weapon, limited, condition; } IQItemTraits;
-static int iq_max_row(int items,int columns) {
-    if(columns<=0 || items<=columns*columns)return 0;
-    return (items+columns-1)/columns-columns;
+static int iq_last_row(int items,int columns,int rows) {
+    if(columns<=0 || rows<=0 || items<=columns*rows)return 0;
+    return (items+columns-1)/columns-rows;
 }
+static int iq_max_row(int items,int columns) {return iq_last_row(items,columns,columns);}
 static int iq_rarity_group(int rank) {
     switch(rank) {
         case 1: case 2:return 1;

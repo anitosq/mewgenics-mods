@@ -1,6 +1,6 @@
 # Improved Inventory installation
 
-Version 0.1.0 requires Windows x64, Steam build 25143593 (game version
+Version 0.2.0 requires Windows x64, Steam build 25143593 (game version
 1.1.21239), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3 (tested with runtime v3.0). The mod stays inactive on other game builds.
 
@@ -67,6 +67,6 @@ also needs testing. Other game builds are unsupported.
 
 Item transfers are still manual, and End Day still deletes items left in Trash.
 
-See the [release notes](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
+See the [release notes](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/releases/0.2.0.md)
 for features and the [test checklist](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/RELEASE_CHECKLIST.md)
 for detailed coverage.

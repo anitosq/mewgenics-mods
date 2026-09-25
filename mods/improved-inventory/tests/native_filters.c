@@ -35,5 +35,15 @@ int main(void) {
     assert(iq_max_row(0,0)==0 && iq_max_row(36,6)==0);
     assert(iq_max_row(37,6)==1 && iq_max_row(42,6)==1);
     assert(iq_max_row(43,6)==2 && iq_max_row(94,6)==10);
+    /* Equipment has six columns but five visible rows. Every item remains
+       reachable, including the first overflow and a partially filled last row. */
+    assert(iq_last_row(30,6,5)==0 && iq_last_row(31,6,5)==1);
+    for(int count=0;count<=1024;count++) {
+        int seen[1024]={0},last=iq_last_row(count,6,5);
+        for(int row=0;row<=last;row++)
+            for(int item=row*6;item<count && item<(row+5)*6;item++)seen[item]=1;
+        for(int item=0;item<count;item++)assert(seen[item]);
+        assert(iq_last_row(count>7?7:count,6,5)==0);
+    }
     return 0;
 }

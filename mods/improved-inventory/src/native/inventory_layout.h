@@ -18,8 +18,11 @@ static IQSearch iq_search;
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets);
 static void iq_ui_update(void);
 static int iq_ui_event(void* event);
+static int iq_wheel_side(void);
 static void iq_ui_capture(void);
 static IQItemTraits iq_traits(void* drawer, uint64_t id);
+static int iq_read(const void* p, void* out, size_t n);
+#include "inventory_lifetime.h"
 
 typedef struct {
     void* renderer;
@@ -33,6 +36,7 @@ typedef struct {
 } IQBackground;
 typedef struct {
     void* drawer;
+    IQReference reference;
     uint64_t item_id;
     int side, ordinal;
     IQItemTraits traits;
@@ -40,7 +44,9 @@ typedef struct {
 } IQDrawer;
 typedef struct {
     void* owner;
+    int equipment;
     void* panels[2];
+    IQReference owner_ref, panel_refs[2], scene_ref, manager_ref, entity_ref;
     IQDrawer drawers[IQ_MAX_DRAWERS];
     int count, items[2], row[2], columns[2];
     IQBackground backgrounds[800];
@@ -51,6 +57,11 @@ typedef struct {
 static IQView iq;
 static IQView pending_view;
 static uint64_t iq_view_revision,iq_metadata_revision;
+static int iq_view_live(void) {
+    return iq_reference_valid(iq.owner_ref) && iq_reference_valid(iq.scene_ref) && iq_reference_valid(iq.entity_ref) &&
+        iq_reference_valid(iq.panel_refs[0]) && (iq.equipment ||
+        (iq_reference_valid(iq.panel_refs[1]) && iq_reference_valid(iq.manager_ref)));
+}
 
 static int iq_read(const void* p, void* out, size_t n) {
     SIZE_T received=0;
@@ -79,6 +90,12 @@ static uint64_t iq_generation(const void* p) {
 static void iq_write_double(void* p,size_t off,double value) {
     memcpy((unsigned char*)p+off,&value,sizeof(value));
 }
+static void* iq_panel_transform(int side) {
+    return iq.equipment?NULL:iq_ptr(iq.panels[side],0x60);
+}
+static void* iq_drawer_button(void* drawer) {
+    return iq_ptr(drawer,iq.equipment?0x48:0x58);
+}
 static void* iq_tracking(void* panel, void* transform, int* index) {
     uintptr_t first=(uintptr_t)iq_ptr(panel,0x70),end=(uintptr_t)iq_ptr(panel,0x78);
     if(!first || end<first || end-first>2000*0x28 || (end-first)%0x28) return NULL;
@@ -91,18 +108,21 @@ static void* iq_tracking(void* panel, void* transform, int* index) {
     return NULL;
 }
 
+static int iq_rows(int side) {return iq.equipment && iq.columns[side]>5?5:iq.columns[side];}
+static int iq_scroll_limit(int side) {return iq_last_row(iq.items[side],iq.columns[side],iq_rows(side));}
 static int iq_visible(const IQDrawer* d) {
     if(d->ordinal<0) return 0;
     int cols=iq.columns[d->side];
     int row=d->ordinal/cols-iq.row[d->side];
-    return row>=0 && row<cols;
+    return row>=0 && row<iq_rows(d->side);
 }
 
 static void iq_present(IQDrawer* d) {
+    if(!iq_reference_valid(d->reference))return;
     unsigned char* drawer=d->drawer;
-    void* renderer=iq_ptr(drawer,0x50);
-    void* button=iq_ptr(drawer,0x58);
-    void* transform=iq_ptr(drawer,0x60);
+    void* renderer=iq_ptr(drawer,iq.equipment?0x40:0x50);
+    void* button=iq_drawer_button(drawer);
+    void* transform=iq_ptr(drawer,iq.equipment?0x50:0x60);
     if (!renderer || !button || !transform) return;
     const int side=d->side;
     int cols=iq.columns[side];
@@ -111,32 +131,33 @@ static void iq_present(IQDrawer* d) {
     int visible=iq_visible(d);
     double x=visible ? pitch*(d->ordinal%cols)+pitch/2 : -100000.0;
     double y=visible ? pitch*(cols-1-row)+pitch/2-(side==0?iq.span[side]*0.072:0) : -100000.0;
-    iq_write_double(drawer,0x78,x);
-    iq_write_double(drawer,0x80,y);
-    iq_write_double(drawer,0x88,iq.scale[side]*(side==0?0.90:1.0));
+    if(iq.equipment && visible)y=iq.span[0]-y;
+    iq_write_double(drawer,iq.equipment?0xb8:0x78,x+(iq.equipment?iq.left[side]:0));
+    iq_write_double(drawer,iq.equipment?0xc0:0x80,y+(iq.equipment?iq.bottom[side]:0));
+    iq_write_double(drawer,iq.equipment?0xc8:0x88,iq.scale[side]*(side==0?0.90:1.0));
     /* The game's instant layout method updates the transform used by both its
        renderer and button. This avoids animating hidden items across hit areas. */
-    ((DrawerUpdate)(void*)(game_base+0x213a20))(drawer);
+    ((DrawerUpdate)(void*)(game_base+(iq.equipment?0x34e230:0x213a20)))(drawer);
     *((unsigned char*)renderer+0x51)=(unsigned char)visible;
     /* Keep the native button update enabled: it owns mouse-leave/tooltip
        cleanup. Hidden buttons move offscreen and the click hook rejects them. */
 }
 
 static void iq_before_grid(void* owner) {
-    if(!layout_test || iq.owner!=owner) return;
+    if(!layout_test || iq.owner!=owner || !iq_view_live()) return;
     for(int i=0;i<iq.background_count;i++) {
         IQBackground* b=&iq.backgrounds[i];
         if(iq_ptr(b->renderer,0x40)!=b->transform ||
            iq_generation(b->renderer)!=b->renderer_generation ||
            iq_generation(b->transform)!=b->transform_generation) continue;
-        void* parent_transform=iq_ptr(iq.panels[b->side],0x60);
-        if(!parent_transform) continue;
+        void* parent_transform=iq_panel_transform(b->side);
+        if(!iq.equipment && !parent_transform) continue;
         iq_write_double(b->transform,0x80,iq_double(parent_transform,0x80)+b->offset_x);
         iq_write_double(b->transform,0x88,iq_double(parent_transform,0x88)+b->offset_y);
         iq_write_double(b->transform,0x98,b->sx);
         iq_write_double(b->transform,0xa0,b->sy);
         *((unsigned char*)b->renderer+0x51)=b->visible;
-        void* track=iq_tracking(iq.panels[b->side],b->transform,NULL);
+        void* track=iq.equipment?NULL:iq_tracking(iq.panels[b->side],b->transform,NULL);
         if(track) {
             iq_write_double(track,0x10,b->offset_x);
             iq_write_double(track,0x18,b->offset_y);
@@ -150,13 +171,23 @@ static void iq_capture(void* owner) {
     /* Include failed/empty captures: they can also invalidate menu counts. */
     iq_view_revision++;
     memset(&pending_view,0,sizeof(pending_view));
-    if(iq.owner==owner) memcpy(pending_view.row,iq.row,sizeof(iq.row));
-    iq.count=0;
+    if(iq.owner==owner && iq_view_live()) memcpy(pending_view.row,iq.row,sizeof(iq.row));
+    memset(&iq,0,sizeof(iq));
     /* Collect and validate the entire view before performing layout writes. */
 #define iq pending_view
     iq.owner=owner;
     iq.panels[0]=iq_ptr(owner,0x38);
     iq.panels[1]=iq_ptr(owner,0x40);
+    iq.owner_ref=iq_reference(owner);
+    for(int side=0;side<2;side++)iq.panel_refs[side]=iq_reference(iq.panels[side]);
+    iq.scene_ref=iq_reference(iq_ptr(iq.panels[0],0x20));
+    void* entity=iq_ptr(iq.panels[0],0x18);
+    if(!entity || !iq_ptr(entity,8))return;
+    iq.entity_ref=iq_reference(entity);
+    /* Resolve while the native layout callback owns a live house panel.
+       Never call this house-only lookup later from global input callbacks. */
+    iq.manager_ref=iq_reference(((void*(__cdecl*)(void*))(void*)(game_base+0xed390))(entity));
+    if(!iq_reference_valid(iq.manager_ref))return;
     int n=iq_int(owner,0x64);
     void** array=iq_ptr(owner,0x68);
     if (n<0 || n>IQ_MAX_DRAWERS || !array) return;
@@ -210,6 +241,7 @@ static void iq_capture(void* owner) {
         if (side<0) continue;
         IQDrawer* d=&iq.drawers[iq.count++];
         d->drawer=drawer;
+        d->reference=iq_reference(drawer);
         if(!iq_read((unsigned char*)drawer+0x68,&d->item_id,8)) return;
         d->side=side;
         d->traits=iq_traits(drawer,d->item_id);
@@ -250,10 +282,10 @@ static void iq_capture(void* owner) {
 }
 
 static IQDrawer* iq_find(void* instance) {
-    if (!layout_test || iq_ptr(instance,0x38)!=iq.owner) return NULL;
+    if (!layout_test || !iq_view_live() || iq_ptr(instance,0x38)!=iq.owner) return NULL;
     uint64_t id=0;
-    if(!iq_read((unsigned char*)instance+0x68,&id,8)) return NULL;
-    for(int i=0;i<iq.count;i++) if(iq.drawers[i].drawer==instance && iq.drawers[i].item_id==id) return &iq.drawers[i];
+    if(!iq_read((unsigned char*)instance+(iq.equipment?0x58:0x68),&id,8)) return NULL;
+    for(int i=0;i<iq.count;i++) if(iq.drawers[i].drawer==instance && iq.drawers[i].item_id==id && iq_reference_valid(iq.drawers[i].reference)) return &iq.drawers[i];
     return NULL;
 }
 
@@ -272,18 +304,18 @@ static void __cdecl iq_click(void* instance) {
     original_item_click(instance);
 }
 static int iq_is_open(void) {
-    if(!iq.panels[0]) return 0;
-    void* scene=iq_ptr(iq.panels[0],0x20);
+    if(!iq_view_live()) return 0;
+    void* scene=iq.scene_ref.pointer;
     unsigned char covered=1;
     if(!scene || !iq_read((unsigned char*)scene+0x4da,&covered,1) || covered) return 0;
-    void* entity=iq_ptr(iq.panels[0],0x18);
-    if(!entity) return 0;
-    void* manager=((void*(__cdecl*)(void*))(void*)(game_base+0xed390))(entity);
-    void* active=iq_ptr(manager,0x58);
+    if(!iq_read((unsigned char*)scene+0x4b0,&covered,1) || covered)return 0;
+    if(iq.equipment)return iq_ptr(iq_ptr(iq.owner,0x18),8)==scene;
+    if(iq_ptr(iq.panels[0],0x20)!=scene || !iq_ptr(iq.panels[0],0x18))return 0;
+    void* active=iq_ptr(iq.manager_ref.pointer,0x58);
     return active==iq.panels[0] || active==iq.panels[1];
 }
 static void iq_scroll(int side,int delta) {
-    int maxrow=iq_max_row(iq.items[side],iq.columns[side]);
+    int maxrow=iq_scroll_limit(side);
     int next=iq.row[side]+delta;
     if(next<0)next=0;
     if(next>maxrow)next=maxrow;
@@ -306,12 +338,9 @@ static unsigned char __cdecl iq_mouse(void* input,void* event) {
         if(!iq_is_open()) { report("Wheel ignored: native inventory not active or covered."); return original_mouse_event(input,event); }
         HWND window=GetForegroundWindow(); DWORD pid=0;
         GetWindowThreadProcessId(window,&pid);
-        POINT point; RECT rect;
-        if(pid==GetCurrentProcessId() && GetCursorPos(&point) && ScreenToClient(window,&point) && GetClientRect(window,&rect)) {
-            /* Initial desktop test uses the two native left/right panels. */
-            double x=(double)point.x/(rect.right-rect.left),y=(double)point.y/(rect.bottom-rect.top);
-            if(y>0.22 && y<0.91 && (x<0.43 || x>0.57)) {
-                int side=x<0.5?0:1;
+        if(pid==GetCurrentProcessId()) {
+            int side=iq_wheel_side();
+            if(side>=0) {
                 /* This build's SDL event uses floating-point Y at 0x1c. */
                 float wheel=0;
                 iq_read((unsigned char*)event+0x1c,&wheel,4);

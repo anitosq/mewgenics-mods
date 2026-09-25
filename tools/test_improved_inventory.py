@@ -20,7 +20,7 @@ def main():
     subprocess.run([node, '--test', str(TESTS / 'model.test.mjs')], cwd=ROOT, check=True)
     build = ROOT / 'work/native-tests'
     build.mkdir(parents=True, exist_ok=True)
-    for name in ('native_filters', 'native_search', 'native_set_rows', 'native_hooks'):
+    for name in ('native_filters', 'native_search', 'native_set_rows', 'native_hooks', 'native_lifetime'):
         output = build / f'{name}.exe'
         # Each fixture uses only part of the shared static helper headers.
         subprocess.run([str(compiler), 'cc', '-O2', '-UNDEBUG', '-Wall', '-Wextra',

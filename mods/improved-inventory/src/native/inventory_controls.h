@@ -46,8 +46,7 @@ static int iq_limited(void* value) {
     }
     return -1;
 }
-static void __cdecl iq_bind(void* drawer,void* item) {
-    original_bind_item(drawer,item);
+static void iq_cache_item(void* drawer,void* item) {
     if(!layout_test) return;
     void* manager=iq_ptr(game_base,0x13c79d0);
     if(!manager || !item) return;
@@ -71,10 +70,15 @@ static void __cdecl iq_bind(void* drawer,void* item) {
     iq_search_metadata(&iq_metadata[index],manager,item,definition);
     iq_metadata_revision++;
 }
+static void __cdecl iq_bind(void* drawer,void* item) {
+    original_bind_item(drawer,item);
+    iq_cache_item(drawer,item);
+}
 static unsigned char __cdecl iq_button_hit(void* button) {
-    if(layout_test && filter_popup && iq_is_open())
+    if(layout_test && iq_is_open())
         for(int i=0;i<iq.count;i++)
-            if(iq_ptr(iq.drawers[i].drawer,0x58)==button)return 0;
+            if((filter_popup || !iq_visible(&iq.drawers[i])) &&
+               iq_reference_valid(iq.drawers[i].reference) && iq_drawer_button(iq.drawers[i].drawer)==button)return 0;
     return original_button_hit(button);
 }
 static double* __cdecl iq_mouse_position(void* camera,double* point) {
