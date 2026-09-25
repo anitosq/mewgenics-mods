@@ -1,8 +1,8 @@
 # Improved Inventory
 
 A Mewgenics mod for sorting through a crowded inventory. Storage and Trash
-scroll without shrinking your item icons, with search and filters built into
-the existing screen.
+scroll without shrinking your item icons. Search and filters work at home
+and while choosing your cats' equipment before an adventure.
 
 - Fixed-size, scrolling item grids with directional scroll indicators.
 - Search across item names, descriptions and set names.
@@ -11,32 +11,29 @@ the existing screen.
 
 ## Download and install
 
-Version 0.1.0: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
+Version 0.2.0: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.2.0)
 and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
 Requires Windows x64, Mewgenics Steam build 25143593 (1.1.21239), and
 Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
 dependency. Follow the [installation guide](INSTALL.md) for Vortex or manual setup.
 The mod stays inactive on unsupported game builds.
 
-See the [release notes](releases/0.1.0.md) for features and the
+See the [release notes](releases/0.2.0.md) for features and the
 [changelog](CHANGELOG.md) for changes.
 
 ## Release records
 
-The [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md)
+The [candidate record](../../docs/releases/improved-inventory/0.2.0-candidate.md)
 contains the Vortex and gameplay test results. The
 [release checklist](RELEASE_CHECKLIST.md) tracks remaining tests, and the
-[publication record](../../docs/releases/improved-inventory/0.1.0-publication.md)
+[publication record](../../docs/releases/improved-inventory/0.2.0-publication.md)
 records download verification. Use the [publishing workflow](../../docs/releases/README.md)
 for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The 0.2.0 candidate fixes the Adventure / Lock In crash and adds the same search
-and filters to equipment selection before an adventure. Its Storage grid shows
-up to six columns and five rows, with scrolling for the rest. The Backpack
-screen during an adventure is unchanged. Version 0.1.0 remains the published
-release. See the [0.2.0 test record](../../docs/releases/improved-inventory/0.2.0-candidate.md).
+Equipment selection shows up to six columns and five rows, with scrolling for
+the rest. The Backpack screen during an adventure is unchanged.
 
 Run commands from the repository root. Python 3.10+, Node.js and Windows x64
 are used for development. The pinned native compiler is Zig 0.15.2; download

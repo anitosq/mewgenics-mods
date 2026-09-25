@@ -108,4 +108,9 @@ the extension implementation. [Extension author page](https://www.nexusmods.com/
 - [x] Release archive startup with only Mewjector and Improved Inventory.
       Extracted archive tested without a diagnostic marker in session 07;
       wheel scrolling verified in both house and equipment screens.
-- [ ] Vortex upgrade from 0.1.0; user acceptance before publication.
+- [x] User accepted equipment appearance and responsiveness, then confirmed the
+      installed performance build and authorized publication.
+- [x] Exact performance package installed via Vortex replacement; all deployed
+      payload hashes match and only one DLL is deployed.
+- [ ] Explicit Vortex upgrade from public 0.1.0. The replacement above was between
+      local 0.2.0 candidates.

@@ -1,6 +1,6 @@
 # Improved Inventory changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0 (2026-09-25)
 
 - Fixed a crash when leaving the house to assign equipment for an adventure.
 - Added scrolling, search, and type, rarity and set filters to pre-adventure

@@ -4,7 +4,7 @@ Mewgenics mods by anitosq. Each mod has its own source, tests and documentation.
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
-| [Improved Inventory](mods/improved-inventory/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | [0.1.0 on GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/526) |
+| [Improved Inventory](mods/improved-inventory/) | Scrolling grids, search and filters for Storage, Trash and adventure equipment selection | [0.2.0 on GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.2.0) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/526) |
 
 ## Repository layout
 
@@ -27,7 +27,7 @@ Research notes record the game builds and mod combinations tested at the time.
 ## Distribution and licensing
 
 Download the mod ZIP attached to its release page. GitHub's automatic source
-archive is for development. The [0.1.0 publication record](docs/releases/improved-inventory/0.1.0-publication.md)
+archive is for development. The [0.2.0 publication record](docs/releases/improved-inventory/0.2.0-publication.md)
 has the release checksums and download checks.
 
 Code and documentation: [MIT License](LICENSE), Copyright (c) 2026 anitosq.
