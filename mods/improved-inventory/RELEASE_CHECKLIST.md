@@ -33,8 +33,8 @@ from checks that still need to be performed on a packaged build.
       No numbered loader entry or configuration replacement is packaged.
       The native startup gate stays inactive when the asset folder is unchecked
       from Vortex Load Order in guard fixtures. Real deployment passed;
-      disable/re-enable/remove/reinstall passed user testing; the separate
-      asset load-order uncheck test remains pending.
+      disable/re-enable/remove/reinstall and separate asset load-order
+      unchecking passed user testing; the inactive startup log was verified.
 
 ## Packaged-build test matrix
 
@@ -52,8 +52,10 @@ from checks that still need to be performed on a packaged build.
       one mod DLL is deployed. Earlier step logs were not separately retained.
 - [ ] Same-name version upgrade and explicit purge/redeploy. First installation
       and the rename migration were tested separately; neither proves these paths.
-- [ ] Vortex load-order unchecking separately from disabling the deployed mod:
+- [x] Vortex load-order unchecking separately from disabling the deployed mod:
       assets may be omitted while a DLL remains loadable. Fail safely.
+      User confirmed expected behavior. Latest log independently verifies
+      inactive startup with assets unchecked, followed by loader detachment.
 - [ ] Search, type, rarity and set combinations, empty results, reset and
       dropdown input blocking on both panels; scroll and arrows at boundaries.
 - [ ] Populate Trash beyond 36 items, return items, reopen and save/reload using
