@@ -23,6 +23,7 @@ static void iq_ui_capture(void);
 static IQItemTraits iq_traits(void* drawer, uint64_t id);
 static int iq_read(const void* p, void* out, size_t n);
 #include "inventory_lifetime.h"
+#include "inventory_index.h"
 
 typedef struct {
     void* renderer;
@@ -36,6 +37,7 @@ typedef struct {
 } IQBackground;
 typedef struct {
     void* drawer;
+    void* button;
     IQReference reference;
     uint64_t item_id;
     int side, ordinal;
@@ -56,6 +58,7 @@ typedef struct {
 } IQView;
 static IQView iq;
 static IQView pending_view;
+static IQIndex iq_drawer_index,iq_button_index;
 static uint64_t iq_view_revision,iq_metadata_revision;
 static int iq_view_live(void) {
     return iq_reference_valid(iq.owner_ref) && iq_reference_valid(iq.scene_ref) && iq_reference_valid(iq.entity_ref) &&
@@ -95,6 +98,14 @@ static void* iq_panel_transform(int side) {
 }
 static void* iq_drawer_button(void* drawer) {
     return iq_ptr(drawer,iq.equipment?0x48:0x58);
+}
+static void iq_index_view(void) {
+    iq_index_clear(&iq_drawer_index);iq_index_clear(&iq_button_index);
+    for(int i=0;i<iq.count;i++) {
+        IQDrawer* d=&iq.drawers[i];d->button=iq_drawer_button(d->drawer);
+        iq_index_put(&iq_drawer_index,d->drawer,i);
+        iq_index_put(&iq_button_index,d->button,i);
+    }
 }
 static void* iq_tracking(void* panel, void* transform, int* index) {
     uintptr_t first=(uintptr_t)iq_ptr(panel,0x70),end=(uintptr_t)iq_ptr(panel,0x78);
@@ -144,6 +155,7 @@ static void iq_present(IQDrawer* d) {
 }
 
 static void iq_before_grid(void* owner) {
+    if(iq.owner==owner){iq_index_clear(&iq_drawer_index);iq_index_clear(&iq_button_index);}
     if(!layout_test || iq.owner!=owner || !iq_view_live()) return;
     for(int i=0;i<iq.background_count;i++) {
         IQBackground* b=&iq.backgrounds[i];
@@ -255,6 +267,7 @@ static void iq_capture(void* owner) {
     }
 #undef iq
     iq=pending_view;
+    iq_index_view();
     for(int i=0;i<iq.background_count;i++) {
         IQBackground* b=&iq.backgrounds[i];
         int side=b->side,j=b->ordinal,cols=iq.columns[side];
@@ -282,11 +295,15 @@ static void iq_capture(void* owner) {
 }
 
 static IQDrawer* iq_find(void* instance) {
-    if (!layout_test || !iq_view_live() || iq_ptr(instance,0x38)!=iq.owner) return NULL;
+    if(!layout_test)return NULL;
+    int at=iq_index_get(&iq_drawer_index,instance);
+    if(at<0 || at>=iq.count)return NULL;
+    IQDrawer* d=&iq.drawers[at];
+    if(d->drawer!=instance || !iq_view_live() || !iq_reference_valid(d->reference) ||
+       iq_ptr(instance,0x38)!=iq.owner)return NULL;
     uint64_t id=0;
     if(!iq_read((unsigned char*)instance+(iq.equipment?0x58:0x68),&id,8)) return NULL;
-    for(int i=0;i<iq.count;i++) if(iq.drawers[i].drawer==instance && iq.drawers[i].item_id==id && iq_reference_valid(iq.drawers[i].reference)) return &iq.drawers[i];
-    return NULL;
+    return d->item_id==id?d:NULL;
 }
 
 static void __cdecl iq_update(void* instance) {

@@ -74,13 +74,7 @@ static void __cdecl iq_bind(void* drawer,void* item) {
     original_bind_item(drawer,item);
     iq_cache_item(drawer,item);
 }
-static unsigned char __cdecl iq_button_hit(void* button) {
-    if(layout_test && iq_is_open())
-        for(int i=0;i<iq.count;i++)
-            if((filter_popup || !iq_visible(&iq.drawers[i])) &&
-               iq_reference_valid(iq.drawers[i].reference) && iq_drawer_button(iq.drawers[i].drawer)==button)return 0;
-    return original_button_hit(button);
-}
+#include "inventory_hit.h"
 static double* __cdecl iq_mouse_position(void* camera,double* point) {
     double* result=original_mouse_position(camera,point);
     if(layout_test) {iq_camera=camera;iq_camera_generation=iq_generation(camera);}

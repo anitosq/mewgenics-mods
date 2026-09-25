@@ -57,6 +57,7 @@ static void iq_capture_equipment(void* owner) {
     int maxrow=iq_last_row(iq.items[0],cols,cols>5?5:cols);if(iq.row[0]>maxrow)iq.row[0]=maxrow;
 #undef iq
     iq=pending_view;
+    iq_index_view();
     for(int j=0;j<iq.background_count;j++) {
         IQBackground* b=&iq.backgrounds[j];int visible=j<cols*iq_rows(0);
         *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
