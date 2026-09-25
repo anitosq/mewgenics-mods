@@ -1,7 +1,7 @@
 # Improved Inventory release readiness
 
-Status: renamed beta.2 installed through Vortex; beta.1 was smoke-tested before
-the rename. Repeat in-game startup for beta.2. No public release. Updated
+Status: beta.2 user-tested with only Mewjector and Improved Inventory active;
+startup and test actions verified in logs. No public release. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
 
@@ -37,8 +37,11 @@ from checks that still need to be performed on a packaged build.
 
 ## Packaged-build test matrix
 
-- [ ] Clean setup: supported game + Mewjector v3.0 + only Improved Inventory,
+- [x] Isolated mod setup: supported game + Mewjector v3.0 + only Improved Inventory,
       launched through Vortex's Custom Launch, with both DLL and assets loaded.
+      Verified beta.2 user session on 25 September. The disabled BiggerWallet
+      priority entry failed to load, leaving only our DLL. This was an isolated
+      profile on the existing installation, not a fresh game/loader install.
 - [ ] Existing mod collection: set markers/tooltips and item overrides coexist.
       Initial smoke test passed with the collection enabled: markers and the
       Transmitter Set tooltip rendered. Broader override coverage remains.
@@ -50,8 +53,14 @@ from checks that still need to be performed on a packaged build.
       dropdown input blocking on both panels; scroll and arrows at boundaries.
 - [ ] Populate Trash beyond 36 items, return items, reopen and save/reload using
       a temporary campaign copy. Preserve pre-existing saves and loader setup.
+      Beta.2 logs verify 37 in Trash, scrolling on both panels, return to 92/0,
+      and total count 92 throughout. Save/reload and backup status were not
+      independently verified for that user-run session.
 - [ ] Inventory UI creation/teardown and game exit; distinguish baseline exit
       exceptions from regressions introduced by this packaged build.
+      No exit exception or matching crash report in the isolated beta.2 run.
+      Earlier automation-assisted runs reported UIAutomationCore-heavy raw
+      stacks, including without our DLL; causation remains unproven.
 - [ ] Supported window sizes/UI scales and input behavior; explicitly document
       any controller, keyboard-layout, IME or Unicode editing limitations.
 - [ ] Missing assets, missing/older loader, unsupported executable, conflicting
@@ -69,7 +78,7 @@ from checks that still need to be performed on a packaged build.
 - [ ] Complete the release record and cross-link both destinations.
 
 See the [release workflow](../../docs/releases/README.md) for publishing and
-failure recovery and the [candidate test record](../../docs/releases/improved-inventory/0.1.0-beta.1-candidate.md)
+failure recovery and the [candidate test record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md)
 for observed results and remaining checks. Source inspection for the packaging notes used the locally
 installed extension's `testMod`/`installMod` and `testMewjectorMod` functions,
 installer registration order, plus the loader research. Do not redistribute

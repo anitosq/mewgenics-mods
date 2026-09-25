@@ -15,7 +15,8 @@ No public release yet. The candidate builder produces a normal-startup DLL
 and matching UI assets, with an exact game-binary compatibility guard.
 The diagnostic build separately retains its session marker. The first archive
 passed a real Vortex install and basic in-game checks with the existing mod
-collection under the former name. The renamed beta.2 is built and installed;
+collection under the former name. The renamed beta.2 also passed an isolated
+user test with only Mewjector and this mod active;
 see the [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md).
 Broader gameplay and installation lifecycle tests remain before public release. Bulk trash
 actions are planned separately and are not implemented.
@@ -27,8 +28,9 @@ keeping Nexus Mods and GitHub releases synchronized, and the
 
 The native code requires **Mewjector v3 API** (tested with v3.0). Other gameplay
 mods, Mewtator and Mewgenics Mod Manager are not required by the implementation.
-Vortex is an optional deployment tool. Standalone installation with only
-Mewjector and this mod still needs verification.
+Vortex is an optional deployment tool. An isolated Vortex profile with only
+Mewjector and this mod has been user-tested and verified in logs. Manual
+installation remains unverified.
 
 ## Development
 
