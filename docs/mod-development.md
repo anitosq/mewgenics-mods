@@ -134,6 +134,13 @@ stopped rebuilding set counts every frame and sampled hover coordinates
 once per control/update. Its fixtures count work; they don't measure FPS.
 Profile in-game before pursuing more complicated optimizations.
 
+Global button hooks should reject unrelated controls before reading native
+objects. Equipment selection exposed an expensive full-inventory scan inside
+every hit test. Index presentation objects at grid rebuilds, then validate only
+the matching reference. Keep lifetime checks at the point of use; performance
+work must not bring back the scene-transition crash. Separate component timings
+from measured frame times and user reports of responsiveness.
+
 ## Package and publish
 
 Follow the [release workflow](releases/README.md). Start with the final archive
