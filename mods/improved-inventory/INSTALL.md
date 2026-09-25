@@ -66,8 +66,6 @@ coverage haven't been tested. In-game performance with very large inventories
 also needs testing. Other game builds are unsupported.
 
 Item transfers are still manual, and End Day still deletes items left in Trash.
-Numbered set markers and expanded set tooltips in the screenshots come from
-separate mods.
 
 See the [release notes](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
 for features and the [test checklist](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/RELEASE_CHECKLIST.md)

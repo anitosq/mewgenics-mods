@@ -86,6 +86,8 @@ relevance before using the humanizer skill to edit voice and phrasing.
   main features for a first release. Test records hold private build history.
 - Keep known problems and essential requirements visible. Don't turn every
   unrun test or possible future feature into a warning on the listing.
+- Confirm screenshot contents and the capture session's active mods before
+  attributing visible features. Don't infer them from earlier test sessions.
 - Check the summary, full description, file notes, changelog, GitHub notes and
   README together. Remove chat context from all of them, then read the result
   aloud. Preserve required license notices in their dedicated sections.

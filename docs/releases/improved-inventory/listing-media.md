@@ -6,6 +6,9 @@ The approved cover is the thumbnail; the wide header and all three supplied
 screenshots are uploaded with captions. The header crop and rendered page
 were visually checked before publication.
 
+The author confirmed that only Improved Inventory was enabled when capturing
+the three gameplay screenshots. They do not show another mod's set numbers.
+
 Use the files in `outputs/listing/improved-inventory/`, or the sibling
 `ImprovedInventory-listing-media-v2.zip`. This ZIP contains the listing artwork.
 

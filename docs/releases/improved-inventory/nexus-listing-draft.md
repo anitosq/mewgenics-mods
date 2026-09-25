@@ -41,9 +41,6 @@ This release supports that game build only.
 See the [installation guide](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/INSTALL.md)
 for setup help and compatibility details. Controller support hasn't been tested.
 
-The screenshots also show numbered set markers and expanded set tooltips
-from separate mods.
-
 ## Links
 
 [GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0) |
