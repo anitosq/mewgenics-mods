@@ -11,14 +11,19 @@ A Mewgenics mod that improves the existing Storage/Trash screen.
 
 ## Status and dependencies
 
-No public release yet. The candidate builder produces a normal-startup DLL
+**0.1.0 is published:** [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
+and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
+The [publication record](../../docs/releases/improved-inventory/0.1.0-publication.md)
+tracks Nexus processing and download verification separately.
+
+The candidate builder produces a normal-startup DLL
 and matching UI assets, with an exact game-binary compatibility guard.
 The diagnostic build separately retains its session marker. The first archive
 passed a real Vortex install and basic in-game checks with the existing mod
 collection under the former name. The renamed beta.2 also passed an isolated
 user test with only Mewjector and this mod active;
 see the [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md).
-Version 0.1.0 is being prepared from that implementation with finalized version
+Version 0.1.0 uses that implementation with finalized version
 metadata and documentation. Remaining validation limits are disclosed in the
 [release notes](releases/0.1.0.md). Bulk trash actions are planned separately
 and are not implemented.

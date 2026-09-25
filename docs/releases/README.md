@@ -1,6 +1,8 @@
 # Release and publishing workflow
 
-Policy established 25 September 2026. No public release exists yet; a local candidate packager is available.
+Policy established 25 September 2026. Improved Inventory 0.1.0 is published;
+see its [publication record](improved-inventory/0.1.0-publication.md) for
+download verification and Nexus processing status.
 
 ## Destinations and source of truth
 
@@ -25,12 +27,12 @@ file. This avoids inventing file IDs or credentials before the first upload.
 | Field | Improved Inventory example |
 | --- | --- |
 | Per-mod version file | `mods/improved-inventory/VERSION` |
-| First public test version (proposed) | `0.1.0-beta.2` |
-| Git tag | `improved-inventory/v0.1.0-beta.2` |
-| GitHub release title | `Improved Inventory 0.1.0-beta.2` |
-| Installable asset | `ImprovedInventory-0.1.0-beta.2.zip` |
-| Archive checksum asset | `ImprovedInventory-0.1.0-beta.2.zip.sha256` |
-| Nexus mod/file version | `0.1.0-beta.2` |
+| First public version | `0.1.0` |
+| Git tag | `improved-inventory/v0.1.0` |
+| GitHub release title | `Improved Inventory 0.1.0` |
+| Installable asset | `ImprovedInventory-0.1.0.zip` |
+| Archive checksum asset | `ImprovedInventory-0.1.0.zip.sha256` |
+| Nexus mod/file version | `0.1.0` |
 
 The version file feeds the DLL's version/log output, package metadata,
 archive name and release checks. Never use GitHub's
@@ -199,11 +201,15 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 ## Current next step
 
-The normal-startup candidate was installed through Vortex and passed basic
-in-game checks with the existing mod collection. See the
-[pre-rename candidate record](improved-inventory/0.1.0-beta.1-candidate.md).
-The renamed beta.2 passed build/deployment checks and an isolated-profile user
-test with startup verified in logs; see its
-[record](improved-inventory/0.1.0-beta.2-candidate.md). Finish the
-installation lifecycle and remaining gameplay/shutdown checks before creating
-a public release. The diagnostic DLL remains a separate build.
+The author selected 0.1.0 for first publication after testing the beta.2
+candidate. Version 0.1.0 preserves its runtime implementation and was rebuilt
+with finalized metadata and documentation. It is a regular GitHub release
+and a Main/primary Nexus file, not a prerelease/Optional download.
+
+Finish Nexus scanning/download verification and the Nexus-to-Vortex check;
+track outcomes in the [publication record](improved-inventory/0.1.0-publication.md).
+For future automated updates, the existing Nexus target is API file ID
+`8024283`, mod ID `526`, game ID `8802`. Do not use legacy version ID `1654`
+as the upload action's file ID. No API key or automatic mirror is configured.
+The preceding candidate evidence and incomplete broader test matrix remain
+available; the public listing discloses those limitations.

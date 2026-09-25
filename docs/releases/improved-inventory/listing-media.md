@@ -1,7 +1,10 @@
 # Improved Inventory listing media
 
-Prepared 25 September 2026. Local media are ready; no Nexus upload or public
-listing is implied by this document.
+Prepared and uploaded 25 September 2026 to the
+[Improved Inventory listing](https://www.nexusmods.com/mewgenics/mods/526).
+The approved cover is the thumbnail; the wide header and all three supplied
+screenshots are uploaded with captions. The header crop and rendered page
+were visually checked before publication.
 
 Use the files in `outputs/listing/improved-inventory/`, or the sibling
 `ImprovedInventory-listing-media-v2.zip`. These are promotional media, not an

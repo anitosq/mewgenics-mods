@@ -23,7 +23,8 @@ Their editable SVG versions stay local in the same folder.
   and lettering are not licensed under the repository's MIT source-code license.
 
 Both PNG exports were visually inspected, including reduced thumbnail previews.
-The live Nexus upload/cropping preview remains to be checked.
+The live Nexus header crop and rendered listing were also visually checked
+before publication on 25 September 2026.
 
 ## Superseded AI concepts (v1)
 

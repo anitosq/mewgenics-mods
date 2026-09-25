@@ -1,9 +1,10 @@
-# Improved Inventory — Nexus listing draft
+# Improved Inventory — Nexus listing copy
 
-Author preparation only. Not published. Listing media are prepared locally;
-see [the media guide](listing-media.md). Finish the release checklist and check
-the live page preview before submitting. Use the same tested archive
-and version as GitHub; do not build a separate Nexus package.
+Published as [Improved Inventory](https://www.nexusmods.com/mewgenics/mods/526),
+version 0.1.0, on 25 September 2026. See [the publication record](0.1.0-publication.md)
+for scanning/download verification and [the media guide](listing-media.md)
+for artwork. Use the same frozen archive as GitHub; do not build a separate
+Nexus package.
 
 ## Summary
 
@@ -57,7 +58,9 @@ also leaves the mod inactive at the next launch.
 
 ## Compatibility and limits
 
-Tested through Vortex with only Mewjector and this mod active. Also tested
+The preceding candidate was tested through Vortex with only Mewjector and
+this mod active. Version 0.1.0 retains that runtime implementation with
+finalized version metadata and release documentation. Also tested
 locally in a larger mod collection; numbered set markers and expanded set
 tooltips come from separate mods and are not included here. Compatibility
 with every inventory replacement or native hook mod is not guaranteed.
@@ -74,7 +77,8 @@ an initial bug report.
 
 ## Source and permissions
 
-[Source and issue tracker](https://github.com/anitosq/mewgenics-mods).
+[GitHub release (same archive)](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0),
+[source and issue tracker](https://github.com/anitosq/mewgenics-mods).
 Original code is MIT licensed. Third-party notices remain applicable. The
 mod references the game's fonts/artwork at runtime; those assets are not
 redistributed in the archive.

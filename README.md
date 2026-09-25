@@ -4,7 +4,7 @@ Mewgenics mod development by **anitosq**. Each mod has its own source, tests and
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
-| [Improved Inventory](mods/improved-inventory/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | Local Vortex candidate tested; public release pending |
+| [Improved Inventory](mods/improved-inventory/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | [0.1.0 on GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/526) |
 
 ## Repository layout
 
@@ -24,8 +24,10 @@ they are not installation instructions or guarantees of current compatibility.
 
 ## Distribution and licensing
 
-No installable release has been published from this repository. Game files,
-saves, extracted game assets, third-party mod binaries and compiler downloads
+Download the installable ZIP from a mod's release page, not GitHub's automatic
+source archive. See the [0.1.0 publication record](docs/releases/improved-inventory/0.1.0-publication.md)
+for download verification and Nexus processing status. Game files, saves,
+extracted game assets, third-party mod binaries and compiler downloads
 are excluded. Current native UI assets reference the game's own fonts and
 artwork at runtime rather than embedding them.
 
