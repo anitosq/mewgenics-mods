@@ -31,6 +31,8 @@ jobs:
         run: python tools/bootstrap_zig.py
       - name: Run reader, browser and native fixture checks
         run: python tools/test_improved_inventory.py
+      - name: Check shared release tools
+        run: python -m unittest discover -s tools/tests -p "test_*.py"
       - name: Check UI asset generation
         run: python tools/build_filter_assets.py
 

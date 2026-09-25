@@ -14,7 +14,10 @@ Mewgenics mods by anitosq. Each mod has its own source, tests and documentation.
 - `assets/`: licensed prototype reference assets; see [third-party notices](THIRD_PARTY_NOTICES.md).
 - `work/` and `outputs/`: ignored local dependencies, generated files, private snapshots and backups.
 
-Start with the [Improved Inventory development guide](mods/improved-inventory/README.md).
+Start with the [project mod development guide](docs/mod-development.md), or
+the [Improved Inventory development guide](mods/improved-inventory/README.md)
+for its build commands. New mods can use the [mod brief](docs/templates/mod-brief.md)
+and [test session template](docs/templates/test-session.md).
 Publishing to Nexus Mods/Vortex and GitHub follows the shared
 [release workflow](docs/releases/README.md).
 The [gameplay brief](docs/research/mewgenics-research.md) and

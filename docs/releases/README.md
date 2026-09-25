@@ -28,9 +28,14 @@ file.
 | First public version | `0.1.0` |
 | Git tag | `improved-inventory/v0.1.0` |
 | GitHub release title | `Improved Inventory 0.1.0` |
+| Nexus mod/file display name | `Improved Inventory` |
 | Installable asset | `ImprovedInventory-0.1.0.zip` |
 | Archive checksum asset | `ImprovedInventory-0.1.0.zip.sha256` |
 | Nexus mod/file version | `0.1.0` |
+
+Keep Nexus display names version-free. Use the version fields for releases
+and the filename for downloaded archives. A display-name edit doesn't require
+a new archive or version.
 
 The version file feeds the DLL's version/log output, package metadata,
 archive name and release checks. Never use GitHub's
@@ -182,6 +187,32 @@ inputs, including `api_key`, `file_id`, `filename`, `version`, `mod_id` and
 [pinned action source](https://github.com/Nexus-Mods/upload-action/blob/c96019556046053aa26044b44396cd38929daf23/action.yml).
 Do not copy the upstream example's source-zipping step: our native mod needs
 the already built and tested release asset.
+
+## Verify a downloaded archive
+
+Use the manifest from the original local build as the reference. This command
+reads the ZIP without extracting, deploying or launching anything:
+
+```powershell
+python tools/verify_mod_archive.py --manifest outputs/releases/improved-inventory/0.1.0/ImprovedInventory-0.1.0.manifest.json --archive outputs/releases/improved-inventory/0.1.0/ImprovedInventory-0.1.0.zip
+```
+
+For a host download, replace `--archive` with the downloaded file's path.
+A renamed file is fine. The verifier checks the archive hash, exact payload
+file list and each file's hash. It rejects missing, extra, duplicated or
+changed payloads. A failure exits with a nonzero status.
+
+If the host has repacked the ZIP, first review the mismatch, then use
+`--allow-repacked` to check the payloads. A successful result still reports
+`archive_matches: false`; record that distinction. This option never accepts
+changed payloads. Use a trusted build manifest, not one supplied alongside
+an unverified download. Deployment and gameplay checks remain separate.
+
+Run the shared tool tests with:
+
+```powershell
+python -m unittest discover -s tools/tests -p "test_*.py"
+```
 
 ## Failure and rollback
 

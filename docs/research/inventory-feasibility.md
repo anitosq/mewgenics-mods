@@ -1,5 +1,9 @@
 # Improved Inventory: first implementation milestone
 
+Historical research from the first prototype. For the released mod, use the
+[current README](../../mods/improved-inventory/README.md) and
+[release checklist](../../mods/improved-inventory/RELEASE_CHECKLIST.md).
+
 24 September 2026. Stage 0 is partially complete. Experimental native scrolling and All / Consumables / rarity / Reset controls run in the existing Storage/Trash screen; this is not the first playable release. A temporary campaign copy verified combined filters, empty results, Reset, Escape dismissal, 37 transfers into Trash, immediate scrolling beyond 36 items, background retention, returning all items, and reopening. The main save stayed byte-identical and loader configuration was restored afterward. Broader filters, input coverage, and lifecycle hardening remain. See [native notes](native-inventory-notes.md) for current evidence and the exit-time exception also reproduced without our DLL.
 
 ## What exists

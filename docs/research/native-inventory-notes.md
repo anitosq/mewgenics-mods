@@ -1,5 +1,10 @@
 # Native inventory integration notes
 
+Chronological development notes; session states and open gates below refer
+to their recorded dates. Current release status is in the
+[mod README](../../mods/improved-inventory/README.md) and
+[release checklist](../../mods/improved-inventory/RELEASE_CHECKLIST.md).
+
 24 September 2026. Research for the installed executable only: SHA-256
 `4127cd6a792ae528bca6f65a8873dd61789591937d87656c2b586a5e30eb77ea`.
 These are reverse-engineered implementation facts, not a supported game API.

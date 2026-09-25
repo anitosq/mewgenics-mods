@@ -61,6 +61,8 @@ reporting a bug. Remove personal paths before sharing log lines.
 
 ## File description
 
+Display name: Improved Inventory. File version: 0.1.0.
+
 Scrolling Storage and Trash grids with search and filters. Requires Mewjector API v3 and Mewgenics 1.1.21239 (Steam build 25143593).
 
 ## Version 0.1.0 changelog

@@ -1,5 +1,9 @@
 # Improved Inventory: proposed mod plan
 
+Original plan, retained for design history. See the
+[mod README](../../mods/improved-inventory/README.md) for what shipped and
+[release checklist](../../mods/improved-inventory/RELEASE_CHECKLIST.md) for open work.
+
 Plan: 24 September 2026. Implementation has begun with a saved-inventory browsing prototype and a native diagnostic build; stage 0 remains incomplete. See [implementation findings](inventory-feasibility.md). Confirmed user priority: the first playable version should provide readable inventory with scrolling and better filters. Batch cleanup and a richer set browser follow separately.
 
 ## Recommendation
