@@ -1,7 +1,8 @@
 # Improved Inventory — Nexus listing draft
 
-Author preparation only. Not published. Finish the release checklist and add
-representative screenshots before submitting. Use the same tested archive
+Author preparation only. Not published. Listing media are prepared locally;
+see [the media guide](listing-media.md). Finish the release checklist and check
+the live page preview before submitting. Use the same tested archive
 and version as GitHub; do not build a separate Nexus package.
 
 ## Summary
@@ -83,8 +84,9 @@ redistributed in the archive.
 - Upload the frozen `ImprovedInventory-0.1.0-beta.2.zip` as a beta/test file;
   set both mod/file version fields consistently and enable Vortex downloads.
 - Add Mewjector as a requirement and make original-code permissions match MIT.
-- Add screenshots: full inventory, rarity menu, set selection and Trash
-  scrolling. Use an isolated profile so screenshots do not imply that other
-  mods' numbered markers/tooltips are included.
+- Upload the selected v2 cover/header and three supplied screenshots using
+  [the media guide](listing-media.md). They show Storage/Trash scrolling,
+  combined filters/set selection, and global search. Check the live preview
+  for cropping and readability before publication.
 - Add the actual GitHub release link after it exists; record Nexus mod/file
   IDs and verify both downloads before marking the release synchronized.
