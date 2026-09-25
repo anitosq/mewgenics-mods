@@ -1,11 +1,11 @@
-"""Run Inventory QoL fixture checks without launching the game or reading saves."""
+"""Run Improved Inventory fixture checks without launching the game or reading saves."""
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-TESTS = ROOT / 'mods/inventory-qol/tests'
+TESTS = ROOT / 'mods/improved-inventory/tests'
 
 
 def main():
@@ -28,7 +28,7 @@ def main():
                         str(TESTS / f'{name}.c'), '-o', str(output)],
                        cwd=ROOT, check=True)
         subprocess.run([str(output)], cwd=ROOT, check=True)
-    print('Inventory QoL fixture checks passed.')
+    print('Improved Inventory fixture checks passed.')
 
 
 if __name__ == '__main__':

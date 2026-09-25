@@ -182,7 +182,7 @@ def build(game, save, output):
                             'Instance IDs are snapshot-local; not persistent identities.'],
             'metadataFailures': failures, 'blobChecksums': blobs}
     output.mkdir(parents=True, exist_ok=True)
-    for path in (Path(__file__).resolve().parents[1] / 'mods/inventory-qol/src/browser').iterdir():
+    for path in (Path(__file__).resolve().parents[1] / 'mods/improved-inventory/src/browser').iterdir():
         if path.is_file():
             shutil.copyfile(path, output / path.name)
     (output / 'inventory.json').write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')

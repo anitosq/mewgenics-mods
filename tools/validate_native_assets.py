@@ -165,6 +165,6 @@ def validate_rarity_art(tags):
 if __name__ == '__main__':
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--game', type=Path, required=True)
-    cli.add_argument('--asset', type=Path, default=Path(__file__).resolve().parents[1] / 'work/native-assets/swfs/inventory_qol.swf')
+    cli.add_argument('--asset', type=Path, default=Path(__file__).resolve().parents[1] / 'work/native-assets/swfs/improved_inventory.swf')
     args = cli.parse_args()
     validate(args.game, args.asset)

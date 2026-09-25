@@ -1,4 +1,4 @@
-# Inventory QoL release readiness
+# Improved Inventory release readiness
 
 Status: local candidate installed through Vortex and smoke-tested; no public release. Updated
 25 September 2026. This checklist distinguishes existing development evidence
@@ -15,7 +15,7 @@ from checks that still need to be performed on a packaged build.
 
 ## Release startup and packaging
 
-- [x] Add a release build mode and stable `InventoryQoL.dll` name/version.
+- [x] Add a release build mode and stable `ImprovedInventory.dll` name/version.
       Activate normally without a fresh session marker, environment switch,
       absolute development path or development runner. Retain diagnostic mode.
 - [x] Retain the exact image guard and version messages. All hook entries are
@@ -25,7 +25,7 @@ from checks that still need to be performed on a packaged build.
 - [x] Implement per-mod VERSION, reviewed compatibility metadata and allowlisted
       packaging from a clean commit, with ZIP/payload checksums and provenance.
 - [x] Verify normal UI asset loading and actual Vortex deployment of the archive.
-      The DLL lives at `mods/InventoryQoL.dll`; assets live in `mods/InventoryQoL/`.
+      The DLL lives at `mods/ImprovedInventory.dll`; assets live in `mods/ImprovedInventory/`.
       The installed extension handles this mixed payload as one mod installation.
       Deployment hashes match the candidate; Vortex excludes CHANGELOG.md.
 - [x] Use Mewjector's normal `ScanPath=mods` discovery for the top-level DLL.
@@ -36,7 +36,7 @@ from checks that still need to be performed on a packaged build.
 
 ## Packaged-build test matrix
 
-- [ ] Clean setup: supported game + Mewjector v3.0 + only Inventory QoL,
+- [ ] Clean setup: supported game + Mewjector v3.0 + only Improved Inventory,
       launched through Vortex's Custom Launch, with both DLL and assets loaded.
 - [ ] Existing mod collection: set markers/tooltips and item overrides coexist.
       Initial smoke test passed with the collection enabled: markers and the
@@ -68,7 +68,7 @@ from checks that still need to be performed on a packaged build.
 - [ ] Complete the release record and cross-link both destinations.
 
 See the [release workflow](../../docs/releases/README.md) for publishing and
-failure recovery and the [candidate test record](../../docs/releases/inventory-qol/0.1.0-beta.1-candidate.md)
+failure recovery and the [candidate test record](../../docs/releases/improved-inventory/0.1.0-beta.1-candidate.md)
 for observed results and remaining checks. Source inspection for the packaging notes used the locally
 installed extension's `testMod`/`installMod` and `testMewjectorMod` functions,
 installer registration order, plus the loader research. Do not redistribute

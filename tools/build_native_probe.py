@@ -12,13 +12,13 @@ cli.add_argument('--game', type=Path, required=True)
 cli.add_argument('--release', action='store_true', help='Build normal startup into work/release-build')
 args = cli.parse_args()
 root = Path(__file__).resolve().parents[1]
-version = (root / 'mods/inventory-qol/VERSION').read_text().strip()
+version = (root / 'mods/improved-inventory/VERSION').read_text().strip()
 if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[a-z0-9.]+)?', version):
-    raise RuntimeError('Invalid Inventory QoL version')
+    raise RuntimeError('Invalid Improved Inventory version')
 probe = json.loads((root / 'work/inventory-probe/probe-report.json').read_text())
 binary = (args.game / 'Mewgenics.exe').read_bytes()
 sha = hashlib.sha256(binary).hexdigest()
-compatibility = json.loads((root / 'mods/inventory-qol/compatibility.json').read_text())
+compatibility = json.loads((root / 'mods/improved-inventory/compatibility.json').read_text())
 if args.release and sha != compatibility['game_sha256']:
     raise RuntimeError('Executable is not in the reviewed release compatibility baseline')
 if sha != probe['binary']['sha256'] or probe['binary']['matched'] != 44:
@@ -65,12 +65,12 @@ literal = lambda data: ','.join(f'0x{v:02x}' for v in data)
     ''.join(f'#define {key}_RVA 0x{extra[key]:x}\nstatic const unsigned char EXPECTED_{key}_BYTES[64] = {{{literal(value)}}};\n' for key,value in extra_signatures.items()))
 if args.release:
     with (build / 'build_guard.h').open('a') as guard:
-        for key, name in [('UI', 'inventory_qol.swf'), ('APPEND', 'swflist.gon.append')]:
+        for key, name in [('UI', 'improved_inventory.swf'), ('APPEND', 'swflist.gon.append')]:
             digest = hashlib.sha256((root / 'work/native-assets/swfs' / name).read_bytes()).digest()
             guard.write(f'static const unsigned char EXPECTED_{key}_SHA256[32] = {{{literal(digest)}}};\n')
 compiler = root / 'work/toolchains/zig-x86_64-windows-0.15.2/zig.exe'
-output = build / ('InventoryQoL.dll' if args.release else 'InventoryQoLProbe.dll')
+output = build / ('ImprovedInventory.dll' if args.release else 'ImprovedInventoryProbe.dll')
 subprocess.run([str(compiler), 'cc', '-target', 'x86_64-windows-gnu', '-shared', '-O2',
-                '-Wall', '-Wextra', '-Werror', '-I', str(build), str(root / 'mods/inventory-qol/src/native/inventory_probe.c'),
+                '-Wall', '-Wextra', '-Werror', '-I', str(build), str(root / 'mods/improved-inventory/src/native/inventory_probe.c'),
                 '-o', str(output), '-lbcrypt', '-luser32', '-lshell32'], check=True)
 print(output)

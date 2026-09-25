@@ -4,17 +4,17 @@ Mewgenics mod development by **anitosq**. Each mod has its own source, tests and
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
-| [Inventory QoL](mods/inventory-qol/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | Local Vortex candidate tested; public release pending |
+| [Improved Inventory](mods/improved-inventory/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | Local Vortex candidate tested; public release pending |
 
 ## Repository layout
 
 - `mods/<mod-name>/`: each mod's source, tests and documentation.
-- `tools/`: build, inspection and development utilities, currently supporting Inventory QoL.
+- `tools/`: build, inspection and development utilities, currently supporting Improved Inventory.
 - `docs/research/`: gameplay research, implementation findings and dated test evidence.
 - `assets/`: licensed prototype reference assets; see [third-party notices](THIRD_PARTY_NOTICES.md).
 - `work/` and `outputs/`: ignored local dependencies, generated files, private snapshots and backups.
 
-Start with the [Inventory QoL development guide](mods/inventory-qol/README.md).
+Start with the [Improved Inventory development guide](mods/improved-inventory/README.md).
 Publishing to Nexus Mods/Vortex and GitHub follows the shared
 [release workflow](docs/releases/README.md).
 The [gameplay brief](docs/research/mewgenics-research.md) and

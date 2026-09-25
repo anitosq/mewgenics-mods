@@ -26,8 +26,8 @@ the original slot 3. Only the copied test campaign changed in that session.
 | Event Descriptions / Detailed Ability Descriptions | Both append combined.csv, but their 480 and 2,756 data keys have no overlap. Header rows were excluded from this key comparison. |
 | Better Loot | Changes combat_reward_table.gon and item_pools/general_pools.gon. Neither path overlaps No Curses or any other active mod. No need to move it relative to No Curses. |
 | Bigger Storage Early / Reroll / Better Furniture / StevenNeutered | Their target files are not shared by another active data mod. Whole-file compatibility with the current game is a separate concern below. |
-| Inventory QoL / set markers | Inventory QoL supplies inventory_qol.swf and appends swflist.gon; markers replace catparts.swf. No common replaced SWF. Inventory QoL reads effective item metadata and changes inventory presentation, not the item-definition files. |
-| Inventory QoL / BiggerWallet | Previous session logs show BiggerWallet hooks 114E38; none of Inventory QoL's nine hook sites match it. No evidence of an order collision. Keep the existing loader setup. |
+| Improved Inventory / set markers | Improved Inventory supplies improved_inventory.swf and appends swflist.gon; markers replace catparts.swf. No common replaced SWF. Improved Inventory reads effective item metadata and changes inventory presentation, not the item-definition files. |
+| Improved Inventory / BiggerWallet | Previous session logs show BiggerWallet hooks 114E38; none of Improved Inventory's nine hook sites match it. No evidence of an order collision. Keep the existing loader setup. |
 
 The inventory runner reads the current enabled modlist on each launch and
 adds its own assets last. It does not use a frozen list of the old order.

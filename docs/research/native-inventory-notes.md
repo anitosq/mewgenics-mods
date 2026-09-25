@@ -8,7 +8,7 @@ These are reverse-engineered implementation facts, not a supported game API.
 
 The existing Storage/Trash screen can display enlarged item icons while retaining
 native tooltips and the installed set-marker art. The experimental implementation
-is in `mods/inventory-qol/src/native/inventory_layout.h`, enabled only by the runner's fresh
+is in `mods/improved-inventory/src/native/inventory_layout.h`, enabled only by the runner's fresh
 `layout-test` marker. It does not change item IDs or container contents.
 
 | Function RVA | Observed purpose |
@@ -614,7 +614,7 @@ The sample is local to that update, so moving panels/cameras are not cached
 across frames. Scrolling at an unchanged boundary now skips drawer layout work.
 
 The production set-menu builder is in inventory_set_rows.h so the fixture in
-mods/inventory-qol/tests/native_set_rows.c exercises the actual code. With 1,024 items and 600
+mods/improved-inventory/tests/native_set_rows.c exercises the actual code. With 1,024 items and 600
 unchanged updates it performs 1,024 metadata lookups; the old all-matching
 two-lookup path would perform 1,228,800. This is an operation-count comparison,
 not an FPS or whole-game timing benchmark. Assertions cover search, type and

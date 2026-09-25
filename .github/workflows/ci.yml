@@ -1,4 +1,4 @@
-name: Inventory QoL checks
+name: Improved Inventory checks
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: inventory-qol-checks-${{ github.ref }}
+  group: improved-inventory-checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
       - name: Download pinned compiler and verify publisher checksum
         run: python tools/bootstrap_zig.py
       - name: Run reader, browser and native fixture checks
-        run: python tools/test_inventory_qol.py
+        run: python tools/test_improved_inventory.py
       - name: Check UI asset generation
         run: python tools/build_filter_assets.py
 

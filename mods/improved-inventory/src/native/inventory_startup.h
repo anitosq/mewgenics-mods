@@ -15,7 +15,7 @@ static int iq_assets_enabled(const wchar_t* dll_path,const wchar_t* command) {
     if(!iq_canonical_path(dll_path,root))return 0;
     wchar_t* slash=wcsrchr(root,L'\\');
     if(!slash || (size_t)(slash-root)+32>=MAX_PATH)return 0;
-    wcscpy(slash+1,L"InventoryQoL");
+    wcscpy(slash+1,L"ImprovedInventory");
     if(!iq_canonical_path(root,wanted))return 0;
     int argc=0,enabled=0,paths=0;
     wchar_t** argv=CommandLineToArgvW(command,&argc);
@@ -28,12 +28,12 @@ static int iq_assets_enabled(const wchar_t* dll_path,const wchar_t* command) {
     LocalFree(argv);
     if(!enabled)return 0;
     if(wcslen(root)+40>=MAX_PATH)return 0;
-    wcscpy(actual,root);wcscat(actual,L"\\swfs\\inventory_qol.swf");
+    wcscpy(actual,root);wcscat(actual,L"\\swfs\\improved_inventory.swf");
     if(!iq_file_matches(actual,EXPECTED_UI_SHA256))return 0;
     wcscpy(actual,root);wcscat(actual,L"\\swfs\\swflist.gon.append");
     return iq_file_matches(actual,EXPECTED_APPEND_SHA256);
 }
 
-__declspec(dllexport) int InventoryQoLValidateAssetsW(const wchar_t* dll_path,const wchar_t* command) {
+__declspec(dllexport) int ImprovedInventoryValidateAssetsW(const wchar_t* dll_path,const wchar_t* command) {
     return dll_path && command && iq_assets_enabled(dll_path,command);
 }

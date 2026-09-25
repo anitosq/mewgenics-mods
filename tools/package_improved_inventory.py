@@ -9,7 +9,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-MOD = ROOT / 'mods/inventory-qol'
+MOD = ROOT / 'mods/improved-inventory'
 
 
 def git(*args):
@@ -27,20 +27,20 @@ def json_bytes(data):
 def payload(version, commit, game_hash):
     compatibility = json.loads((MOD / 'compatibility.json').read_text())
     files = {
-        'InventoryQoL.dll': (ROOT / 'work/release-build/InventoryQoL.dll').read_bytes(),
-        'InventoryQoL/swfs/inventory_qol.swf': (ROOT / 'work/native-assets/swfs/inventory_qol.swf').read_bytes(),
-        'InventoryQoL/swfs/swflist.gon.append': (ROOT / 'work/native-assets/swfs/swflist.gon.append').read_bytes(),
-        'InventoryQoL/INSTALL.md': (MOD / 'INSTALL.md').read_bytes(),
-        'InventoryQoL/LICENSE': (ROOT / 'LICENSE').read_bytes(),
-        'InventoryQoL/THIRD_PARTY_NOTICES.md': (ROOT / 'THIRD_PARTY_NOTICES.md').read_bytes(),
-        'InventoryQoL/CHANGELOG.md': (MOD / 'CHANGELOG.md').read_bytes(),
-        'InventoryQoL/description.json': json_bytes({
-            'title': 'Inventory QoL', 'author': 'anitosq', 'version': version,
+        'ImprovedInventory.dll': (ROOT / 'work/release-build/ImprovedInventory.dll').read_bytes(),
+        'ImprovedInventory/swfs/improved_inventory.swf': (ROOT / 'work/native-assets/swfs/improved_inventory.swf').read_bytes(),
+        'ImprovedInventory/swfs/swflist.gon.append': (ROOT / 'work/native-assets/swfs/swflist.gon.append').read_bytes(),
+        'ImprovedInventory/INSTALL.md': (MOD / 'INSTALL.md').read_bytes(),
+        'ImprovedInventory/LICENSE': (ROOT / 'LICENSE').read_bytes(),
+        'ImprovedInventory/THIRD_PARTY_NOTICES.md': (ROOT / 'THIRD_PARTY_NOTICES.md').read_bytes(),
+        'ImprovedInventory/CHANGELOG.md': (MOD / 'CHANGELOG.md').read_bytes(),
+        'ImprovedInventory/description.json': json_bytes({
+            'title': 'Improved Inventory', 'author': 'anitosq', 'version': version,
             'description': 'Scrolling Storage/Trash, search and filters. Requires Mewjector API v3; see INSTALL.md.',
             'url': 'https://github.com/anitosq/mewgenics-mods',
         }),
-        'InventoryQoL/build-info.json': json_bytes({
-            'mod': 'inventory-qol', 'version': version, 'source_commit': commit,
+        'ImprovedInventory/build-info.json': json_bytes({
+            'mod': 'improved-inventory', 'version': version, 'source_commit': commit,
             'game_sha256': game_hash, 'steam_build_id': compatibility['steam_build_id'],
             'compiler': 'zig 0.15.2', 'loader_api_minimum': compatibility['loader_api_minimum'],
             'status': 'candidate; see release checklist for runtime validation',
@@ -68,7 +68,7 @@ def write_archive(path, files):
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--game', required=True, type=Path)
-    cli.add_argument('--output', type=Path, help='New output directory (default: outputs/releases/inventory-qol/VERSION)')
+    cli.add_argument('--output', type=Path, help='New output directory (default: outputs/releases/improved-inventory/VERSION)')
     args = cli.parse_args()
     if git('status', '--porcelain'):
         raise SystemExit('Commit project changes before packaging; working tree must be clean.')
@@ -76,7 +76,7 @@ def main():
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[a-z0-9.]+)?', version):
         raise SystemExit('Invalid version')
     commit = git('rev-parse', 'HEAD')
-    output = (args.output or ROOT / 'outputs/releases/inventory-qol' / version).resolve()
+    output = (args.output or ROOT / 'outputs/releases/improved-inventory' / version).resolve()
     # Keep private builds under the project's ignored output/scratch directories.
     if not any(base in output.parents for base in (ROOT / 'outputs', ROOT / 'work')):
         raise SystemExit('Choose a new directory inside work/ or outputs/.')
@@ -85,7 +85,7 @@ def main():
     game = args.game.resolve()
     game_hash = digest((game / 'Mewgenics.exe').read_bytes())
     for script, extra in [
-        ('test_inventory_qol.py', []),
+        ('test_improved_inventory.py', []),
         ('build_filter_assets.py', []),
         ('validate_native_assets.py', ['--game', str(game)]),
         ('build_native_probe.py', ['--game', str(game), '--release']),
@@ -98,7 +98,7 @@ def main():
         raise SystemExit('Game changed during build; candidate withheld.')
     files = payload(version, commit, game_hash)
     output.mkdir(parents=True)
-    archive = output / f'InventoryQoL-{version}.zip'
+    archive = output / f'ImprovedInventory-{version}.zip'
     write_archive(archive, files)
     checksum = digest(archive.read_bytes())
     archive.with_suffix('.zip.sha256').write_text(f'{checksum}  {archive.name}\n', encoding='ascii')

@@ -29,7 +29,7 @@ def run(game, profile, layout_test=False, control=False, test_slot=False):
     if game_running():
         raise RuntimeError('Close Mewgenics normally before starting an observational session')
     root = Path(__file__).resolve().parents[1]
-    dll = root / 'work/native-build/InventoryQoLProbe.dll'
+    dll = root / 'work/native-build/ImprovedInventoryProbe.dll'
     if not control and not dll.is_file():
         raise RuntimeError('Build the diagnostic DLL first')
     report = json.loads((root / 'work/inventory-probe/probe-report.json').read_text())
@@ -45,7 +45,7 @@ def run(game, profile, layout_test=False, control=False, test_slot=False):
     (backup / 'chainloader.ini').write_bytes(original)
     lines = original.decode('utf-8-sig').splitlines(keepends=True)
     indices = [i for i, line in enumerate(lines) if line.strip() == '[LoadOrder]']
-    if len(indices) != 1 or any('InventoryQoLProbe' in line for line in lines):
+    if len(indices) != 1 or any('ImprovedInventoryProbe' in line for line in lines):
         raise RuntimeError('Unexpected loader configuration; no changes made')
     # Absolute DLL path leaves Vortex's deployed mod collection untouched.
     section = indices[0] + 1
@@ -63,11 +63,11 @@ def run(game, profile, layout_test=False, control=False, test_slot=False):
     mods = [str(game / 'mods' / name.strip()) for name in mod_names if name.strip() and not name.startswith('#')]
     if layout_test:
         assets = root / 'work/native-assets'
-        if not (assets / 'swfs/inventory_qol.swf').is_file() or not (assets / 'swfs/swflist.gon.append').is_file():
+        if not (assets / 'swfs/improved_inventory.swf').is_file() or not (assets / 'swfs/swflist.gon.append').is_file():
             raise RuntimeError('Build the native filter assets first')
         mods.append(str(assets))
     env = os.environ.copy()
-    marker = dll.with_name('InventoryQoLProbe.session')
+    marker = dll.with_name('ImprovedInventoryProbe.session')
     if marker.exists():
         raise RuntimeError('A diagnostic session marker already exists; inspect before proceeding')
     test_save = profile / 'saves/steamcampaign03.sav'

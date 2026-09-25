@@ -159,6 +159,6 @@ for active in range(4):
         disabled.append(m.field(dynamic_font,x+4,432,width_-8,30,20,label,align=2,color=(136,130,117,255)))
         parts.append((m.sprite('disabled'+str(i),disabled,export=False),'disabled'+str(i)))
     m.sprite(f'IQSets{active}',parts)
-m.write(ROOT/'work/native-assets/swfs/inventory_qol.swf')
-(ROOT/'work/native-assets/swfs/swflist.gon.append').write_text('game [ inventory_qol.swf ]\n')
+m.write(ROOT/'work/native-assets/swfs/improved_inventory.swf')
+(ROOT/'work/native-assets/swfs/swflist.gon.append').write_text('game [ improved_inventory.swf ]\n')
 print(f'Generated {len(m.exports)} original native toolbar/popup/arrow symbols.')

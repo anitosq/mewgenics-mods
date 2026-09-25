@@ -22,15 +22,15 @@ file. This avoids inventing file IDs or credentials before the first upload.
 
 ## Versions in this multi-mod repository
 
-| Field | Inventory QoL example |
+| Field | Improved Inventory example |
 | --- | --- |
-| Per-mod version file | `mods/inventory-qol/VERSION` |
-| First public test version (proposed) | `0.1.0-beta.1` |
-| Git tag | `inventory-qol/v0.1.0-beta.1` |
-| GitHub release title | `Inventory QoL 0.1.0-beta.1` |
-| Installable asset | `InventoryQoL-0.1.0-beta.1.zip` |
-| Archive checksum asset | `InventoryQoL-0.1.0-beta.1.zip.sha256` |
-| Nexus mod/file version | `0.1.0-beta.1` |
+| Per-mod version file | `mods/improved-inventory/VERSION` |
+| First public test version (proposed) | `0.1.0-beta.2` |
+| Git tag | `improved-inventory/v0.1.0-beta.2` |
+| GitHub release title | `Improved Inventory 0.1.0-beta.2` |
+| Installable asset | `ImprovedInventory-0.1.0-beta.2.zip` |
+| Archive checksum asset | `ImprovedInventory-0.1.0-beta.2.zip.sha256` |
+| Nexus mod/file version | `0.1.0-beta.2` |
 
 The version file feeds the DLL's version/log output, package metadata,
 archive name and release checks. Never use GitHub's
@@ -62,9 +62,9 @@ private runtime logs locally; only publish a sanitized test summary.
 
 ## Prepare a release candidate
 
-1. Complete the mod's [readiness checklist](../../mods/inventory-qol/RELEASE_CHECKLIST.md).
+1. Complete the mod's [readiness checklist](../../mods/improved-inventory/RELEASE_CHECKLIST.md).
    Resolve installation and startup blockers before making a player archive.
-2. Set its version and finalize its [changelog](../../mods/inventory-qol/CHANGELOG.md).
+2. Set its version and finalize its [changelog](../../mods/improved-inventory/CHANGELOG.md).
    Write player-facing notes using the [template](release-notes-template.md).
 3. Commit the exact source and metadata. Require a clean working tree and
    passing checks for that commit. Build from that commit using the supported
@@ -78,8 +78,8 @@ private runtime logs locally; only publish a sanitized test summary.
    disable/remove and gameplay checks. Test the frozen archive, not loose
    development files. Any payload change requires repackaging and retesting.
 6. Save the archive and a SHA-256 sidecar in ignored
-   `outputs/releases/inventory-qol/<version>/`. The sidecar contains one line:
-   `<lowercase SHA-256>  InventoryQoL-<version>.zip`.
+   `outputs/releases/improved-inventory/<version>/`. The sidecar contains one line:
+   `<lowercase SHA-256>  ImprovedInventory-<version>.zip`.
    Also record the deployed payload's relative filenames and SHA-256 hashes
    for comparison if a hosting service repacks an archive.
 
@@ -113,21 +113,21 @@ collecting public feedback.
    outer ZIP hashes must match. Any changed DLL/SWF/metadata is a failure.
 6. Record source commit, tag, submitted checksum, payload verification,
    GitHub URL, Nexus URL, file/version IDs and test result in a per-version
-   record under `docs/releases/inventory-qol/`. Link both destinations from
+   record under `docs/releases/improved-inventory/`. Link both destinations from
    the mod README. Only then mark synchronization complete.
 
 Example commands, **only after a tested package exists**; run from the repo
-root. The archive is produced by `tools/package_inventory_qol.py`, not these commands:
+root. The archive is produced by `tools/package_improved_inventory.py`, not these commands:
 
 ```powershell
 $repo = 'anitosq/mewgenics-mods'
-$version = (Get-Content mods/inventory-qol/VERSION -Raw).Trim()
-$tag = "inventory-qol/v$version"
-$bundle = "outputs/releases/inventory-qol/$version/InventoryQoL-$version.zip"
-$notes = "mods/inventory-qol/releases/$version.md"
-git tag -a $tag -m "Inventory QoL $version"
+$version = (Get-Content mods/improved-inventory/VERSION -Raw).Trim()
+$tag = "improved-inventory/v$version"
+$bundle = "outputs/releases/improved-inventory/$version/ImprovedInventory-$version.zip"
+$notes = "mods/improved-inventory/releases/$version.md"
+git tag -a $tag -m "Improved Inventory $version"
 git push origin $tag
-gh release create $tag $bundle "$bundle.sha256" --repo $repo --verify-tag --draft --prerelease --latest=false --title "Inventory QoL $version" --notes-file $notes
+gh release create $tag $bundle "$bundle.sha256" --repo $repo --verify-tag --draft --prerelease --latest=false --title "Improved Inventory $version" --notes-file $notes
 ```
 
 Check each command succeeds before continuing. Remove `--prerelease` for a
@@ -156,12 +156,12 @@ tested commit -> frozen ZIP -> draft GitHub release -> publish
 
 The workflow is not wired yet. Its implementation must:
 
-- Run only for published `inventory-qol/v...` releases, excluding other mods.
+- Run only for published `improved-inventory/v...` releases, excluding other mods.
   Mirror stable releases automatically; require explicit selection of a
   separate test file/category for prereleases. Do not replace stable with beta.
 - Download the explicitly named ZIP and checksum from that tag. Validate tag,
   package version, manifest and checksum; never rebuild on the publishing job.
-- Use a dedicated `nexus-inventory-qol` environment. Store the author API key
+- Use a dedicated `nexus-improved-inventory` environment. Store the author API key
   as `NEXUSMODS_API_KEY` there, never in source or chat. Configure the file ID
   from Nexus's Files > Advanced/manage-files UI; do not confuse it with the
   legacy ID in a download URL. Configure the mod ID required by the action
@@ -201,6 +201,6 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 The normal-startup candidate was installed through Vortex and passed basic
 in-game checks with the existing mod collection. See the
-[candidate record](inventory-qol/0.1.0-beta.1-candidate.md). Finish the clean-setup,
+[candidate record](improved-inventory/0.1.0-beta.1-candidate.md). Finish the clean-setup,
 installation lifecycle and remaining gameplay/shutdown checks before creating
 a public release. The diagnostic DLL remains a separate build.

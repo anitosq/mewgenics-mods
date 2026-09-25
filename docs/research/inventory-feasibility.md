@@ -1,13 +1,13 @@
-# Inventory QoL: first implementation milestone
+# Improved Inventory: first implementation milestone
 
 24 September 2026. Stage 0 is partially complete. Experimental native scrolling and All / Consumables / rarity / Reset controls run in the existing Storage/Trash screen; this is not the first playable release. A temporary campaign copy verified combined filters, empty results, Reset, Escape dismissal, 37 transfers into Trash, immediate scrolling beyond 36 items, background retention, returning all items, and reopening. The main save stayed byte-identical and loader configuration was restored afterward. Broader filters, input coverage, and lifecycle hardening remain. See [native notes](native-inventory-notes.md) for current evidence and the exit-time exception also reproduced without our DLL.
 
 ## What exists
 
-- `mods/inventory-qol/src/browser/`: readable scrolling cards, compact/comfortable density, expanded horizontal search/type/location bar, a “More filters” dialog for slot/rarity/set choices, removable applied-filter chips, stable sorting, and per-copy inspection. Apply commits dialog choices; Cancel/Escape preserves the applied filters. Filters combine with AND across categories and OR within selected rarities. Unknown set membership is excluded from “No set.” There are no transfer or save-writing controls.
+- `mods/improved-inventory/src/browser/`: readable scrolling cards, compact/comfortable density, expanded horizontal search/type/location bar, a “More filters” dialog for slot/rarity/set choices, removable applied-filter chips, stable sorting, and per-copy inspection. Apply commits dialog choices; Cancel/Escape preserves the applied filters. Filters combine with AND across categories and OR within selected rarities. Unknown set membership is excluded from “No set.” There are no transfer or save-writing controls.
 - `tools/probe_inventory.py`: bounds-checked saved-inventory parser and installed-build inspection. SQLite is opened read-only and copied into memory for a consistent read; only inventory records are exported locally.
 - `tools/build_preview.py`: joins the saved records to installed base item definitions and English names. Explicit relevant metadata overrides in active mods are flagged rather than guessing engine merge precedence.
-- `mods/inventory-qol/src/native/inventory_probe.c`, `inventory_layout.h`, `inventory_controls.h`, and `inventory_filter.h`: a guarded Mewjector diagnostic DLL with passive observation and optional experimental scrolling/filtering. A fresh `layout-test` marker enables a six-column cap, wheel input, and native controls using generated SWF assets. Runtime item definitions supply consumable status; native drawer metadata supplies rarity. The default runner remains observational. A PE/byte-guarded startup callback defers initialization to the game thread. Observer/layout hooks require the full executable hash and matching entry bytes. Loading the DLL alone still installs its guarded startup callback; it is not a gameplay package.
+- `mods/improved-inventory/src/native/inventory_probe.c`, `inventory_layout.h`, `inventory_controls.h`, and `inventory_filter.h`: a guarded Mewjector diagnostic DLL with passive observation and optional experimental scrolling/filtering. A fresh `layout-test` marker enables a six-column cap, wheel input, and native controls using generated SWF assets. Runtime item definitions supply consumable status; native drawer metadata supplies rarity. The default runner remains observational. A PE/byte-guarded startup callback defers initialization to the game thread. Observer/layout hooks require the full executable hash and matching entry bytes. Loading the DLL alone still installs its guarded startup callback; it is not a gameplay package.
 - `tools/inspect_inventory_native.py`: read-only PE string-reference and disassembly report. `tools/run_inventory_probe.py`: backs up saves/settings/config, temporarily enables the passive probe, starts through Steam, and restores the configuration after exit if no external deployment changed it. `tools/inspect_probe_dump.py`: local crash-dump triage; its raw stack candidates are not a proper unwind.
 
 The browser is a separate development harness. It does not replace the inventory screen, preserve game tooltips, show item icons, or synchronize with the running game.
@@ -66,8 +66,8 @@ $gamePath = 'C:\Program Files (x86)\Steam\steamapps\common\Mewgenics'
 $savePath = Join-Path $env:APPDATA 'Glaiel Games\Mewgenics\<Steam ID>\saves\steamcampaign01.sav'
 python tools/probe_inventory.py --game $gamePath --save $savePath --output work/inventory-probe
 python tools/build_preview.py --game $gamePath --save $savePath --output outputs/inventory-preview
-python -m unittest discover -s mods/inventory-qol/tests -p 'test_*.py'
-node --test mods/inventory-qol/tests/model.test.mjs
+python -m unittest discover -s mods/improved-inventory/tests -p 'test_*.py'
+node --test mods/improved-inventory/tests/model.test.mjs
 python tools/build_stress_preview.py
 python -m http.server 8791 --bind 127.0.0.1 --directory outputs/inventory-preview
 ```
@@ -81,7 +81,7 @@ python tools/build_native_probe.py --game $gamePath
 python tools/test_native_guard.py $gamePath
 ```
 
-Output: `work/native-build/InventoryQoLProbe.dll`. These commands do not deploy it, edit `chainloader.ini`, stop the game, or launch it. Do not package the diagnostic DLL as the inventory mod.
+Output: `work/native-build/ImprovedInventoryProbe.dll`. These commands do not deploy it, edit `chainloader.ini`, stop the game, or launch it. Do not package the diagnostic DLL as the inventory mod.
 
 With the game closed, a deliberate passive session can be run using `python tools/run_inventory_probe.py --game $gamePath --profile '<profile folder containing saves and settings.txt>'`. Build the generated assets with `python tools/build_filter_assets.py` before using `--layout-test`. For transfer tests add both `--layout-test --test-slot`: the runner copies campaign 1 into absent slot 3, refuses to overwrite an existing slot, and archives/removes its copy after exit. Select the **rightmost Home**. This isolates inventory, not profile settings or Steam. Keep Vortex deployment idle during the session; exit through the game menu and let the runner restore the config. Backups and a before/after save comparison remain in `work/backups/`. Native sorting and transfers can change saved sequence metadata.
 

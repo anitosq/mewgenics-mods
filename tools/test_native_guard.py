@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 root = Path(__file__).resolve().parents[1]
-library = ctypes.WinDLL(str(root / 'work/native-build/InventoryQoLProbe.dll'))
+library = ctypes.WinDLL(str(root / 'work/native-build/ImprovedInventoryProbe.dll'))
 check = library.InventoryProbeValidateImageW
 check.argtypes = [ctypes.c_wchar_p]
 check.restype = ctypes.c_int

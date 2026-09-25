@@ -23,12 +23,12 @@ for (const name of ['testMod', 'installMod']) {
 const priority = name => Number(source.match(new RegExp(`registerInstaller\\(${name}, (\\d+)`))?.[1]);
 assert(priority('MOD_ID') < priority('MEWJECTOR_MOD_ID'), 'Asset installer no longer precedes DLL-only installer');
 assert((await sandbox.testMod(files, 'mewgenics')).supported);
-const result = await sandbox.installMod(files, 'InventoryQoL-0.1.0-beta.1');
+const result = await sandbox.installMod(files, `ImprovedInventory-${manifest.version}`);
 const copies = result.instructions.filter(x => x.type === 'copy');
 assert.equal(copies.length, files.length);
 for (const file of files) {
   assert(copies.some(x => x.source === file && x.destination === file), `Wrong destination: ${file}`);
 }
-assert(result.instructions.some(x => x.type === 'attribute' && x.key === 'modName' && x.value === 'InventoryQoL'));
+assert(result.instructions.some(x => x.type === 'attribute' && x.key === 'modName' && x.value === 'ImprovedInventory'));
 assert(result.instructions.some(x => x.type === 'setmodtype' && x.value === 'mewgenics-mod'));
-console.log('Installed Vortex extension preserves all payload paths under mods/ and registers InventoryQoL as the asset load-order entry.');
+console.log('Installed Vortex extension preserves all payload paths under mods/ and registers ImprovedInventory as the asset load-order entry.');

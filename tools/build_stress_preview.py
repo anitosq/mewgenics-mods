@@ -13,7 +13,7 @@ data.update(source='SYNTHETIC 1000-ITEM TEST', mode='synthetic load test',
             containerCounts={'storage':1000,'trash':0,'backpack':0})
 target = preview / 'stress'
 target.mkdir(exist_ok=True)
-for path in (root / 'mods/inventory-qol/src/browser').iterdir():
+for path in (root / 'mods/improved-inventory/src/browser').iterdir():
     shutil.copyfile(path, target / path.name)
 (target / 'inventory.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
 print(target)
