@@ -103,6 +103,9 @@ the extension implementation. [Extension author page](https://www.nexusmods.com/
 - [x] Equipment search, type/rarity/set filtering, scrolling and empty results.
 - [x] Equip/unequip with a filter active; counts and backgrounds refresh.
 - [x] Cat switching and equipment Lock In to route selection.
-- [ ] House inventory to cat Lock In without a crash.
-- [ ] Release archive startup with only Mewjector and Improved Inventory.
+- [x] House inventory to cat Lock In without a crash. User handled party
+      selection in the final packaged test; equipment and route screens observed.
+- [x] Release archive startup with only Mewjector and Improved Inventory.
+      Extracted archive tested without a diagnostic marker in session 07;
+      wheel scrolling verified in both house and equipment screens.
 - [ ] Vortex upgrade from 0.1.0; user acceptance before publication.
