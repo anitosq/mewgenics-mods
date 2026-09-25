@@ -4,7 +4,7 @@ Mewgenics mod development by **anitosq**. Each mod has its own source, tests and
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
-| [Inventory QoL](mods/inventory-qol/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | Experimental; not yet packaged for installation |
+| [Inventory QoL](mods/inventory-qol/) | Readable, scrolling Storage/Trash grids with search, item type, rarity and set filters | Local Vortex candidate tested; public release pending |
 
 ## Repository layout
 

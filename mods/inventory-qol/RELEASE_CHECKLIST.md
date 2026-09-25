@@ -1,6 +1,6 @@
 # Inventory QoL release readiness
 
-Status: candidate build tooling implemented; no public release. Updated
+Status: local candidate installed through Vortex and smoke-tested; no public release. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
 
@@ -13,7 +13,7 @@ from checks that still need to be performed on a packaged build.
 - [x] Original code/documentation MIT licensed; third-party notices retained.
 - [x] Shared release policy and automated fixture-check workflow added.
 
-## Release startup and packaging: next implementation milestone
+## Release startup and packaging
 
 - [x] Add a release build mode and stable `InventoryQoL.dll` name/version.
       Activate normally without a fresh session marker, environment switch,
@@ -24,20 +24,23 @@ from checks that still need to be performed on a packaged build.
       gate requires the exact enabled asset path and matching SWF/append hashes.
 - [x] Implement per-mod VERSION, reviewed compatibility metadata and allowlisted
       packaging from a clean commit, with ZIP/payload checksums and provenance.
-- [ ] Verify normal UI asset loading and actual Vortex deployment of the archive.
+- [x] Verify normal UI asset loading and actual Vortex deployment of the archive.
       The DLL lives at `mods/InventoryQoL.dll`; assets live in `mods/InventoryQoL/`.
-      The current extension's asset installer is being checked against this
-      mixed payload so one mod installation owns both components.
+      The installed extension handles this mixed payload as one mod installation.
+      Deployment hashes match the candidate; Vortex excludes CHANGELOG.md.
 - [x] Use Mewjector's normal `ScanPath=mods` discovery for the top-level DLL.
       No numbered loader entry or configuration replacement is packaged.
       The native startup gate stays inactive when the asset folder is unchecked
-      from Vortex Load Order. Real deployment/lifecycle verification is pending.
+      from Vortex Load Order in guard fixtures. Real deployment passed;
+      disable/uncheck lifecycle verification is pending.
 
 ## Packaged-build test matrix
 
 - [ ] Clean setup: supported game + Mewjector v3.0 + only Inventory QoL,
       launched through Vortex's Custom Launch, with both DLL and assets loaded.
 - [ ] Existing mod collection: set markers/tooltips and item overrides coexist.
+      Initial smoke test passed with the collection enabled: markers and the
+      Transmitter Set tooltip rendered. Broader override coverage remains.
 - [ ] Fresh install, upgrade, reinstall, disable, re-enable, purge/redeploy,
       remove and launch without the mod; no duplicate DLL or stale activation.
 - [ ] Vortex load-order unchecking separately from disabling the deployed mod:
@@ -65,7 +68,8 @@ from checks that still need to be performed on a packaged build.
 - [ ] Complete the release record and cross-link both destinations.
 
 See the [release workflow](../../docs/releases/README.md) for publishing and
-failure recovery. Source inspection for the packaging notes used the locally
+failure recovery and the [candidate test record](../../docs/releases/inventory-qol/0.1.0-beta.1-candidate.md)
+for observed results and remaining checks. Source inspection for the packaging notes used the locally
 installed extension's `testMod`/`installMod` and `testMewjectorMod` functions,
 installer registration order, plus the loader research. Do not redistribute
 the extension implementation. [Extension author page](https://www.nexusmods.com/site/mods/1691).

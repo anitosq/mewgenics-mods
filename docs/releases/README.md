@@ -199,6 +199,8 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 ## Current next step
 
-The normal-startup candidate builder is implemented. Verify the resulting
-archive through Vortex and finish the packaged-build test matrix before
-creating a public release. The diagnostic DLL remains a separate build.
+The normal-startup candidate was installed through Vortex and passed basic
+in-game checks with the existing mod collection. See the
+[candidate record](inventory-qol/0.1.0-beta.1-candidate.md). Finish the clean-setup,
+installation lifecycle and remaining gameplay/shutdown checks before creating
+a public release. The diagnostic DLL remains a separate build.
