@@ -1,8 +1,8 @@
 # Release and publishing workflow
 
-Policy established 25 September 2026. Improved Inventory 0.1.0 is published;
-see its [publication record](improved-inventory/0.1.0-publication.md) for
-download verification and Nexus processing status.
+Policy established 25 September 2026. Improved Inventory 0.2.0 is published;
+see its [publication record](improved-inventory/0.2.0-publication.md) for
+verified GitHub and Nexus downloads.
 
 ## Destinations and source of truth
 
@@ -255,18 +255,15 @@ recommended file while preparing the fix. Follow Nexus archive/update controls
 to preserve its update chain; do not delete/reupload files just to reset them.
 Never roll back a user's save as part of a mod update or uninstall.
 
-## Current next step
+## Current release and next step
 
-The author selected 0.1.0 for first publication after testing the beta.2
-candidate. Version 0.1.0 preserves its runtime implementation and was rebuilt
-with finalized metadata and documentation. It is a regular GitHub release
-and a Main/primary Nexus file, not a prerelease/Optional download.
+Version 0.2.0 is a regular GitHub release and the Main/primary Nexus download.
+Both downloaded archives match the tested ZIP. Edge blocked the manual Nexus
+CDN download, but the normal Vortex download succeeded and its hashes passed.
+See the [publication record](improved-inventory/0.2.0-publication.md).
 
-Nexus scanning passed. Finish download verification (Edge blocked the CDN
-download) and the Nexus-to-Vortex check;
-track outcomes in the [publication record](improved-inventory/0.1.0-publication.md).
 For future automated updates, the existing Nexus target is API file ID
-`8024283`, mod ID `526`, game ID `8802`. Do not use legacy version ID `1654`
+`8024283`, mod ID `526`, game ID `8802`. Do not use legacy version ID `1655`
 as the upload action's file ID. No API key or automatic mirror is configured.
-The preceding candidate evidence and incomplete broader test matrix remain
-available; the public listing discloses those limitations.
+Automating this mirror remains the next workflow improvement. Candidate
+records and the readiness checklist retain the broader runtime test coverage.
