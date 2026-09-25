@@ -1,7 +1,7 @@
 # Improved Inventory release readiness
 
 Status: 0.1.0 published from the user-tested beta.2 implementation; only
-version metadata and release documentation changed. Nexus verification pending. Updated
+version metadata and release documentation changed. Nexus scan passed; its download verification is blocked by Edge. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
 
@@ -84,7 +84,7 @@ from checks that still need to be performed on a packaged build.
       download match the candidate. See the publication record below.
 - [x] Upload the same archive to Nexus; set version, requirements and MIT permissions.
 - [ ] Verify both downloads and Vortex mod-manager installation; record Nexus IDs.
-- [ ] Complete the release record and cross-link both destinations.
+- [x] Complete the release record and cross-link both destinations.
 
 See the [release workflow](../../docs/releases/README.md) for publishing and
 failure recovery and the [candidate test record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md)

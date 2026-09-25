@@ -206,7 +206,8 @@ candidate. Version 0.1.0 preserves its runtime implementation and was rebuilt
 with finalized metadata and documentation. It is a regular GitHub release
 and a Main/primary Nexus file, not a prerelease/Optional download.
 
-Finish Nexus scanning/download verification and the Nexus-to-Vortex check;
+Nexus scanning passed. Finish download verification (Edge blocked the CDN
+download) and the Nexus-to-Vortex check;
 track outcomes in the [publication record](improved-inventory/0.1.0-publication.md).
 For future automated updates, the existing Nexus target is API file ID
 `8024283`, mod ID `526`, game ID `8802`. Do not use legacy version ID `1654`
