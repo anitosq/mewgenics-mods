@@ -15,6 +15,8 @@ Mewgenics mod development by **anitosq**. Each mod has its own source, tests and
 - `work/` and `outputs/`: ignored local dependencies, generated files, private snapshots and backups.
 
 Start with the [Inventory QoL development guide](mods/inventory-qol/README.md).
+Publishing to Nexus Mods/Vortex and GitHub follows the shared
+[release workflow](docs/releases/README.md).
 The [gameplay brief](docs/research/mewgenics-research.md) and
 [modding research](docs/research/mewgenics-modding-research.md) provide background.
 Research notes describe the builds and mod combinations tested at the time;

@@ -16,6 +16,11 @@ an exact game-binary compatibility guard and a temporary diagnostic session
 marker. Normal startup, packaging and a clean installation test remain before
 release. Bulk trash actions are planned separately and are not implemented.
 
+The [release readiness checklist](RELEASE_CHECKLIST.md) tracks the remaining
+work. See the shared [publishing workflow](../../docs/releases/README.md) for
+keeping Nexus Mods and GitHub releases synchronized, and the
+[changelog](CHANGELOG.md) for unreleased changes.
+
 The native code requires **Mewjector v3 API** (tested with v3.0). Other gameplay
 mods, Mewtator and Mewgenics Mod Manager are not required by the implementation.
 Vortex is an optional deployment tool. Standalone installation with only
