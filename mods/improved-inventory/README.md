@@ -1,6 +1,6 @@
 # Improved Inventory
 
-An experimental Mewgenics mod that improves the existing Storage/Trash screen.
+A Mewgenics mod that improves the existing Storage/Trash screen.
 
 - Fixed-size, scrolling item grids with directional scroll indicators.
 - Search across item names, descriptions and set names.
@@ -18,13 +18,15 @@ passed a real Vortex install and basic in-game checks with the existing mod
 collection under the former name. The renamed beta.2 also passed an isolated
 user test with only Mewjector and this mod active;
 see the [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md).
-Broader gameplay and installation lifecycle tests remain before public release. Bulk trash
-actions are planned separately and are not implemented.
+Version 0.1.0 is being prepared from that implementation with finalized version
+metadata and documentation. Remaining validation limits are disclosed in the
+[release notes](releases/0.1.0.md). Bulk trash actions are planned separately
+and are not implemented.
 
 The [release readiness checklist](RELEASE_CHECKLIST.md) tracks the remaining
 work. See the shared [publishing workflow](../../docs/releases/README.md) for
 keeping Nexus Mods and GitHub releases synchronized, and the
-[changelog](CHANGELOG.md) for unreleased changes.
+[changelog](CHANGELOG.md) for release changes.
 
 The native code requires **Mewjector v3 API** (tested with v3.0). Other gameplay
 mods, Mewtator and Mewgenics Mod Manager are not required by the implementation.

@@ -1,7 +1,7 @@
 # Improved Inventory release readiness
 
-Status: beta.2 user-tested with only Mewjector and Improved Inventory active;
-startup and test actions verified in logs. No public release. Updated
+Status: preparing 0.1.0 from the user-tested beta.2 implementation; only
+version metadata and release documentation change. No public release. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
 
@@ -79,14 +79,17 @@ from checks that still need to be performed on a packaged build.
 - [ ] Finalize the supported Steam build ID/hash and tested dependency versions.
 - [ ] Write and test player install/update/uninstall instructions.
 - [ ] Capture representative in-game screenshots and finalize the Nexus listing.
-- [ ] Tag tested commit; attach frozen ZIP/checksum/notes to a GitHub draft.
+- [x] Tag tested commit; attach frozen ZIP/checksum/notes to a GitHub draft.
+      Created 25 September 2026; uploaded digest and fresh authenticated
+      download match the candidate. See the publication record below.
 - [ ] Upload the same archive to Nexus; set version, requirements and MIT permissions.
 - [ ] Verify both downloads and Vortex mod-manager installation; record Nexus IDs.
 - [ ] Complete the release record and cross-link both destinations.
 
 See the [release workflow](../../docs/releases/README.md) for publishing and
 failure recovery and the [candidate test record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md)
-for observed results and remaining checks. Source inspection for the packaging notes used the locally
+for observed results and remaining checks. The [publication record](../../docs/releases/improved-inventory/0.1.0-beta.2-publication.md)
+tracks the unpublished GitHub and Nexus drafts. Source inspection for the packaging notes used the locally
 installed extension's `testMod`/`installMod` and `testMewjectorMod` functions,
 installer registration order, plus the loader research. Do not redistribute
 the extension implementation. [Extension author page](https://www.nexusmods.com/site/mods/1691).

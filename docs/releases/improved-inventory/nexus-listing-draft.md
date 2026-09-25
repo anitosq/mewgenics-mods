@@ -26,7 +26,7 @@ filters directly to the existing Storage/Trash view.
 - Combine filters and clear them with Reset.
 - Uses the game's font, rarity artwork and sound feedback.
 
-This beta does not add bulk trash actions. Item transfers and End Day retain
+This release does not add bulk trash actions. Item transfers and End Day retain
 their normal effects, including deletion of items left in Trash at End Day.
 
 ## Requirements
@@ -55,7 +55,7 @@ Close the game before disabling, updating or removing the mod. Disable or
 remove it through Vortex, then deploy. Unchecking only its Load Order entry
 also leaves the mod inactive at the next launch.
 
-## Compatibility and beta limits
+## Compatibility and limits
 
 Tested through Vortex with only Mewjector and this mod active. Also tested
 locally in a larger mod collection; numbered set markers and expanded set
@@ -81,7 +81,7 @@ redistributed in the archive.
 
 ## Author upload checklist
 
-- Upload the frozen `ImprovedInventory-0.1.0-beta.2.zip` as a beta/test file;
+- Upload the frozen `ImprovedInventory-0.1.0.zip` as the main file;
   set both mod/file version fields consistently and enable Vortex downloads.
 - Add Mewjector as a requirement and make original-code permissions match MIT.
 - Upload the selected v2 cover/header and three supplied screenshots using

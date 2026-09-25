@@ -1,14 +1,10 @@
 # Improved Inventory changelog
 
-No public releases yet. Move tested changes from Unreleased into a dated
-version section when preparing a release; use the same changes on GitHub
-and Nexus Mods.
+## 0.1.0 — 2026-09-25
 
-## Unreleased
-
-- Renamed the mod to Improved Inventory, including its DLL, assets, packaging
-  and development paths. The renamed local candidate is 0.1.0-beta.2; remove
-  the former Inventory QoL candidate before installing it.
+First public release, prepared from the user-tested 0.1.0-beta.2 candidate.
+Runtime behavior is unchanged; version metadata and release documentation
+are finalized. Remove any former Inventory QoL candidate before installing.
 
 - Readable scrolling grids in the existing Storage/Trash screen, with arrows
   indicating available scrolling.
@@ -18,5 +14,5 @@ and Nexus Mods.
 - Dropdowns block interaction with items underneath them.
 - Cached set-menu counts and reduced repeated hover-coordinate calculations.
 
-Normal startup and Vortex packaging are implemented; the full release
-readiness checklist remains open.
+Requires Mewjector API v3 and the supported Windows x64 Steam executable
+(build 25143593, displayed version 1.1.21239). See INSTALL.md for limitations.

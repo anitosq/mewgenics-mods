@@ -1,7 +1,7 @@
 # Improved Inventory installation
 
-This is a beta candidate. Supported platform: Windows x64, Steam build
-25143593. Other executable builds are rejected by the compatibility check.
+Version 0.1.0. Supported platform: Windows x64, Steam build
+25143593 (displayed version 1.1.21239). Other executable builds are rejected by the compatibility check.
 The required loader is [Mewjector](https://www.nexusmods.com/mewgenics/mods/218),
 API v3 or newer; v3.0 is the tested baseline.
 
@@ -72,5 +72,10 @@ entry mismatch, the mod remains inactive: use a compatible release and report
 the game build and relevant log lines. Do not bypass the compatibility guard.
 
 Other gameplay mods, Mewtator and Mewgenics Mod Manager are not dependencies.
-No bulk trash operation is included. Controller/IME support, other game builds
-and the full installation lifecycle remain unverified for this candidate.
+No bulk trash operation is included. Vortex install, disable, re-enable,
+remove, reinstall and asset Load Order toggling were user-tested on the
+preceding candidate. Version 0.1.0 preserves that runtime implementation.
+Controller/IME input, other game builds, manual installation, broader
+resolution/UI-scale coverage, same-name upgrades and explicit purge/redeploy
+remain unverified. Large-inventory logic has automated coverage; measured
+in-game performance at very large counts is still pending.
