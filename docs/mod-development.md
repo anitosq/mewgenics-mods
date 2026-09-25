@@ -151,6 +151,15 @@ how to install and any limits that affect them. Put detailed test history in
 release records, and licenses in their own sections. Screenshots should show
 the features; a cover can use organized item imagery and readable native text.
 
+Do the audience review before the humanizer pass. Our first edit made the
+sentences shorter but left private test-build migration advice and ordinary
+dropdown behavior in the listing. A new player had no reason to read either.
+Write from the publicly available release history, not this conversation.
+For each sentence, identify the player decision it helps or the benefit it
+explains. Remove or relocate it if neither applies. The
+[release audience check](releases/README.md#review-the-public-copy)
+spells out what belongs on each page.
+
 For browser publication, verify edits after saving. Nexus's file-description
 field once showed new text without updating its form state. Its preview
 panel also intercepted clicks on controls beneath it. Confirm the public

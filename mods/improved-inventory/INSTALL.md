@@ -41,15 +41,6 @@ asset launch arguments will leave this mod inactive.
 
 ## Updating and removing
 
-### Moving from the former Inventory QoL candidate
-
-Close the game, remove the former Inventory QoL installation in Vortex and
-deploy before installing Improved Inventory. The DLL and asset folder have
-new names, so installing both archives creates two copies of the mod.
-For the old manual installation, remove only `mods/InventoryQoL.dll` and
-`mods/InventoryQoL/`, and its old asset launch argument, before following the
-installation instructions above.
-
 Close the game before changing the mod. Update the whole archive through
 Vortex, keep one version enabled, and deploy. The DLL and SWFs must come from
 the same archive; mismatched files leave the mod inactive.
@@ -67,9 +58,17 @@ and use Custom Launch. If it reports an unsupported executable or a hook
 entry mismatch, use a compatible release and report the game build and
 relevant log lines.
 
-Mewjector is the only mod dependency. See the
-[release notes](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
-for current limits and the
-[test checklist](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/RELEASE_CHECKLIST.md)
-for coverage.
-Items left in Trash are still deleted when you end the day.
+## Compatibility
+
+Mewjector is the only mod dependency; runtime v3.0 was used for testing.
+Controller and IME input, manual installation and broader resolution/UI-scale
+coverage haven't been tested. In-game performance with very large inventories
+also needs testing. Other game builds are unsupported.
+
+Item transfers are still manual, and End Day still deletes items left in Trash.
+Numbered set markers and expanded set tooltips in the screenshots come from
+separate mods.
+
+See the [release notes](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
+for features and the [test checklist](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/RELEASE_CHECKLIST.md)
+for detailed coverage.

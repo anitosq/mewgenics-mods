@@ -65,6 +65,31 @@ game executable. CI does not currently build an installable release, publish
 to either site, or establish in-game compatibility. Keep build reports and
 private runtime logs locally; only publish a sanitized test summary.
 
+## Review the public copy
+
+Read the draft as someone discovering the mod for the first time. Review
+relevance before using the humanizer skill to edit voice and phrasing.
+
+- Open with the player's problem and the improvement they will notice.
+  Make the appeal concrete; avoid hype, rhetorical questions and generic praise.
+- Keep a sentence if it helps someone choose, install or use the mod, or
+  explains a relevant limitation. Accuracy alone doesn't make a detail useful.
+- Base migration advice on public release history. The Inventory QoL test
+  build was private; it doesn't belong in first-release installation copy.
+- Ordinary UI correctness, such as dropdowns blocking clicks underneath them,
+  belongs in tests. Mention a fix in later release notes only if it affected
+  a public version. Font reuse and coordinate calculations belong in developer
+  notes unless their effect is central to the player's choice.
+- The listing introduces features and gives essential setup steps. The install
+  guide holds troubleshooting, removal and detailed compatibility coverage.
+  Release notes describe changes from the previous public release, or the
+  main features for a first release. Test records hold private build history.
+- Keep known problems and essential requirements visible. Don't turn every
+  unrun test or possible future feature into a warning on the listing.
+- Check the summary, full description, file notes, changelog, GitHub notes and
+  README together. Remove chat context from all of them, then read the result
+  aloud. Preserve required license notices in their dedicated sections.
+
 ## Prepare a release candidate
 
 1. Complete the mod's [readiness checklist](../../mods/improved-inventory/RELEASE_CHECKLIST.md).
@@ -73,6 +98,7 @@ private runtime logs locally; only publish a sanitized test summary.
    Write player-facing notes using the [template](release-notes-template.md).
    Describe changes and setup in plain language. Keep detailed test history
    in the release record and license terms in the license/credits sections.
+   Run the audience review above before the prose edit.
 3. Commit the exact source and metadata. Require a clean working tree and
    passing checks for that commit. Build from that commit using the supported
    game and pinned toolchain; capture commit ID, compiler version, executable

@@ -7,30 +7,28 @@ version 0.1.0. Release IDs and checksums are in the
 
 ## Summary
 
-Keep item icons readable with scrolling Storage and Trash grids. Search by
-name, description or set, and filter by type, condition and rarity.
+Find what you need in a crowded inventory. Adds readable scrolling grids,
+search, and filters for item type, rarity and sets to Storage and Trash.
 
 ## Description
 
-Improved Inventory keeps your item icons readable as your inventory grows.
-It adds scrolling, search and filters to the existing Storage/Trash screen.
+A crowded inventory is hard to sort when every icon keeps getting smaller.
+Improved Inventory gives Storage and Trash scrollable grids with readable
+item icons, plus search and filters to help you find what you need.
 
-- Scroll through both grids, with arrows showing when there are more items.
-- Search item names, descriptions and set names.
-- Filter weapon consumables, item consumables, reusable weapons, worn items and broken items.
-- Pick Common, Uncommon, Rare or Very Rare using the game's rarity symbols.
-- Search the set list, see item counts and select multiple sets. You can also show any set or no set.
-- Combine filters and clear them with Reset.
+- Find items by name, description or set name.
+- Show consumables, reusable weapons, worn items or broken items.
+- Narrow results by rarity, from Common to Very Rare.
+- Browse the sets in your inventory, see how many pieces you have and select several sets at once.
 
-The controls use the game's font and sounds. Open dropdowns block clicks
-and item tooltips underneath them.
+Search and filters work together, so you can look for something specific,
+like Rare consumables or equipment from a particular set.
 
 ## Requirements
 
 Windows x64, Mewgenics 1.1.21239 (Steam build 25143593), and
-[Mewjector](https://www.nexusmods.com/mewgenics/mods/218) API v3 (tested with runtime v3.0).
-Install Mewjector separately; it's the only mod dependency.
-The mod stays inactive on other game builds.
+[Mewjector](https://www.nexusmods.com/mewgenics/mods/218) API v3.
+This release supports that game build only.
 
 ## Install with Vortex
 
@@ -40,19 +38,11 @@ The mod stays inactive on other game builds.
 3. Check ImprovedInventory in the game's Load Order page.
 4. Start the game with Vortex's Custom Launch and open Storage/Trash.
 
-If you used the earlier Inventory QoL test build, remove it first.
-For updates, close the game and replace the whole mod through Vortex.
-To uninstall, remove it and deploy.
+See the [installation guide](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/INSTALL.md)
+for setup help and compatibility details. Controller support hasn't been tested.
 
-## Notes
-
-- Items left in Trash are still deleted when you end the day. Bulk trash actions aren't included.
-- Numbered set markers and expanded set tooltips shown in the screenshots come from other mods.
-- Controller and IME input, manual installation, and wider UI-scale coverage haven't been tested. In-game performance with very large inventories also needs testing.
-
-For setup problems, look for ImprovedInventory in `mod_logs/chainloader.log`.
-Include your game build, mod version and steps to reproduce the problem when
-reporting a bug. Remove personal paths before sharing log lines.
+The screenshots also show numbered set markers and expanded set tooltips
+from separate mods.
 
 ## Links
 
@@ -67,11 +57,11 @@ Scrolling Storage and Trash grids with search and filters. Requires Mewjector AP
 
 ## Version 0.1.0 changelog
 
-- First public release, using the tested beta.2 implementation.
-- Scrolling Storage and Trash grids with readable icons and scroll arrows.
+- First public release.
+- Scrolling Storage and Trash grids with readable item icons.
 - Search by item name, description or set name.
-- Item-type and rarity filters, plus a searchable set list with item counts and multiple selections.
-- The game's font, rarity symbols and sounds. Open dropdowns block clicks and item tooltips underneath them.
+- Filters for consumables, reusable weapons, worn and broken items, and rarity.
+- A searchable set list with item counts and multiple selections.
 
 ## Credits
 

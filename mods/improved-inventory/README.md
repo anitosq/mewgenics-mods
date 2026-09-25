@@ -1,13 +1,13 @@
 # Improved Inventory
 
-A Mewgenics mod that improves the existing Storage/Trash screen.
+A Mewgenics mod for sorting through a crowded inventory. Storage and Trash
+scroll without shrinking your item icons, with search and filters built into
+the existing screen.
 
 - Fixed-size, scrolling item grids with directional scroll indicators.
 - Search across item names, descriptions and set names.
 - Item-type and rarity filters, including worn and broken items.
 - Searchable set list with multiple selections and item counts.
-- The game's font, rarity symbols and sounds.
-- Dropdowns that suppress interaction with items underneath them.
 
 ## Download and install
 
@@ -18,8 +18,7 @@ Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
 dependency. Follow the [installation guide](INSTALL.md) for Vortex or manual setup.
 The mod stays inactive on unsupported game builds.
 
-Bulk trash actions are planned for a later release. See the
-[release notes](releases/0.1.0.md) for features and current limits, and the
+See the [release notes](releases/0.1.0.md) for features and the
 [changelog](CHANGELOG.md) for changes.
 
 ## Release records

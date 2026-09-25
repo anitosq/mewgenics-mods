@@ -37,6 +37,11 @@ for current status; dated research notes describe experiments at that time.
 - Write player copy about features, installation and relevant known issues.
   Keep test evidence in release records and license terms in dedicated files.
   Use the humanizer skill when available for public copy. Keep required notices.
+- Review audience and relevance before polishing sentences. Assume a first-time
+  player has never seen this chat or a private build. Lead with a concrete
+  player benefit; omit private migrations, routine UI correctness and internal
+  test history from listings. Include upgrade advice only for versions the
+  public could actually obtain. Use the publishing workflow's audience check.
 - Distinguish user-confirmed behavior, logs, automated fixtures and untested
   cases. Don't turn fixture results into claims of visual correctness or FPS.
   Run checks appropriate to the change; avoid redundant test runs.
