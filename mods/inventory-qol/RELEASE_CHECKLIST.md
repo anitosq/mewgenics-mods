@@ -1,6 +1,6 @@
 # Inventory QoL release readiness
 
-Status: preparation; no installable archive or public release. Updated
+Status: candidate build tooling implemented; no public release. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
 
@@ -15,30 +15,23 @@ from checks that still need to be performed on a packaged build.
 
 ## Release startup and packaging: next implementation milestone
 
-- [ ] Add a release build mode and stable `InventoryQoL.dll` name/version.
+- [x] Add a release build mode and stable `InventoryQoL.dll` name/version.
       Activate normally without a fresh session marker, environment switch,
       absolute development path or development runner. Retain diagnostic mode.
-- [ ] Keep the exact supported-image guard and useful version/compatibility
-      messages. Validate every required hook entry before enabling changes;
-      handle partial hook installation and missing UI assets safely. Current
-      initialization can install some hooks before later checks fail.
-- [ ] Register the original UI SWF and `swflist.gon.append` through the normal
-      deployed mod folder and Vortex launch arguments.
-- [ ] Implement the per-mod version source, release build and allowlisted
-      packager. Include instructions, license/notices, checksums and a public
-      provenance summary; exclude all diagnostic/session/private files.
-- [ ] Validate the archive against the installed Mewgenics Vortex extension
-      0.4.0, then verify a real Vortex installation. A proposed simple layout is
-      one stable `InventoryQoL/` folder with `description.json`, the DLL and
-      `swfs/`; its installer behavior is source-supported, not runtime-tested.
-- [ ] Settle the DLL registration method. A nested DLL is not discovered by
-      Mewjector v3's nonrecursive `ScanPath=mods`. Current Vortex handles asset
-      launch paths but does not generate a DLL manifest or edit `chainloader.ini`.
-      An explicit `ModN=InventoryQoL\InventoryQoL.dll` entry is a viable
-      fallback: keep `ScanPath`, preserve other entries and use consecutive
-      numbers. Document the one-time setup/removal if retained. Do not ship a
-      replacement loader config, bundle a second loader or claim one-click
-      installation until it is demonstrated.
+- [x] Retain the exact image guard and version messages. All hook entries are
+      checked first; UI activation is committed only after all hooks install.
+      Fault tests cover every partial-install position. The release startup
+      gate requires the exact enabled asset path and matching SWF/append hashes.
+- [x] Implement per-mod VERSION, reviewed compatibility metadata and allowlisted
+      packaging from a clean commit, with ZIP/payload checksums and provenance.
+- [ ] Verify normal UI asset loading and actual Vortex deployment of the archive.
+      The DLL lives at `mods/InventoryQoL.dll`; assets live in `mods/InventoryQoL/`.
+      The current extension's asset installer is being checked against this
+      mixed payload so one mod installation owns both components.
+- [x] Use Mewjector's normal `ScanPath=mods` discovery for the top-level DLL.
+      No numbered loader entry or configuration replacement is packaged.
+      The native startup gate stays inactive when the asset folder is unchecked
+      from Vortex Load Order. Real deployment/lifecycle verification is pending.
 
 ## Packaged-build test matrix
 

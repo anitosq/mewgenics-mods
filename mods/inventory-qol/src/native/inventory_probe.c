@@ -1,5 +1,5 @@
-/* Development milestone: passive observation by default, optional native grid
- * presentation experiment with a fresh layout-test marker. This code does not
+/* Release mode activates with a matching enabled asset folder. Diagnostic
+ * mode retains explicit observation/layout session markers. This code does not
  * write item containers; ordinary native interactions still have game effects.
  * A byte/PE-guarded startup hook defers initialization to the game thread.
  * Observer/layout hooks additionally require the full executable hash.
@@ -28,6 +28,8 @@ static Bootstrap original_bootstrap;
 static volatile LONG initialized;
 static int session_mode;
 
+#if !IQ_RELEASE_BUILD
+
 static int session_marker_enabled(void) {
     /* Steam starts a new process and does not inherit the launcher's environment.
        A short-lived marker beside this research DLL survives that handoff. */
@@ -52,14 +54,18 @@ static int session_marker_enabled(void) {
     return ok && received==12 && memcmp(data,"observe-only",12)==0;
 }
 
+
+#endif
+
 static void report(const char* message) {
-    if (log_message) log_message("InventoryQoLProbe", "%s", message);
+    if (log_message) log_message(IQ_RELEASE_BUILD ? "InventoryQoL" : "InventoryQoLProbe", "%s", message);
 }
 
 #include "inventory_layout.h"
 #include "inventory_controls.h"
+#include "inventory_hooks.h"
 
-__declspec(dllexport) int InventoryProbeValidateImageW(const wchar_t* path) {
+static int iq_file_matches(const wchar_t* path,const unsigned char expected[32]) {
     HANDLE file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (file == INVALID_HANDLE_VALUE) return 0;
@@ -76,13 +82,22 @@ __declspec(dllexport) int InventoryProbeValidateImageW(const wchar_t* path) {
         if (BCryptHashData(hash, buffer, count, 0) < 0) goto done;
     }
     if (BCryptFinishHash(hash, digest, sizeof(digest), 0) < 0) goto done;
-    ok = memcmp(digest, EXPECTED_SHA256, sizeof(digest)) == 0;
+    ok = memcmp(digest, expected, sizeof(digest)) == 0;
 done:
     if (hash) BCryptDestroyHash(hash);
     if (algorithm) BCryptCloseAlgorithmProvider(algorithm, 0);
     CloseHandle(file);
     return ok;
 }
+
+__declspec(dllexport) int InventoryProbeValidateImageW(const wchar_t* path) {
+    return path && iq_file_matches(path,EXPECTED_SHA256);
+}
+__declspec(dllexport) int InventoryQoLBuildKind(void) {return IQ_RELEASE_BUILD;}
+__declspec(dllexport) const char* InventoryQoLVersion(void) {return IQ_VERSION;}
+#if IQ_RELEASE_BUILD
+#include "inventory_startup.h"
+#endif
 
 static int read_name(const char* source, char* destination, size_t capacity) {
     if (!source) return 0;
@@ -102,7 +117,7 @@ static void __cdecl observe_grid(void* instance) {
     /* Bounded logging follows the optional layout experiment on the game thread. */
     unsigned char fields[0x88];
     SIZE_T received = 0;
-    if (grid_event_count >= 40 || !ReadProcessMemory(GetCurrentProcess(), instance,
+    if (IQ_RELEASE_BUILD || grid_event_count >= 40 || !ReadProcessMemory(GetCurrentProcess(), instance,
         fields, sizeof(fields), &received) || received != sizeof(fields)) return;
     LONG event = InterlockedIncrement(&grid_event_count);
     if (event > 40) return;
@@ -123,7 +138,7 @@ static void* __cdecl observe_renderer(void* scene, void* entity, const char* nam
        retained or dereferenced; logged renderer addresses are transient hints. */
     void* result = original_renderer(scene, entity, name);
     char readable[96], message[260];
-    if (event_count < 200 && read_name(name, readable, sizeof(readable))) {
+    if (!IQ_RELEASE_BUILD && event_count < 200 && read_name(name, readable, sizeof(readable))) {
         if (strstr(readable, "Inventory") || strstr(readable, "Storage") || strstr(readable, "Trash")) {
             LONG event = InterlockedIncrement(&event_count);
             if (event <= 200 && log_message) {
@@ -144,12 +159,22 @@ static DWORD WINAPI initialize(void* ignored) {
     log_message = (ApiLog)(void*)GetProcAddress(loader, "MJ_Log");
     ApiInstall install = (ApiInstall)(void*)GetProcAddress(loader, "MJ_InstallHook");
     if (!version || version() < 3 || !log_message || !install) return 0;
-    report("Diagnostic initialization started.");
+    report("Inventory QoL " IQ_VERSION " initialization started.");
+#if IQ_RELEASE_BUILD
+    wchar_t module[MAX_PATH];
+    DWORD module_size=GetModuleFileNameW(own_module,module,MAX_PATH);
+    if(!module_size || module_size>=MAX_PATH || !iq_assets_enabled(module,GetCommandLineW())) {
+        report("Inactive: enable InventoryQoL in the mod load order and deploy matching UI assets.");
+        return 0;
+    }
+    session_mode=2;
+#else
     char enabled[8] = {0};
     if ((GetEnvironmentVariableA("INVENTORY_QOL_ENABLE_PROBE", enabled, sizeof(enabled)) != 1 || enabled[0] != '1') && !session_marker_enabled()) {
         report("Observers inactive. Explicit test switch or fresh session marker required.");
         return 0;
     }
+    #endif
     wchar_t image[MAX_PATH];
     DWORD size = GetModuleFileNameW(NULL, image, MAX_PATH);
     if (!size || size >= MAX_PATH || !InventoryProbeValidateImageW(image)) {
@@ -159,40 +184,25 @@ static DWORD WINAPI initialize(void* ignored) {
     report("Executable hash matched.");
     unsigned char* base = (unsigned char*)GetModuleHandleW(NULL);
     game_base=base;
-    /* Check every experimental entry before enabling any presentation changes. */
-    if(session_mode==2) {
-        if(memcmp(base+DRAWER_UPDATE_RVA,EXPECTED_DRAWER_UPDATE_BYTES,64) ||
-           memcmp(base+MOUSE_EVENT_RVA,EXPECTED_MOUSE_EVENT_BYTES,64) ||
-           memcmp(base+ITEM_CLICK_RVA,EXPECTED_ITEM_CLICK_BYTES,64) ||
-           memcmp(base+ITEM_BIND_RVA,EXPECTED_ITEM_BIND_BYTES,64) ||
-           memcmp(base+MOUSE_POSITION_RVA,EXPECTED_MOUSE_POSITION_BYTES,64) ||
-           memcmp(base+BUTTON_HIT_RVA,EXPECTED_BUTTON_HIT_BYTES,64)) {
-            report("Experimental entry mismatch; layout test disabled.");return 0;
-        }
-        int a=install(DRAWER_UPDATE_RVA,0,(void*)iq_update,(void**)&original_drawer_update,50,"InventoryQoL.LayoutUpdate");
-        int b=install(MOUSE_EVENT_RVA,0,(void*)iq_mouse,(void**)&original_mouse_event,50,"InventoryQoL.Mouse");
-        int c=install(ITEM_CLICK_RVA,0,(void*)iq_click,(void**)&original_item_click,50,"InventoryQoL.Click");
-        int d=install(ITEM_BIND_RVA,0,(void*)iq_bind,(void**)&original_bind_item,50,"InventoryQoL.Metadata");
-        int e=install(MOUSE_POSITION_RVA,0,(void*)iq_mouse_position,(void**)&original_mouse_position,50,"InventoryQoL.MousePosition");
-        int f=install(BUTTON_HIT_RVA,0,(void*)iq_button_hit,(void**)&original_button_hit,50,"InventoryQoL.PopupHitTest");
-        layout_test=a && b && c && d && e && f;
-    }
-    if (memcmp(base + RENDERER_RVA, EXPECTED_RENDERER_BYTES, sizeof(EXPECTED_RENDERER_BYTES)) != 0) {
-        report("Renderer entry differs (possibly another hook). No observer hooks installed.");
+    IQHook hooks[]={
+        {RENDERER_RVA,EXPECTED_RENDERER_BYTES,(void*)observe_renderer,(void**)&original_renderer,"InventoryQoL.Renderer"},
+        {GRID_RVA,EXPECTED_GRID_BYTES,(void*)observe_grid,(void**)&original_grid,"InventoryQoL.Grid"},
+        {DRAWER_UPDATE_RVA,EXPECTED_DRAWER_UPDATE_BYTES,(void*)iq_update,(void**)&original_drawer_update,"InventoryQoL.LayoutUpdate"},
+        {MOUSE_EVENT_RVA,EXPECTED_MOUSE_EVENT_BYTES,(void*)iq_mouse,(void**)&original_mouse_event,"InventoryQoL.Mouse"},
+        {ITEM_CLICK_RVA,EXPECTED_ITEM_CLICK_BYTES,(void*)iq_click,(void**)&original_item_click,"InventoryQoL.Click"},
+        {ITEM_BIND_RVA,EXPECTED_ITEM_BIND_BYTES,(void*)iq_bind,(void**)&original_bind_item,"InventoryQoL.Metadata"},
+        {MOUSE_POSITION_RVA,EXPECTED_MOUSE_POSITION_BYTES,(void*)iq_mouse_position,(void**)&original_mouse_position,"InventoryQoL.MousePosition"},
+        {BUTTON_HIT_RVA,EXPECTED_BUTTON_HIT_BYTES,(void*)iq_button_hit,(void**)&original_button_hit,"InventoryQoL.PopupHitTest"}
+    };
+    int active=0;
+    int status=iq_install_plan(base,hooks,session_mode==2?8:2,install,&active);
+    if(status!=1) {
+        report(status<0 ? "Incompatible hook entry; Inventory QoL inactive." :
+               "Hook installation failed; installed callbacks remain pass-through.");
         return 0;
     }
-    int installed = install(RENDERER_RVA, 0, (void*)observe_renderer,
-                            (void**)&original_renderer, 50, "InventoryQoLProbe");
-    report(installed ? "Renderer observation enabled."
-                     : "Hook installation failed.");
-    if (memcmp(base + GRID_RVA, EXPECTED_GRID_BYTES, sizeof(EXPECTED_GRID_BYTES)) != 0) {
-        report("Grid entry differs. Grid observer not installed.");
-        return 0;
-    }
-    installed = install(GRID_RVA, 0, (void*)observe_grid,
-                        (void**)&original_grid, 50, "InventoryQoLProbe");
-    report(installed ? (layout_test ? "Experimental layout enabled; item containers untouched." : "Grid observation enabled; no layout writes.")
-                     : "Grid observation installation failed.");
+    layout_test=active && session_mode==2;
+    report(layout_test ? "Inventory QoL enabled; all UI hooks installed." : "Observation enabled; no layout changes.");
     return 0;
 }
 
@@ -209,13 +219,14 @@ static void register_bootstrap(void) {
     if (!loader) return;
     ApiVersion version=(ApiVersion)(void*)GetProcAddress(loader,"MJ_GetVersion");
     ApiInstall install=(ApiInstall)(void*)GetProcAddress(loader,"MJ_InstallHook");
-    if (!version || !install || version()<3) return;
+    log_message=(ApiLog)(void*)GetProcAddress(loader,"MJ_Log");
+    if (!version || !install || version()<3) {report("Mewjector API v3 or newer is required.");return;}
     unsigned char* base=(unsigned char*)GetModuleHandleW(NULL);
     IMAGE_DOS_HEADER* dos=(IMAGE_DOS_HEADER*)base;
     IMAGE_NT_HEADERS64* pe=(IMAGE_NT_HEADERS64*)(base+dos->e_lfanew);
-    if (pe->FileHeader.TimeDateStamp!=EXPECTED_TIMESTAMP || pe->OptionalHeader.SizeOfImage!=EXPECTED_IMAGE_SIZE) return;
-    if (memcmp(base+BOOTSTRAP_RVA,EXPECTED_BOOTSTRAP_BYTES,sizeof(EXPECTED_BOOTSTRAP_BYTES))!=0) return;
-    install(BOOTSTRAP_RVA,0,(void*)observe_bootstrap,(void**)&original_bootstrap,50,"InventoryQoLProbe.Bootstrap");
+    if (pe->FileHeader.TimeDateStamp!=EXPECTED_TIMESTAMP || pe->OptionalHeader.SizeOfImage!=EXPECTED_IMAGE_SIZE) {report("Unsupported executable headers; no bootstrap hook installed.");return;}
+    if (memcmp(base+BOOTSTRAP_RVA,EXPECTED_BOOTSTRAP_BYTES,sizeof(EXPECTED_BOOTSTRAP_BYTES))!=0) {report("Bootstrap entry mismatch or another Inventory QoL copy already loaded; inactive.");return;}
+    if(!install(BOOTSTRAP_RVA,0,(void*)observe_bootstrap,(void**)&original_bootstrap,50,"InventoryQoL.Bootstrap"))report("Bootstrap hook installation failed.");
 }
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {

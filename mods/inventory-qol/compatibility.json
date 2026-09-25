@@ -1,0 +1,6 @@
+{
+  "platform": "windows-x64-steam",
+  "steam_build_id": "25143593",
+  "game_sha256": "4127cd6a792ae528bca6f65a8873dd61789591937d87656c2b586a5e30eb77ea",
+  "loader_api_minimum": 3
+}

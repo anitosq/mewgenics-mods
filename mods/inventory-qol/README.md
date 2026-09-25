@@ -11,10 +11,11 @@ An experimental Mewgenics mod that improves the existing Storage/Trash screen.
 
 ## Status and dependencies
 
-This is development source, not an installable release. The current DLL uses
-an exact game-binary compatibility guard and a temporary diagnostic session
-marker. Normal startup, packaging and a clean installation test remain before
-release. Bulk trash actions are planned separately and are not implemented.
+No public release yet. The candidate builder produces a normal-startup DLL
+and matching UI assets, with an exact game-binary compatibility guard.
+The diagnostic build separately retains its session marker. Packaged gameplay
+and installation lifecycle tests remain before public release. Bulk trash
+actions are planned separately and are not implemented.
 
 The [release readiness checklist](RELEASE_CHECKLIST.md) tracks the remaining
 work. See the shared [publishing workflow](../../docs/releases/README.md) for
@@ -49,6 +50,19 @@ The native build additionally requires a locally installed supported game and
 the local compatibility report. Follow the
 [research setup and build instructions](../../docs/research/inventory-feasibility.md#reproduce-locally).
 Generated binaries stay in `work/native-build/`.
+
+With a clean committed working tree and the local compatibility report in
+place, build a candidate without deploying it:
+
+```powershell
+python tools/package_inventory_qol.py --game 'C:\Program Files (x86)\Steam\steamapps\common\Mewgenics'
+```
+
+The packager runs fixtures, native font/art checks, release compilation and
+startup guard checks. It writes the ZIP, checksum and payload manifest under
+`outputs/releases/inventory-qol/<version>/` and refuses to overwrite an
+existing candidate directory. Use `--output outputs/candidates/<new-name>`
+for another local test build. See [installation instructions](INSTALL.md).
 
 `src/native/` is the in-game implementation. `src/browser/` is an earlier,
 read-only browser prototype for saved inventory snapshots; it is not needed

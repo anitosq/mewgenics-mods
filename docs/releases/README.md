@@ -1,6 +1,6 @@
 # Release and publishing workflow
 
-Policy established 25 September 2026. No installable release exists yet.
+Policy established 25 September 2026. No public release exists yet; a local candidate packager is available.
 
 ## Destinations and source of truth
 
@@ -24,7 +24,7 @@ file. This avoids inventing file IDs or credentials before the first upload.
 
 | Field | Inventory QoL example |
 | --- | --- |
-| Per-mod version file, introduced with the release build | `mods/inventory-qol/VERSION` |
+| Per-mod version file | `mods/inventory-qol/VERSION` |
 | First public test version (proposed) | `0.1.0-beta.1` |
 | Git tag | `inventory-qol/v0.1.0-beta.1` |
 | GitHub release title | `Inventory QoL 0.1.0-beta.1` |
@@ -32,8 +32,8 @@ file. This avoids inventing file IDs or credentials before the first upload.
 | Archive checksum asset | `InventoryQoL-0.1.0-beta.1.zip.sha256` |
 | Nexus mod/file version | `0.1.0-beta.1` |
 
-The version file will feed the DLL's version/log output, package metadata,
-archive name and release checks. It is not implemented yet. Never use GitHub's
+The version file feeds the DLL's version/log output, package metadata,
+archive name and release checks. Never use GitHub's
 automatic source-code ZIP as the player download.
 
 Use semantic versions: patch for compatible fixes, minor for compatible new
@@ -73,8 +73,7 @@ private runtime logs locally; only publish a sanitized test summary.
 4. Package only the allowlisted DLL, original generated SWF/append file,
    metadata, installation instructions, MIT license and applicable notices.
    Do not include the loader, replacement `chainloader.ini`, test markers,
-   logs, saves, game assets, compilers or other mods. The packager and payload
-   allowlist still need implementation.
+   logs, saves, game assets, compilers or other mods. The packager uses an explicit payload allowlist.
 5. Install the ZIP through Vortex and finish clean-install, upgrade,
    disable/remove and gameplay checks. Test the frozen archive, not loose
    development files. Any payload change requires repackaging and retesting.
@@ -118,7 +117,7 @@ collecting public feedback.
    the mod README. Only then mark synchronization complete.
 
 Example commands, **only after a tested package exists**; run from the repo
-root. The archive is produced by the future packager, not these commands:
+root. The archive is produced by `tools/package_inventory_qol.py`, not these commands:
 
 ```powershell
 $repo = 'anitosq/mewgenics-mods'
@@ -200,7 +199,6 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 ## Current next step
 
-Finish the normal release startup and Vortex/Mewjector installation path,
-then build the first private candidate archive for local installation tests.
-The publishing workflow above cannot turn the current diagnostic DLL into
-an installable mod by itself.
+The normal-startup candidate builder is implemented. Verify the resulting
+archive through Vortex and finish the packaged-build test matrix before
+creating a public release. The diagnostic DLL remains a separate build.
