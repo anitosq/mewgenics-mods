@@ -201,6 +201,8 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 The normal-startup candidate was installed through Vortex and passed basic
 in-game checks with the existing mod collection. See the
-[candidate record](improved-inventory/0.1.0-beta.1-candidate.md). Finish the clean-setup,
+[pre-rename candidate record](improved-inventory/0.1.0-beta.1-candidate.md).
+The renamed beta.2 passed build/deployment checks; see its
+[record](improved-inventory/0.1.0-beta.2-candidate.md). Verify renamed in-game startup and finish the clean-setup,
 installation lifecycle and remaining gameplay/shutdown checks before creating
 a public release. The diagnostic DLL remains a separate build.

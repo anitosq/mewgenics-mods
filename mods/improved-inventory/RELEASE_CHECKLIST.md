@@ -1,6 +1,7 @@
 # Improved Inventory release readiness
 
-Status: local candidate installed through Vortex and smoke-tested; no public release. Updated
+Status: renamed beta.2 installed through Vortex; beta.1 was smoke-tested before
+the rename. Repeat in-game startup for beta.2. No public release. Updated
 25 September 2026. This checklist distinguishes existing development evidence
 from checks that still need to be performed on a packaged build.
 

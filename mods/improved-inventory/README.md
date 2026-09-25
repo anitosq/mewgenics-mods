@@ -15,7 +15,8 @@ No public release yet. The candidate builder produces a normal-startup DLL
 and matching UI assets, with an exact game-binary compatibility guard.
 The diagnostic build separately retains its session marker. The first archive
 passed a real Vortex install and basic in-game checks with the existing mod
-collection; see the [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.1-candidate.md).
+collection under the former name. The renamed beta.2 is built and installed;
+see the [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md).
 Broader gameplay and installation lifecycle tests remain before public release. Bulk trash
 actions are planned separately and are not implemented.
 
