@@ -1,5 +1,9 @@
 # Research references and notices
 
+Original project code and documentation are covered by the root [MIT
+License](LICENSE). The third-party notices and asset licenses below remain
+in effect; the project license does not relicense third-party or game assets.
+
 Inventory serialization research uses the format documented in
 https://github.com/michael-trinity/mewgenics-savegame-editor,
 `app/utils/parse/inventory.ts`. Our reader adds strict bounds/version/end checks,

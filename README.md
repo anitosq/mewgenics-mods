@@ -27,5 +27,8 @@ saves, extracted game assets, third-party mod binaries and compiler downloads
 are excluded. Current native UI assets reference the game's own fonts and
 artwork at runtime rather than embedding them.
 
-A project license has not yet been selected. Third-party material retains its
-own terms in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Original project code and documentation are licensed under the
+[MIT License](LICENSE), Copyright (c) 2026 anitosq. This applies across the
+repository's mods unless otherwise noted. Third-party material retains its
+own terms in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); game assets are
+not covered by the project license.
