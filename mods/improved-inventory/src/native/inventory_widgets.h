@@ -272,10 +272,12 @@ static void iq_ui_update(void) {
     else if(iq_search.set_mode==3)swprintf(label,200,L"%d sets",selected_sets);
     else swprintf(label,200,L"%ls",iq_search.set_mode==1?L"Any set":iq_search.set_mode==2?L"No set":L"All sets");
     iq_text(&iq_controls.bars[selected],0,"sets",label);
-    iq_control_show(&iq_controls.count,"IQCount",x+12*s,y-80*s);
-    if(iq.equipment)swprintf(label,200,L"Storage: %d%ls",iq.items[0],iq.items[0]==0?L"    No matches":L"");
-    else swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
-    iq_text(&iq_controls.count,0,"count",label);
+    if(iq.equipment)iq_control_hide(&iq_controls.count);
+    else {
+        iq_control_show(&iq_controls.count,"IQCount",x+12*s,y-80*s);
+        swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
+        iq_text(&iq_controls.count,0,"count",label);
+    }
     if(filter_popup==1 || filter_popup==2) {
         snprintf(name,sizeof(name),filter_popup==1?"IQRarity%d":"IQType%d",filter_popup==1?active_filter.rarity:active_filter.type);
         iq_control_show(&iq_controls.popups[iq_popup_index()],name,x+(filter_popup==1?238:0)*s,y-82*s);
