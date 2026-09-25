@@ -1,8 +1,7 @@
 # Research references and notices
 
-Original project code and documentation are covered by the root [MIT
-License](LICENSE). The third-party notices and asset licenses below remain
-in effect; the project license does not relicense third-party or game assets.
+Project code and documentation use the [MIT License](LICENSE). Credits and
+licenses for other material are listed below. Game assets belong to their owners.
 
 Inventory serialization research uses the format documented in
 https://github.com/michael-trinity/mewgenics-savegame-editor,
@@ -31,11 +30,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Other repositories under `work/modding-sources/` are research snapshots, not
-bundled dependencies. The cat-table repository had no license file when
-inspected: its implementation/assets are not copied into our product. Function
-address/signature comparisons are compatibility research only. Original game
-resources and extracted local save data are not redistributable project assets.
+The repositories in `work/modding-sources/` are local research references.
+They aren't included in the mod. The cat-table repository had no license
+file when inspected; no code or assets were copied from it.
 
 ## Native control lettering
 
@@ -43,12 +40,10 @@ Patrick Hand, Copyright (c) 2010-2012 Patrick Wagesreiter, is distributed under
 the SIL Open Font License 1.1. The original font and full license are retained
 in `assets/fonts/`. Source: https://github.com/google/fonts/tree/main/ofl/patrickhand.
 This font was used by the earlier prototype. The current native control
-generator references the installed game's `Edmundm` font through `fonts.swf`;
-it embeds no font outlines and copies no game artwork into generated assets.
-The retained Patrick Hand files are historical references; include
+generator loads the installed game's `Edmundm` font through `fonts.swf`.
+The Patrick Hand files are historical references; include
 `assets/fonts/OFL.txt` if distributing those files or the older generated assets.
 fontTools under `work/python-libs/` is not required by the current UI generator.
 
-The rarity tiles reference the installed game's `HeadItemIcon` and its rarity
-frames at runtime. These original game symbols are neither bundled nor
-replaced by the generated UI assets.
+The rarity tiles use the installed game's `HeadItemIcon` rarity frames.
+Game fonts and artwork are loaded at runtime and aren't included in the mod archive.

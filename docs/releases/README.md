@@ -6,20 +6,18 @@ download verification and Nexus processing status.
 
 ## Destinations and source of truth
 
-Publish mods on **Nexus Mods**; players install them through **Vortex**.
+Publish mods on Nexus Mods for installation through Vortex.
 Keep development and tagged releases in this GitHub repository. Each standalone
 mod gets its own versions, archive and Nexus page; closely related variants
 and compatibility patches can share that mod's page.
 
-**Build once, test that archive, upload that same archive to both sites.**
-Never rebuild separately for Nexus and GitHub. GitHub is the canonical record
-of the source commit, release notes and submitted archive checksum. Nexus is
-the Vortex discovery/download channel. A release is synchronized only after
-both downloads and their version information have been checked.
+Build one archive, test it, and upload it to both sites. GitHub records the
+source commit, release notes and checksum. Nexus provides Vortex downloads.
+Check both downloads and version numbers before marking a release synchronized.
 
 Use the manual first-release procedure below. Later uploads can use Nexus's
 official action, which requires an existing mod page and at least one uploaded
-file. This avoids inventing file IDs or credentials before the first upload.
+file.
 [Official upload action](https://github.com/Nexus-Mods/upload-action/tree/v1.0.0-beta.10).
 
 ## Versions in this multi-mod repository
@@ -68,6 +66,8 @@ private runtime logs locally; only publish a sanitized test summary.
    Resolve installation and startup blockers before making a player archive.
 2. Set its version and finalize its [changelog](../../mods/improved-inventory/CHANGELOG.md).
    Write player-facing notes using the [template](release-notes-template.md).
+   Describe changes and setup in plain language. Keep detailed test history
+   in the release record and license terms in the license/credits sections.
 3. Commit the exact source and metadata. Require a clean working tree and
    passing checks for that commit. Build from that commit using the supported
    game and pinned toolchain; capture commit ID, compiler version, executable
@@ -85,10 +85,8 @@ private runtime logs locally; only publish a sanitized test summary.
    Also record the deployed payload's relative filenames and SHA-256 hashes
    for comparison if a hosting service repacks an archive.
 
-Do not publish until the supported game build, Mewjector requirement,
-installation steps and known limitations are accurate. A first beta is a
-reasonable target after these checks; version `1.0.0` is not needed to start
-collecting public feedback.
+Before publishing, check the game build, Mewjector requirement, installation
+steps and known issues against the tested package.
 
 ## First publication: coordinated manual uploads
 
@@ -107,19 +105,18 @@ collecting public feedback.
    reviewed changelog on both sites, adapting formatting only.
 4. Publish the prepared releases in the same session. For the first beta,
    preserve its prerelease/test labeling. The two services cannot publish
-   atomically; mark the mirror as pending until verified rather than implying
-   instant synchronization.
+   atomically; mark the mirror as pending until verified.
 5. Download from both sites, check the version and archive checksum, and test
    the Nexus mod-manager download in Vortex. If Nexus repacks the container,
-   compare the extracted file list and file hashes rather than claiming the
-   outer ZIP hashes must match. Any changed DLL/SWF/metadata is a failure.
+   compare the extracted file list and file hashes. Investigate any changed
+   DLL, SWF or metadata.
 6. Record source commit, tag, submitted checksum, payload verification,
    GitHub URL, Nexus URL, file/version IDs and test result in a per-version
    record under `docs/releases/improved-inventory/`. Link both destinations from
    the mod README. Only then mark synchronization complete.
 
-Example commands, **only after a tested package exists**; run from the repo
-root. The archive is produced by `tools/package_improved_inventory.py`, not these commands:
+After testing the package built by `tools/package_improved_inventory.py`,
+run these commands from the repository root:
 
 ```powershell
 $repo = 'anitosq/mewgenics-mods'

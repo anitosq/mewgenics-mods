@@ -1,10 +1,9 @@
 # Improved Inventory changelog
 
-## 0.1.0 — 2026-09-25
+## 0.1.0 (2026-09-25)
 
-First public release, prepared from the user-tested 0.1.0-beta.2 candidate.
-Runtime behavior is unchanged; version metadata and release documentation
-are finalized. Remove any former Inventory QoL candidate before installing.
+First public release. Uses the tested beta.2 implementation with the version
+updated to 0.1.0. Remove the earlier Inventory QoL test build before installing.
 
 - Readable scrolling grids in the existing Storage/Trash screen, with arrows
   indicating available scrolling.

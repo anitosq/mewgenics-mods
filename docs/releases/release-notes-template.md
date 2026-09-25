@@ -1,39 +1,27 @@
 # Release notes template
 
-Copy into `mods/<mod-id>/releases/<version>.md` and replace all placeholders.
-This is a template, not a release announcement. Keep technical build evidence
-in the release record and give players concise instructions here.
+Copy into `mods/<mod-id>/releases/<version>.md` and replace the placeholders.
+Write for someone installing the mod. Put build details, checksums and test
+logs in the release record.
 
-## <Mod name> <version>
+<One sentence about the release. Mention beta status if applicable.>
 
-<One sentence describing the player-visible improvement. State beta status
-when applicable.>
+## Changes
 
-### Changes
+- <What the player will notice.>
 
-- <Player-visible feature or fix from this mod's changelog.>
+## Install
 
-### Requirements and compatibility
+<Supported game version/platform and loader, with links. Name the mod ZIP
+and link the installation guide. Include any steps specific to this update.>
 
-- Game: <supported platform and Steam build ID; human version only if verified>.
-- Loader: <required and tested Mewjector version>.
-- Tested with: <relevant mod combinations; do not claim universal compatibility>.
+## Notes
 
-### Install or update
+<Known issues or limits that affect players. Omit this section if there
+are none. Link the checklist for detailed test coverage. Keep credits and
+license terms in their dedicated files unless this release changes them.>
 
-<Link the verified Vortex/manual instructions. State any required loader
-registration, removal of old DLL names, or upgrade-specific steps. Name the
-installable ZIP explicitly; GitHub source archives are not mod packages.>
+## Links
 
-### Known limitations
-
-- <Verified limitations and untested input/platform combinations.>
-
-### Downloads and source
-
-- Nexus Mods: <mod/file URL, or explicitly say mirror pending>.
-- GitHub: <this tagged release URL>.
-- Source commit: <full SHA>.
-- Installable archive: <exact filename>.
-- SHA-256: <archive checksum, also attached as a sidecar>.
-- License: MIT for original project work; third-party terms remain applicable.
+- Nexus Mods: <mod/file URL, or mirror status if pending>.
+- GitHub: <release URL>.

@@ -1,6 +1,6 @@
 # Mewgenics Mods
 
-Mewgenics mod development by **anitosq**. Each mod has its own source, tests and documentation in this repository.
+Mewgenics mods by anitosq. Each mod has its own source, tests and documentation.
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
@@ -19,20 +19,13 @@ Publishing to Nexus Mods/Vortex and GitHub follows the shared
 [release workflow](docs/releases/README.md).
 The [gameplay brief](docs/research/mewgenics-research.md) and
 [modding research](docs/research/mewgenics-modding-research.md) provide background.
-Research notes describe the builds and mod combinations tested at the time;
-they are not installation instructions or guarantees of current compatibility.
+Research notes record the game builds and mod combinations tested at the time.
 
 ## Distribution and licensing
 
-Download the installable ZIP from a mod's release page, not GitHub's automatic
-source archive. See the [0.1.0 publication record](docs/releases/improved-inventory/0.1.0-publication.md)
-for download verification and Nexus processing status. Game files, saves,
-extracted game assets, third-party mod binaries and compiler downloads
-are excluded. Current native UI assets reference the game's own fonts and
-artwork at runtime rather than embedding them.
+Download the mod ZIP attached to its release page. GitHub's automatic source
+archive is for development. The [0.1.0 publication record](docs/releases/improved-inventory/0.1.0-publication.md)
+has the release checksums and download checks.
 
-Original project code and documentation are licensed under the
-[MIT License](LICENSE), Copyright (c) 2026 anitosq. This applies across the
-repository's mods unless otherwise noted. Third-party material retains its
-own terms in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); game assets are
-not covered by the project license.
+Code and documentation: [MIT License](LICENSE), Copyright (c) 2026 anitosq.
+See [third-party notices](THIRD_PARTY_NOTICES.md) for other credits and licenses.

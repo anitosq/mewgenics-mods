@@ -7,8 +7,7 @@ screenshots are uploaded with captions. The header crop and rendered page
 were visually checked before publication.
 
 Use the files in `outputs/listing/improved-inventory/`, or the sibling
-`ImprovedInventory-listing-media-v2.zip`. These are promotional media, not an
-installable mod. Do not install this ZIP in Vortex.
+`ImprovedInventory-listing-media-v2.zip`. This ZIP contains the listing artwork.
 
 | Placement / order | File | Caption |
 | --- | --- | --- |
@@ -31,5 +30,4 @@ AI concepts; do not upload the older unversioned cover/header by mistake.
 `media-manifest.json` records the selected files' dimensions and SHA-256 hashes.
 The ZIP contains these five PNGs, this guide, the artwork provenance, and that manifest. Editable SVG
 versions stay alongside the local PNGs and are not included in the upload kit.
-Game-derived imagery and lettering are excluded from the source-code MIT
-license. Keep listing artwork outside the installable mod archive.
+Artwork credits are recorded in [the provenance notes](banner-prompts.md).

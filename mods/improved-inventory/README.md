@@ -6,38 +6,30 @@ A Mewgenics mod that improves the existing Storage/Trash screen.
 - Search across item names, descriptions and set names.
 - Item-type and rarity filters, including worn and broken items.
 - Searchable set list with multiple selections and item counts.
-- Game font, runtime rarity artwork and native sound feedback.
+- The game's font, rarity symbols and sounds.
 - Dropdowns that suppress interaction with items underneath them.
 
-## Status and dependencies
+## Download and install
 
-**0.1.0 is published:** [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
+Version 0.1.0: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.1.0)
 and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
-The [publication record](../../docs/releases/improved-inventory/0.1.0-publication.md)
-tracks Nexus processing and download verification separately.
+Requires Windows x64, Mewgenics Steam build 25143593 (1.1.21239), and
+Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
+dependency. Follow the [installation guide](INSTALL.md) for Vortex or manual setup.
+The mod stays inactive on unsupported game builds.
 
-The candidate builder produces a normal-startup DLL
-and matching UI assets, with an exact game-binary compatibility guard.
-The diagnostic build separately retains its session marker. The first archive
-passed a real Vortex install and basic in-game checks with the existing mod
-collection under the former name. The renamed beta.2 also passed an isolated
-user test with only Mewjector and this mod active;
-see the [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md).
-Version 0.1.0 uses that implementation with finalized version
-metadata and documentation. Remaining validation limits are disclosed in the
-[release notes](releases/0.1.0.md). Bulk trash actions are planned separately
-and are not implemented.
+Bulk trash actions are planned for a later release. See the
+[release notes](releases/0.1.0.md) for features and current limits, and the
+[changelog](CHANGELOG.md) for changes.
 
-The [release readiness checklist](RELEASE_CHECKLIST.md) tracks the remaining
-work. See the shared [publishing workflow](../../docs/releases/README.md) for
-keeping Nexus Mods and GitHub releases synchronized, and the
-[changelog](CHANGELOG.md) for release changes.
+## Release records
 
-The native code requires **Mewjector v3 API** (tested with v3.0). Other gameplay
-mods, Mewtator and Mewgenics Mod Manager are not required by the implementation.
-Vortex is an optional deployment tool. An isolated Vortex profile with only
-Mewjector and this mod has been user-tested and verified in logs. Manual
-installation remains unverified.
+The [candidate record](../../docs/releases/improved-inventory/0.1.0-beta.2-candidate.md)
+contains the Vortex and gameplay test results. The
+[release checklist](RELEASE_CHECKLIST.md) tracks remaining tests, and the
+[publication record](../../docs/releases/improved-inventory/0.1.0-publication.md)
+records download verification. Use the [publishing workflow](../../docs/releases/README.md)
+for updates to Nexus Mods and GitHub.
 
 ## Development
 
