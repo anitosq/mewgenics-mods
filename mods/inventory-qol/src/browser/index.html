@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inventory QoL · Development preview</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><div><span class="eyebrow">MEWGENICS / INVENTORY QOL</span><h1>A little room to think.</h1></div><span class="status">READ-ONLY PREVIEW</span></header>
+  <p class="intro">Browse a saved inventory at a readable size. This development preview is separate from the game and cannot move or edit items.</p>
+  <section class="filter-bar" aria-label="Inventory filters">
+    <div><label for="container">Location</label><select id="container"><option value="all">All locations</option><option value="storage">Storage</option><option value="backpack">Backpack</option><option value="trash">Trash</option></select></div>
+    <div class="search-field"><label for="search">Find an item or set</label><input type="search" id="search" placeholder="Name, set, or item ID…"></div>
+    <div><label for="category">Item type</label><select id="category"><option value="all">All items</option><option value="consumable">Consumables</option><option value="equipment">Equipment</option><option value="unknown">Unverified type</option></select></div>
+    <button id="more-filters" aria-haspopup="dialog">More filters</button>
+    <button id="clear" class="secondary">Clear filters</button>
+    <div id="active-filters" aria-label="Applied filters"></div>
+  </section>
+  <div class="workspace">
+    <main>
+      <div class="toolbar"><div><strong id="result-count" aria-live="polite">Loading…</strong><div id="scope-summary" class="muted"></div></div><div class="view-controls"><label for="sort">Sort</label><select id="sort"><option value="name">Name</option><option value="set">Set</option><option value="rarity">Rarity</option><option value="slot">Slot</option><option value="original">Saved order</option></select><label for="density">Size</label><select id="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div></div>
+      <section id="items" tabindex="0" aria-label="Scrollable inventory" data-density="comfortable"></section>
+      <div id="empty" hidden><h2>No matching items</h2><p>Try another location or clear a filter.</p><button id="empty-clear">Clear filters</button></div>
+      <footer><span id="snapshot"></span><span>Snapshot-local identities · No live synchronization</span></footer>
+    </main>
+  </div>
+  <dialog id="filter-dialog" aria-labelledby="filter-title">
+    <form id="filter-form">
+      <h2 id="filter-title">Refine your inventory</h2>
+      <p class="muted">Choose any rarities, then narrow by slot or set.</p>
+      <label for="slot">Equipment slot</label><select id="slot"><option value="all">All slots</option></select>
+      <fieldset id="rarities"><legend>Rarity <small>any selected</small></legend></fieldset>
+      <label for="set">Set membership</label><select id="set"><option value="all">All items</option><option value="any">Belongs to any set</option><option value="none">No set</option></select>
+      <p class="note">Unknown set membership is excluded from “No set.” Condition filters await verified game data.</p>
+      <div class="dialog-actions"><button type="button" id="cancel-filters" class="secondary">Cancel</button><button type="submit">Apply filters</button></div>
+    </form>
+  </dialog>
+  <dialog id="details"><button id="close-details" aria-label="Close item details">Close</button><div id="details-content"></div></dialog>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>
