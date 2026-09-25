@@ -33,7 +33,8 @@ from checks that still need to be performed on a packaged build.
       No numbered loader entry or configuration replacement is packaged.
       The native startup gate stays inactive when the asset folder is unchecked
       from Vortex Load Order in guard fixtures. Real deployment passed;
-      disable/uncheck lifecycle verification is pending.
+      disable/re-enable/remove/reinstall passed user testing; the separate
+      asset load-order uncheck test remains pending.
 
 ## Packaged-build test matrix
 
@@ -45,8 +46,12 @@ from checks that still need to be performed on a packaged build.
 - [ ] Existing mod collection: set markers/tooltips and item overrides coexist.
       Initial smoke test passed with the collection enabled: markers and the
       Transmitter Set tooltip rendered. Broader override coverage remains.
-- [ ] Fresh install, upgrade, reinstall, disable, re-enable, purge/redeploy,
-      remove and launch without the mod; no duplicate DLL or stale activation.
+- [x] Disable/deploy/launch, re-enable/deploy/launch, remove/deploy/launch,
+      and reinstall/deploy/launch: user confirmed all four steps worked.
+      Final reinstall log and payload hashes independently verified; only
+      one mod DLL is deployed. Earlier step logs were not separately retained.
+- [ ] Same-name version upgrade and explicit purge/redeploy. First installation
+      and the rename migration were tested separately; neither proves these paths.
 - [ ] Vortex load-order unchecking separately from disabling the deployed mod:
       assets may be omitted while a DLL remains loadable. Fail safely.
 - [ ] Search, type, rarity and set combinations, empty results, reset and
