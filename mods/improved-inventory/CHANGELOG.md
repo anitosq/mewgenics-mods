@@ -1,6 +1,6 @@
 # Improved Inventory changelog
 
-## 0.3.0-beta.3 (unreleased)
+## 0.3.0 (2026-09-28)
 
 - See separate Storage and Trash counts beside each set.
 - Set counts include duplicate copies and stay visible while you search or filter.

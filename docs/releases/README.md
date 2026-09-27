@@ -129,8 +129,9 @@ steps and known issues against the tested package.
    version or replace its payload silently.
 2. Create the Mewgenics Nexus page with screenshots, feature summary,
    installation/update/removal instructions, compatibility and known issues.
-   Add Mewjector as a requirement; list Vortex plus its Mewgenics extension as
-   the tested installation method. Link the repository and MIT license, and
+   Add Mewjector as a requirement and give the tested Vortex installation steps.
+   Don't require a separate extension download for users whose Vortex already
+   manages Mewgenics. Link the repository and MIT license, and
    make Nexus permissions consistent with MIT for our original work.
 3. Upload the **same ZIP** with the exact same version. Enable mod-manager
    downloads and keep the page/file unpublished or hidden during preparation

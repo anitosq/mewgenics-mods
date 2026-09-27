@@ -7,35 +7,34 @@ and while choosing your cats' equipment before an adventure.
 - Fixed-size, scrolling item grids with directional scroll indicators.
 - Search across item names, descriptions and set names.
 - Item-type and rarity filters, including worn and broken items.
-- Searchable set list with multiple selections and item counts.
+- Searchable set list with multiple selections and separate Storage/Trash counts.
 
 ## Download and install
 
-Version 0.2.0: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.2.0)
+Version 0.3.0: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.0)
 and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
 Requires Windows x64, Mewgenics Steam build 25143593 (1.1.21239), and
 Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
 dependency. Follow the [installation guide](INSTALL.md) for Vortex or manual setup.
 The mod stays inactive on unsupported game builds.
 
-See the [release notes](releases/0.2.0.md) for features and the
+See the [release notes](releases/0.3.0.md) for features and the
 [changelog](CHANGELOG.md) for changes.
 
 ## Release records
 
-The [candidate record](../../docs/releases/improved-inventory/0.2.0-candidate.md)
+The [candidate record](../../docs/releases/improved-inventory/0.3.0-candidate.md)
 contains the Vortex and gameplay test results. The
 [release checklist](RELEASE_CHECKLIST.md) tracks remaining tests, and the
-[publication record](../../docs/releases/improved-inventory/0.2.0-publication.md)
+[publication record](../../docs/releases/improved-inventory/0.3.0-publication.md)
 records download verification. Use the [publishing workflow](../../docs/releases/README.md)
 for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The 0.3.0-beta.3 candidate adds separate Storage and Trash counts to the Sets
-menu. Counts include duplicate copies and use all items in each container,
+Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
-under "Available". See the [candidate record](../../docs/releases/improved-inventory/0.3.0-candidate.md).
+under "Available".
 
 
 Equipment selection shows up to six columns and five rows, with scrolling for

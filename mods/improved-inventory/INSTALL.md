@@ -1,17 +1,19 @@
 # Improved Inventory installation
 
-Version 0.2.0 requires Windows x64, Steam build 25143593 (game version
+Version 0.3.0 requires Windows x64, Steam build 25143593 (game version
 1.1.21239), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3 (tested with runtime v3.0). The mod stays inactive on other game builds.
 
 ## Vortex
 
-1. Close Mewgenics. Install Mewjector and the
-   [Mewgenics Vortex extension](https://www.nexusmods.com/site/mods/1691).
+1. Close Mewgenics. Install and enable Mewjector if you don't already use it.
 2. Use Mod Manager Download on Nexus, or install `ImprovedInventory-<version>.zip`
    with Vortex's Install From File. Enable and deploy it.
-3. Check ImprovedInventory in the game's Vortex Load Order page.
-4. Start the game with Vortex's Custom Launch tool and open Storage/Trash.
+3. Launch Mewgenics through Vortex.
+
+If Vortex already manages your Mewgenics mods, you don't need to download a
+separate extension for Improved Inventory. For a new setup, add Mewgenics in
+Vortex's Games page and follow its setup prompts.
 
 The archive deploys two components together:
 
@@ -53,8 +55,12 @@ remove its asset launch argument.
 
 Look for ImprovedInventory and its version in `mod_logs/chainloader.log`.
 "Improved Inventory enabled; all UI hooks installed" confirms native startup.
-If it reports inactive assets, deploy the complete package, check Load Order
-and use Custom Launch. If it reports an unsupported executable or a hook
+If it reports inactive assets, deploy the complete package and check that
+ImprovedInventory is enabled in Vortex's Load Order page. Launch with Vortex's
+default Mewgenics tool (called Custom Launch in Tools). The
+[game-support extension](https://www.nexusmods.com/site/mods/1691) supplies the
+mod launch arguments; it is already present in a working Vortex setup.
+If it reports an unsupported executable or a hook
 entry mismatch, use a compatible release and report the game build and
 relevant log lines.
 
@@ -67,6 +73,6 @@ also needs testing. Other game builds are unsupported.
 
 Item transfers are still manual, and End Day still deletes items left in Trash.
 
-See the [release notes](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/releases/0.2.0.md)
+See the [release notes](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/releases/0.3.0.md)
 for features and the [test checklist](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/RELEASE_CHECKLIST.md)
 for detailed coverage.
