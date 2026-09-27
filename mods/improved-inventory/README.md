@@ -32,7 +32,7 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The 0.3.0-beta.1 candidate adds Storage/Trash counts to the Sets menu and a
+The 0.3.0-beta.2 candidate adds Storage/Trash counts to the Sets menu and a
 "2+ pieces" filter for sets with at least two different item types. Copies of
 the same item, including worn or broken copies, count toward the displayed
 quantity but cannot qualify a set on their own. Counts use all items in the

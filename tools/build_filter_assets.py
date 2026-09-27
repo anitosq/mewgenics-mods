@@ -152,7 +152,7 @@ for active in range(4):
     parts.append(m.field(dynamic_font,205,129,217,30,18,'Different items'))
     parts.append(m.field(dynamic_font,12,170,252,24,18,'Set'))
     parts.append((m.field(dynamic_font,274,170,90,24,18,'Storage',align=2),'storage_header'))
-    parts.append((m.field(dynamic_font,366,170,64,24,18,'Trash',align=2),'trash_header'))
+    parts.append((m.field(dynamic_font,366,170,64,24,18,'',align=2),'trash_header'))
     for i in range(7):
         parts.append((m.field(dynamic_font,12,198+i*33,252,31,20,''),f'row{i}'))
         parts.append((m.field(dynamic_font,274,198+i*33,90,31,20,'',align=2),f'storage{i}'))

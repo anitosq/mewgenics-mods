@@ -1,6 +1,6 @@
 # Improved Inventory changelog
 
-## 0.3.0-beta.1 (unreleased)
+## 0.3.0-beta.2 (unreleased)
 
 - See separate Storage and Trash counts beside each set.
 - Use "2+ pieces" to find items from sets where you own at least two different
