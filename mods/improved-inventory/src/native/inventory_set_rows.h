@@ -9,7 +9,6 @@ static void iq_build_set_rows(void) {
         iq_set_rows_count=0;
         for(int j=0;j<iq_set_count;j++) {
             if(!iq_query_match(iq_sets[j].name,iq_set_query))continue;
-            if(iq_search.multiple_pieces && !(iq_owned.multiple[j/64]&(UINT64_C(1)<<(j%64))))continue;
             int at=iq_set_rows_count++;
             while(at>0 && _wcsicmp(iq_sets[iq_set_rows[at-1]].name,iq_sets[j].name)>0){iq_set_rows[at]=iq_set_rows[at-1];at--;}
             iq_set_rows[at]=j;

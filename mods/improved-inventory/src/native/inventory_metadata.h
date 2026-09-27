@@ -85,11 +85,10 @@ static IQMetadata* iq_find_metadata(void* drawer,uint64_t id) {
 #include "inventory_ownership.h"
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets) {
     IQMetadata* m=iq_find_metadata(drawer,id);
-    if(!m)return !iq_search.query[0] && (!include_sets || (!iq_search.set_mode && !iq_search.multiple_pieces));
-    return iq_query_match(m->text,iq_search.query) && (!include_sets || iq_owned_set_match(&iq_search,m->sets,m->sets_known,iq_owned.multiple));
+    if(!m)return !iq_search.query[0] && (!include_sets || !iq_search.set_mode);
+    return iq_query_match(m->text,iq_search.query) && (!include_sets || iq_set_match(&iq_search,m->sets,m->sets_known));
 }
 static void iq_filter_view(void) {
-    iq_build_ownership();
     memset(iq.items,0,sizeof(iq.items));
     for(int i=0;i<iq.count;i++) {
         IQDrawer* d=&iq.drawers[i];

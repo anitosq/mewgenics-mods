@@ -271,7 +271,6 @@ static void iq_ui_update(void) {
     if(iq_search.set_mode==3 && selected_sets==1){iq_set_name(label,iq_sets[last].name);if(wcslen(label)>6)wcscpy(label+4,L"..");}
     else if(iq_search.set_mode==3)swprintf(label,200,L"%d sets",selected_sets);
     else swprintf(label,200,L"%ls",iq_search.set_mode==1?L"Any set":iq_search.set_mode==2?L"No set":L"All sets");
-    if(iq_search.multiple_pieces)wcscpy(label,L"2+ pieces");
     iq_text(&iq_controls.bars[selected],0,"sets",label);
     if(iq.equipment)iq_control_hide(&iq_controls.count);
     else {
@@ -292,7 +291,6 @@ static void iq_ui_update(void) {
         snprintf(name,sizeof(name),"IQSets%d",iq_search.set_mode);
         IQControl* popup=&iq_controls.popups[iq_popup_index()];iq_control_show(popup,name,x+131*s,y-82*s);iq_build_set_rows();
         iq_query_label(label,iq_set_query,L"Find a set...",iq_focus==2);iq_text(popup,0,"query",label);
-        swprintf(label,200,L"[%lc] 2+ pieces",iq_search.multiple_pieces?L'x':L' ');iq_text(popup,22,"multiple",label);
         iq_text(popup,23,"storage_header",iq.equipment?L"Available":L"Storage");
         iq_text(popup,24,"trash_header",iq.equipment?L"":L"Trash");
         for(int row=0;row<IQ_SET_PAGE;row++) {
@@ -364,11 +362,10 @@ static void iq_feedback_update(void) {
         } else {
             for(int i=0;i<3;i++)if(iq_feedback_rect(&sample,popup,i,10+i*142,38,136,36))return;
             if(iq_feedback_rect(&sample,popup,3,396,82,34,36) || iq_feedback_rect(&sample,popup,4,10,82,386,36))return;
-            if(iq_feedback_rect(&sample,popup,5,10,126,420,36))return;
-            for(int i=0;i<IQ_SET_PAGE && iq_set_offset+i<iq_set_rows_count;i++)if(iq_feedback_rect(&sample,popup,6+i,10,198+i*33,420,31))return;
-            if(iq_set_offset>0 && iq_feedback_rect(&sample,popup,13,10,437,62,36))return;
-            if(iq_set_offset+IQ_SET_PAGE<iq_set_rows_count && iq_feedback_rect(&sample,popup,14,80,437,77,36))return;
-            if(iq_feedback_rect(&sample,popup,15,166,437,78,36) || iq_feedback_rect(&sample,popup,16,333,437,97,36))return;
+            for(int i=0;i<IQ_SET_PAGE && iq_set_offset+i<iq_set_rows_count;i++)if(iq_feedback_rect(&sample,popup,5+i,10,154+i*33,420,31))return;
+            if(iq_set_offset>0 && iq_feedback_rect(&sample,popup,12,10,393,62,36))return;
+            if(iq_set_offset+IQ_SET_PAGE<iq_set_rows_count && iq_feedback_rect(&sample,popup,13,80,393,77,36))return;
+            if(iq_feedback_rect(&sample,popup,14,166,393,78,36) || iq_feedback_rect(&sample,popup,15,333,393,97,36))return;
         }
         return;
     }
@@ -437,30 +434,24 @@ static int iq_ui_event(void* event) {
     unsigned char button=0;iq_read((unsigned char*)event+0x18,&button,1);double p[2];
     if(filter_popup==3) {
         iq_controls.captured_click=1;
-        if(button!=1 || !iq_control_point(&iq_controls.popups[iq_popup_index()],p) || p[0]<0 || p[0]>=440 || p[1]<0 || p[1]>=487){iq_sound(IQ_SOUND_CLOSE);filter_popup=0;iq_focus_set(0);iq_ui_update();return 1;}
+        if(button!=1 || !iq_control_point(&iq_controls.popups[iq_popup_index()],p) || p[0]<0 || p[0]>=440 || p[1]<0 || p[1]>=443){iq_sound(IQ_SOUND_CLOSE);filter_popup=0;iq_focus_set(0);iq_ui_update();return 1;}
         if(p[0]>=10 && p[0]<430 && p[1]>=82 && p[1]<118){if(p[0]>=396){iq_sound(IQ_SOUND_RESET);iq_set_query[0]=0;iq_set_offset=0;}iq_focus_set(2);iq_ui_update();return 1;}
         iq_focus_set(0);
         if(p[0]>=10 && p[0]<430 && p[1]>=38 && p[1]<74) {
             int mode=(int)((p[0]-10)/142);
-            if(p[0]-(10+mode*142)<136){iq_sound(IQ_SOUND_SELECT);iq_search.set_mode=mode;if(mode==2)iq_search.multiple_pieces=0;memset(iq_search.sets,0,sizeof(iq_search.sets));iq_refilter();}
+            if(p[0]-(10+mode*142)<136){iq_sound(IQ_SOUND_SELECT);iq_search.set_mode=mode;memset(iq_search.sets,0,sizeof(iq_search.sets));iq_refilter();}
             return 1;
         }
-        if(p[0]>=10 && p[0]<430 && p[1]>=126 && p[1]<162) {
-            iq_search.multiple_pieces=!iq_search.multiple_pieces;
-            if(iq_search.multiple_pieces && iq_search.set_mode==2)iq_search.set_mode=0;
-            iq_sound(iq_search.multiple_pieces?IQ_SOUND_CHECK:IQ_SOUND_UNCHECK);
-            iq_set_offset=0;iq_refilter();return 1;
-        }
-        if(p[0]>=10 && p[0]<430 && p[1]>=198 && p[1]<429) {
-            int row=(int)((p[1]-198)/33),at=iq_set_offset+row;
-            if(p[1]-(198+row*33)>=31)return 1;
+        if(p[0]>=10 && p[0]<430 && p[1]>=154 && p[1]<385) {
+            int row=(int)((p[1]-154)/33),at=iq_set_offset+row;
+            if(p[1]-(154+row*33)>=31)return 1;
             if(at<iq_set_rows_count){int j=iq_set_rows[at];iq_search.set_mode=3;iq_search.sets[j/64]^=UINT64_C(1)<<(j%64);iq_sound((iq_search.sets[j/64]&(UINT64_C(1)<<(j%64)))?IQ_SOUND_CHECK:IQ_SOUND_UNCHECK);if(!(iq_search.sets[0]|iq_search.sets[1]|iq_search.sets[2]|iq_search.sets[3]))iq_search.set_mode=0;}
             iq_refilter();return 1;
         }
-        if(p[1]>=437 && p[1]<473) {
+        if(p[1]>=393 && p[1]<429) {
             if(p[0]>=10 && p[0]<72 && iq_set_offset>0){iq_sound(IQ_SOUND_SELECT);iq_set_offset-=IQ_SET_PAGE;}
             else if(p[0]>=80 && p[0]<157 && iq_set_offset+IQ_SET_PAGE<iq_set_rows_count){iq_sound(IQ_SOUND_SELECT);iq_set_offset+=IQ_SET_PAGE;}
-            else if(p[0]>=166 && p[0]<244){iq_sound(IQ_SOUND_RESET);iq_search.set_mode=0;iq_search.multiple_pieces=0;memset(iq_search.sets,0,sizeof(iq_search.sets));iq_set_query[0]=0;iq_set_offset=0;iq_refilter();}
+            else if(p[0]>=166 && p[0]<244){iq_sound(IQ_SOUND_RESET);iq_search.set_mode=0;memset(iq_search.sets,0,sizeof(iq_search.sets));iq_set_query[0]=0;iq_set_offset=0;iq_refilter();}
             else if(p[0]>=333 && p[0]<430){iq_sound(IQ_SOUND_CLOSE);filter_popup=0;}
         }
         iq_ui_update();return 1;

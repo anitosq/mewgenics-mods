@@ -142,29 +142,26 @@ for focused in range(2):
 # Additional inset keeps both counts comfortably inside the lighter panel.
 m.sprite('IQCount',[(m.field(dynamic_font,18,0,562,24,18,'Matches'),'count')])
 for active in range(4):
-    parts=m.paper(0,0,440,487)+[m.text('Sets (match any selected)',12,28,22)]
+    parts=m.paper(0,0,440,443)+[m.text('Sets (match any selected)',12,28,22)]
     for i,label in enumerate(['All','Any','No set']):parts+=m.button(label,10+i*142,38,136,active==i,center=True)
     parts+=m.button('',10,82,420)
     parts.append((m.field(dynamic_font,18,84,371,31,20,'Find a set...'),'query'))
     parts+=m.button('x',396,82,34)
-    parts+=m.button('',10,126,420)
-    parts.append((m.field(dynamic_font,18,129,180,30,20,'[ ] 2+ pieces'),'multiple'))
-    parts.append(m.field(dynamic_font,205,129,217,30,18,'Different items'))
-    parts.append(m.field(dynamic_font,12,170,252,24,18,'Set'))
-    parts.append((m.field(dynamic_font,274,170,90,24,18,'Storage',align=2),'storage_header'))
-    parts.append((m.field(dynamic_font,366,170,64,24,18,'',align=2),'trash_header'))
+    parts.append(m.field(dynamic_font,12,126,252,24,18,'Set'))
+    parts.append((m.field(dynamic_font,274,126,90,24,18,'Storage',align=2),'storage_header'))
+    parts.append((m.field(dynamic_font,366,126,64,24,18,'',align=2),'trash_header'))
     for i in range(7):
-        parts.append((m.field(dynamic_font,12,198+i*33,252,31,20,''),f'row{i}'))
-        parts.append((m.field(dynamic_font,274,198+i*33,90,31,20,'',align=2),f'storage{i}'))
-        parts.append((m.field(dynamic_font,366,198+i*33,64,31,20,'',align=2),f'trash{i}'))
-    parts+=m.button('Up',10,437,62)+m.button('Down',80,437,77)+m.button('Clear',166,437,78)+m.button('Done',333,437,97)
-    rectangles=[(10+i*142,38,136,36) for i in range(3)]+[(396,82,34,36),(10,82,386,36),(10,126,420,36)]
-    rectangles += [(10,198+i*33,420,31) for i in range(7)]
-    rectangles += [(10,437,62,36),(80,437,77,36),(166,437,78,36),(333,437,97,36)]
+        parts.append((m.field(dynamic_font,12,154+i*33,252,31,20,''),f'row{i}'))
+        parts.append((m.field(dynamic_font,274,154+i*33,90,31,20,'',align=2),f'storage{i}'))
+        parts.append((m.field(dynamic_font,366,154+i*33,64,31,20,'',align=2),f'trash{i}'))
+    parts+=m.button('Up',10,393,62)+m.button('Down',80,393,77)+m.button('Clear',166,393,78)+m.button('Done',333,393,97)
+    rectangles=[(10+i*142,38,136,36) for i in range(3)]+[(396,82,34,36),(10,82,386,36)]
+    rectangles += [(10,154+i*33,420,31) for i in range(7)]
+    rectangles += [(10,393,62,36),(80,393,77,36),(166,393,78,36),(333,393,97,36)]
     m.feedback(parts,rectangles)
     for i,(label,x,width_) in enumerate([('Up',10,62),('Down',80,77)]):
-        disabled=m.paper(x,437,width_,36)
-        disabled.append(m.field(dynamic_font,x+4,440,width_-8,30,20,label,align=2,color=(136,130,117,255)))
+        disabled=m.paper(x,393,width_,36)
+        disabled.append(m.field(dynamic_font,x+4,396,width_-8,30,20,label,align=2,color=(136,130,117,255)))
         parts.append((m.sprite('disabled'+str(i),disabled,export=False),'disabled'+str(i)))
     m.sprite(f'IQSets{active}',parts)
 m.write(ROOT/'work/native-assets/swfs/improved_inventory.swf')

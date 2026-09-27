@@ -1,9 +1,8 @@
 /* Full captured containers, independent of the displayed filters. Rebuilt only
  * on a grid capture or item rebind. Equipment contains unassigned items only. */
 static struct {
-    uint64_t view_revision,metadata_revision,multiple[4];
+    uint64_t view_revision,metadata_revision;
     int valid,counts[IQ_SET_LIMIT][2];
-    char first_key[IQ_SET_LIMIT][128];
 } iq_owned;
 static void iq_build_ownership(void) {
     if(iq_owned.valid && iq_owned.view_revision==iq_view_revision &&
@@ -17,11 +16,6 @@ static void iq_build_ownership(void) {
             uint64_t bit=UINT64_C(1)<<(j%64);
             if(!(m->sets[j/64]&bit))continue;
             iq_owned.counts[j][d->side]++;
-            /* Conditions/copies share a definition key. An unreadable key
-             * still counts as owned, but cannot establish a second piece. */
-            if(!m->item_key[0] || (iq_owned.multiple[j/64]&bit))continue;
-            if(!iq_owned.first_key[j][0])strcpy(iq_owned.first_key[j],m->item_key);
-            else if(strcmp(iq_owned.first_key[j],m->item_key))iq_owned.multiple[j/64]|=bit;
         }
     }
     iq_owned.view_revision=iq_view_revision;iq_owned.metadata_revision=iq_metadata_revision;
