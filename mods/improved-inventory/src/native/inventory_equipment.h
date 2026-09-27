@@ -51,13 +51,13 @@ static void iq_capture_equipment(void* owner) {
         if(assigned!=-1)continue;
         IQDrawer* d=&iq.drawers[iq.count++];d->drawer=drawer;d->reference=iq_reference(drawer);d->item_id=id;
         d->traits=iq_traits(drawer,id);d->rarity=iq_int(drawer,0xfc);
-        d->ordinal=iq_filter_match(active_filter,d->traits,d->rarity) && iq_extended_match(drawer,id,1)?iq.items[0]++:-1;
+        d->ordinal=-1;
         iq.scale[0]=iq_double(drawer,0xc8)*columns/cols;
     }
-    int maxrow=iq_last_row(iq.items[0],cols,cols>5?5:cols);if(iq.row[0]>maxrow)iq.row[0]=maxrow;
 #undef iq
     iq=pending_view;
     iq_index_view();
+    iq_filter_view();
     for(int j=0;j<iq.background_count;j++) {
         IQBackground* b=&iq.backgrounds[j];int visible=j<cols*iq_rows(0);
         *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;

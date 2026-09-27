@@ -82,8 +82,21 @@ static IQMetadata* iq_find_metadata(void* drawer,uint64_t id) {
         if(iq_metadata[i].drawer==drawer && iq_metadata[i].id==id && iq_metadata[i].generation==generation)return &iq_metadata[i];
     return NULL;
 }
+#include "inventory_ownership.h"
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets) {
     IQMetadata* m=iq_find_metadata(drawer,id);
-    if(!m)return !iq_search.query[0] && (!include_sets || !iq_search.set_mode);
-    return iq_query_match(m->text,iq_search.query) && (!include_sets || iq_set_match(&iq_search,m->sets,m->sets_known));
+    if(!m)return !iq_search.query[0] && (!include_sets || (!iq_search.set_mode && !iq_search.multiple_pieces));
+    return iq_query_match(m->text,iq_search.query) && (!include_sets || iq_owned_set_match(&iq_search,m->sets,m->sets_known,iq_owned.multiple));
+}
+static void iq_filter_view(void) {
+    iq_build_ownership();
+    memset(iq.items,0,sizeof(iq.items));
+    for(int i=0;i<iq.count;i++) {
+        IQDrawer* d=&iq.drawers[i];
+        d->ordinal=iq_filter_match(active_filter,d->traits,d->rarity) && iq_extended_match(d->drawer,d->item_id,1)?iq.items[d->side]++:-1;
+    }
+    for(int side=0;side<2;side++) {
+        int maxrow=iq_scroll_limit(side);
+        if(iq.row[side]>maxrow)iq.row[side]=maxrow;
+    }
 }

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #define IQ_SET_LIMIT 256
 #define IQ_QUERY_LIMIT 128
-typedef struct { wchar_t query[IQ_QUERY_LIMIT]; int set_mode; uint64_t sets[4]; } IQSearch;
+typedef struct { wchar_t query[IQ_QUERY_LIMIT]; int set_mode, multiple_pieces; uint64_t sets[4]; } IQSearch;
 static int iq_contains(const wchar_t* text,const wchar_t* query,size_t length) {
     if(!length)return 1;
     for(;*text;text++) {
@@ -28,6 +28,16 @@ static int iq_set_match(const IQSearch* filter,const uint64_t* sets,int known) {
     uint64_t any=0,selected=0;
     for(int i=0;i<4;i++){any|=sets[i];selected|=sets[i]&filter->sets[i];}
     return filter->set_mode==1?any!=0:filter->set_mode==2?any==0:selected!=0;
+}
+static int iq_owned_set_match(const IQSearch* filter,const uint64_t* sets,int known,const uint64_t* multiple) {
+    if(!filter->multiple_pieces)return iq_set_match(filter,sets,known);
+    if(!known || filter->set_mode==2)return 0;
+    for(int i=0;i<4;i++) {
+        uint64_t eligible=sets[i]&multiple[i];
+        if(filter->set_mode==3)eligible&=filter->sets[i];
+        if(eligible)return 1;
+    }
+    return 0;
 }
 static void iq_plain_text(wchar_t* out,size_t capacity,const wchar_t* in) {
     size_t n=0;

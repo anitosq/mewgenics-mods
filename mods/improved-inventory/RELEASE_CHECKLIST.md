@@ -1,12 +1,9 @@
 # Improved Inventory release readiness
 
-Current development: [0.2.0 candidate](../../docs/releases/improved-inventory/0.2.0-candidate.md).
-Its adventure/equipment checks are recorded separately below.
-
-Status of the previous release: 0.1.0 published from the user-tested beta.2 implementation; only
-version metadata and release documentation changed. Nexus scan passed; its download verification is blocked by Edge. Updated
-25 September 2026. This checklist distinguishes existing development evidence
-from checks that still need to be performed on a packaged build.
+Current development: [0.3.0 set-filter candidate](../../docs/releases/improved-inventory/0.3.0-candidate.md).
+The checklist below records earlier foundations and release checks; it does not
+certify the new candidate. Published 0.2.0 verification is in its
+[publication record](../../docs/releases/improved-inventory/0.2.0-publication.md).
 
 ## Completed foundations
 

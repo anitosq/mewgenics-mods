@@ -32,6 +32,15 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
+The 0.3.0-beta.1 candidate adds Storage/Trash counts to the Sets menu and a
+"2+ pieces" filter for sets with at least two different item types. Copies of
+the same item, including worn or broken copies, count toward the displayed
+quantity but cannot qualify a set on their own. Counts use all items in the
+current screen, independent of search, rarity and type filters. Equipment
+selection counts unassigned items under "Available"; it excludes equipped items
+and Trash. See the [candidate record](../../docs/releases/improved-inventory/0.3.0-candidate.md).
+
+
 Equipment selection shows up to six columns and five rows, with scrolling for
 the rest. The Backpack screen during an adventure is unchanged.
 

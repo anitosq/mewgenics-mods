@@ -16,6 +16,7 @@ static IQFilter active_filter;
 static int filter_popup;
 static IQSearch iq_search;
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets);
+static void iq_filter_view(void);
 static void iq_ui_update(void);
 static int iq_ui_event(void* event);
 static int iq_wheel_side(void);
@@ -120,7 +121,7 @@ static void* iq_tracking(void* panel, void* transform, int* index) {
 }
 
 static int iq_rows(int side) {return iq.equipment && iq.columns[side]>5?5:iq.columns[side];}
-static int iq_scroll_limit(int side) {return iq_last_row(iq.items[side],iq.columns[side],iq_rows(side));}
+static int iq_scroll_limit(int side) {return iq.equipment?iq_last_row(iq.items[side],iq.columns[side],iq_rows(side)):iq_max_row(iq.items[side],iq.columns[side]);}
 static int iq_visible(const IQDrawer* d) {
     if(d->ordinal<0) return 0;
     int cols=iq.columns[d->side];
@@ -258,16 +259,12 @@ static void iq_capture(void* owner) {
         d->side=side;
         d->traits=iq_traits(drawer,d->item_id);
         d->rarity=iq_int(drawer,0xb4);
-        d->ordinal=(iq_filter_match(active_filter,d->traits,d->rarity) && iq_extended_match(drawer,d->item_id,1))?iq.items[side]++:-1;
-    }
-    for(int side=0;side<2;side++) {
-        int cols=iq.columns[side];
-        int maxrow=iq_max_row(iq.items[side],cols);
-        if(iq.row[side]>maxrow) iq.row[side]=maxrow;
+        d->ordinal=-1;
     }
 #undef iq
     iq=pending_view;
     iq_index_view();
+    iq_filter_view();
     for(int i=0;i<iq.background_count;i++) {
         IQBackground* b=&iq.backgrounds[i];
         int side=b->side,j=b->ordinal,cols=iq.columns[side];

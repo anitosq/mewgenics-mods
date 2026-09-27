@@ -1,5 +1,13 @@
 # Improved Inventory changelog
 
+## 0.3.0-beta.1 (unreleased)
+
+- See separate Storage and Trash counts beside each set.
+- Use "2+ pieces" to find items from sets where you own at least two different
+  pieces. At home, it checks Storage and Trash together. When choosing adventure
+  equipment, it checks the available, unassigned items.
+- Set counts include duplicate copies and stay visible while you search or filter.
+
 ## 0.2.0 (2026-09-25)
 
 - Fixed a crash when leaving the house to assign equipment for an adventure.
