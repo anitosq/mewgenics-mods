@@ -35,12 +35,12 @@ See the [installation guide](https://github.com/anitosq/mewgenics-mods/blob/main
 
 Display name: Improved Inventory. File version: 0.3.0.
 
-Scrolling inventory grids, search and filters at home and before an adventure. Adds separate Storage/Trash counts for sets. Requires Mewjector API v3 and Mewgenics 1.1.21239.
+Scrolling grids, search and filters for Storage, Trash and adventure equipment selection. Requires Mewjector API v3 and Mewgenics 1.1.21239 (Steam build 25143593).
 
 ## Version 0.3.0 changelog
 
-- See separate Storage and Trash counts beside each set.
-- Set counts include duplicate copies and stay visible while you search or filter.
+- The Sets menu now shows separate Storage and Trash counts, including duplicate copies. Counts stay the same when you search or filter your inventory.
+- During equipment selection, Available shows how many items have not been assigned to a cat.
 
 ## Author notes
 

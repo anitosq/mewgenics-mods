@@ -1,7 +1,7 @@
 # Release and publishing workflow
 
-Policy established 25 September 2026. Improved Inventory 0.2.0 is published;
-see its [publication record](improved-inventory/0.2.0-publication.md) for
+Policy established 25 September 2026. Improved Inventory 0.3.0 is published;
+see its [publication record](improved-inventory/0.3.0-publication.md) for
 verified GitHub and Nexus downloads.
 
 ## Destinations and source of truth
@@ -258,13 +258,13 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 ## Current release and next step
 
-Version 0.2.0 is a regular GitHub release and the Main/primary Nexus download.
-Both downloaded archives match the tested ZIP. Edge blocked the manual Nexus
-CDN download, but the normal Vortex download succeeded and its hashes passed.
-See the [publication record](improved-inventory/0.2.0-publication.md).
+Version 0.3.0 is a regular GitHub release and the Main/primary Nexus download.
+Both downloaded archives match the tested ZIP. The normal Vortex download and
+current-profile update succeeded, with matching deployed payloads.
+See the [publication record](improved-inventory/0.3.0-publication.md).
 
 For future automated updates, the existing Nexus target is API file ID
-`8024283`, mod ID `526`, game ID `8802`. Do not use legacy version ID `1655`
+`8024283`, mod ID `526`, game ID `8802`. Do not use legacy version ID `1667`
 as the upload action's file ID. No API key or automatic mirror is configured.
 Automating this mirror remains the next workflow improvement. Candidate
 records and the readiness checklist retain the broader runtime test coverage.
