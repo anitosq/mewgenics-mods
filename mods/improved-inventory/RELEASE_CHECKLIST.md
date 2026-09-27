@@ -1,6 +1,6 @@
 # Improved Inventory release readiness
 
-Current development: [0.3.0 set-filter candidate](../../docs/releases/improved-inventory/0.3.0-candidate.md).
+Current development: [0.3.0 set-count candidate](../../docs/releases/improved-inventory/0.3.0-candidate.md).
 The checklist below records earlier foundations and release checks; it does not
 certify the new candidate. Published 0.2.0 verification is in its
 [publication record](../../docs/releases/improved-inventory/0.2.0-publication.md).
