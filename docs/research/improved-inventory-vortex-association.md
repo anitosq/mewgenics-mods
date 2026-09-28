@@ -1,7 +1,7 @@
 # Vortex Load Order association
 
-Tested 28 September 2026. This is an unpublished packaging fix for 0.3.2.
-Published archives remain unchanged.
+Tested 28 September 2026 as a packaging probe for 0.3.2. The results below
+describe that probe; the fix subsequently shipped in 0.3.3.
 
 ## Cause and fix
 
@@ -69,3 +69,10 @@ collection support.
 Before publishing, make a new versioned candidate and run its package checks.
 Do not overwrite the public 0.3.2 archive with this probe. Verify the hosted
 update retains its Nexus association as well as the Load Order folder link.
+
+## Published outcome
+
+Version 0.3.3 passed the candidate and hosted-download checks. The public Nexus
+copy retains its name, version, thumbnail and managed Load Order association.
+The local probe was removed through Vortex and replaced by that public copy.
+See the [publication record](../releases/improved-inventory/0.3.3-publication.md).

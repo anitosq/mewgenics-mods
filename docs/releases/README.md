@@ -1,7 +1,7 @@
 # Release and publishing workflow
 
-Policy established 25 September 2026. Improved Inventory 0.3.2 is published;
-see its [publication record](improved-inventory/0.3.2-publication.md) for
+Policy established 25 September 2026. Improved Inventory 0.3.3 is published;
+see its [publication record](improved-inventory/0.3.3-publication.md) for
 verified GitHub and Nexus downloads.
 
 ## Destinations and source of truth
@@ -21,7 +21,7 @@ The default universal layout includes a required-file FOMOD mapping for Vortex
 and one self-contained mod folder for Mewtator's importer. Validate both routes,
 including external Mewtator paths and Vortex's generated launch arguments.
 For Vortex updates from 0.3.1 or earlier, remove the old mod and deploy before
-installing 0.3.2; the deployment root changed. Do not change frozen archives
+installing the update; the deployment root changed. Do not change frozen archives
 in place. The [packaging investigation](../research/improved-inventory-universal-package.md)
 records why this layout was chosen.
 
@@ -268,14 +268,14 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 ## Current release and next step
 
-Version 0.3.2 uses one download on GitHub and Nexus for both managers. See the
-[publication record](improved-inventory/0.3.2-publication.md) for download checks,
+Version 0.3.3 uses one download on GitHub and Nexus for both managers. See the
+[publication record](improved-inventory/0.3.3-publication.md) for download checks,
 scan status and public Vortex installation results.
 
 For future automated updates, the existing Nexus target is API file ID
 `8024283` for the universal package, mod ID `526`, game ID `8802`. The separate
 Mewtator API file `8041395` belongs to retired 0.3.1 packaging and should not
-receive new uploads. Do not use legacy version ID `1671` as the upload action's
+receive new uploads. Do not use legacy version ID `1672` as the upload action's
 file ID. No API key or automatic mirror is configured.
 Automating this mirror remains the next workflow improvement. Candidate
 records and the readiness checklist retain the broader runtime test coverage.

@@ -1,13 +1,9 @@
 # Improved Inventory release readiness
 
-The 0.3.1 compatibility patch is published. Its
-[candidate record](../../docs/releases/improved-inventory/0.3.1-candidate.md)
-tracks both package layouts; prior results below do not establish Mewtator coverage.
-
-Current release: [0.3.1 publication record](../../docs/releases/improved-inventory/0.3.1-publication.md).
-The [candidate record](../../docs/releases/improved-inventory/0.3.0-candidate.md)
-separates fixture results, earlier equipment tests and the stable home transfer
-check. The checklist below retains the broader foundations and outstanding coverage.
+Current release: [0.3.3 publication record](../../docs/releases/improved-inventory/0.3.3-publication.md).
+The [0.3.3 candidate record](../../docs/releases/improved-inventory/0.3.3-candidate.md)
+covers the packaging patch. The checklist below retains broader runtime
+coverage and outstanding checks from earlier releases.
 
 ## Completed foundations
 

@@ -150,5 +150,5 @@ show an unmanaged thumbnail because the FOMOD installer does not set the
 extension's modName attribute; its checkbox and launch arguments still work.
 
 The subsequent [association fix](improved-inventory-vortex-association.md)
-adds installer metadata to restore that link. It is tested locally and has
-not yet been published.
+adds installer metadata to restore that link. It ships in 0.3.3; see the
+[publication record](../releases/improved-inventory/0.3.3-publication.md).

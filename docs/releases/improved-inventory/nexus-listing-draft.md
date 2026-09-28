@@ -1,6 +1,6 @@
 # Improved Inventory Nexus listing copy
 
-Release 0.3.2. Mirrors the live description on 28 September 2026.
+Release 0.3.3. Mirrors the live description on 28 September 2026.
 
 ## Summary
 
@@ -27,7 +27,7 @@ One download works with Vortex and Mewtator.
 
 Close the game. Install and enable Mewjector if you don't already use it, then download, enable and deploy Improved Inventory. Launch Mewgenics through Vortex.
 
-Updating from 0.3.1 or earlier? Remove the old version and deploy before installing 0.3.2.
+Updating from 0.3.1 or earlier? Remove the old version and deploy before installing the update.
 
 See the [installation guide](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/INSTALL.md) for setup help and compatibility details. Controller support hasn't been tested.
 
@@ -41,19 +41,17 @@ For manual installation, follow the installation guide.
 
 ## Links
 
-[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.2) | [Source and issue tracker](https://github.com/anitosq/mewgenics-mods)
+[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.3) | [Source and issue tracker](https://github.com/anitosq/mewgenics-mods)
 
 ## File description
 
-Display name: Improved Inventory. File version: 0.3.2.
+Display name: Improved Inventory. File version: 0.3.3.
 
 One download for Vortex and Mewtator. Adds scrolling grids, search and filters to Storage, Trash and adventure equipment selection. Requires Mewjector API v3 and Mewgenics 1.1.21239.
 
-## Version 0.3.2 changelog
+## Version 0.3.3 changelog
 
-- One download now works with both Vortex and Mewtator.
-- Updating from 0.3.1 or earlier in Vortex: remove the old version and deploy before installing this update. Mewtator users can replace their existing mod.
-- Inventory features are unchanged.
+- Fixed the "Not managed by Vortex" label in Load Order.
 
 ## Author notes
 
