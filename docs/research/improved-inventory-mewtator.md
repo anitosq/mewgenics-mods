@@ -68,4 +68,7 @@ Before releasing a patch:
 
 The 0.3.1 patch implements both layouts and two archives; validation is tracked
 in the [candidate record](../releases/improved-inventory/0.3.1-candidate.md).
-The live 0.3.0 listing retains the workaround until the patch is published.
+Version 0.3.1 is now published with both layouts. A subsequent
+[single-archive FOMOD experiment](improved-inventory-universal-package.md)
+passed file-placement checks but exposed Vortex upgrade/removal problems;
+it has not replaced the supported downloads.

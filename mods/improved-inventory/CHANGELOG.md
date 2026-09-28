@@ -1,5 +1,10 @@
 # Improved Inventory changelog
 
+## 0.3.2
+
+- One download now works with both Vortex and Mewtator.
+- Inventory features are unchanged from 0.3.1.
+
 ## 0.3.1
 
 - Added a Mewtator download that supports its configured mods directory,

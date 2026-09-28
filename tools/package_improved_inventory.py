@@ -1,4 +1,4 @@
-"""Build once and package Vortex/manual and Mewtator candidates; never deploy/publish."""
+"""Build a single Vortex/Mewtator candidate; never deploy or publish."""
 import argparse
 import hashlib
 import json
@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,10 +73,31 @@ def package_variants(files):
     return {'': files, '-Mewtator': nested}
 
 
+def universal_package(files):
+    """One nested payload for Mewtator; Vortex maps it with declarative FOMOD XML."""
+    nested = package_variants(files)['-Mewtator']
+    config = ET.Element('config', {
+        'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+        'xsi:noNamespaceSchemaLocation': 'http://qconsulting.ca/fo3/ModConfig5.0.xsd',
+    })
+    ET.SubElement(config, 'moduleName').text = 'Improved Inventory'
+    required = ET.SubElement(config, 'requiredInstallFiles')
+    for name in sorted(nested):
+        target = 'ImprovedInventory.dll' if name == 'ImprovedInventory/ImprovedInventory.dll' else name
+        ET.SubElement(required, 'file', source=name.replace('/', '\\'),
+                      destination=('mods/' + target).replace('/', '\\'), priority='0')
+    ET.indent(config)
+    # Vortex's native installer rejects the optional XML declaration on the tested setup.
+    nested['fomod/ModuleConfig.xml'] = ET.tostring(config, encoding='utf-8', xml_declaration=False)
+    return nested
+
+
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--game', required=True, type=Path)
     cli.add_argument('--output', type=Path, help='New output directory (default: outputs/releases/improved-inventory/VERSION)')
+    cli.add_argument('--layout', choices=['legacy', 'universal'], default='universal',
+                     help='One archive for both managers; legacy reproduces the older split layout.')
     args = cli.parse_args()
     if git('status', '--porcelain'):
         raise SystemExit('Commit project changes before packaging; working tree must be clean.')
@@ -105,7 +127,8 @@ def main():
         raise SystemExit('Game changed during build; candidate withheld.')
     files = payload(version, commit, game_hash)
     output.mkdir(parents=True)
-    for suffix, variant in package_variants(files).items():
+    variants = {'': universal_package(files)} if args.layout == 'universal' else package_variants(files)
+    for suffix, variant in variants.items():
         archive = output / f'ImprovedInventory-{version}{suffix}.zip'
         write_archive(archive, variant)
         checksum = digest(archive.read_bytes())

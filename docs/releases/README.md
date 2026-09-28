@@ -18,6 +18,14 @@ identical DLL/assets and must not be installed together. GitHub records the
 source commit, release notes and checksum. Nexus provides Vortex downloads.
 Check both downloads and version numbers before marking a release synchronized.
 
+For the next Improved Inventory release, the target is **one ZIP for both
+Vortex and Mewtator**, with placement handled automatically. Download selection
+and installation effort are part of the player experience. The opt-in
+`--layout universal` candidate and its remaining validation are tracked in the
+[packaging investigation](../research/improved-inventory-universal-package.md).
+The two-package instructions above describe published 0.3.1, not the desired
+long-term workflow. Do not change frozen archives in place.
+
 Use the manual first-release procedure below. Later uploads can use Nexus's
 official action, which requires an existing mod page and at least one uploaded
 file.

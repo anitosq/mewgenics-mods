@@ -11,16 +11,15 @@ and while choosing your cats' equipment before an adventure.
 
 ## Download and install
 
-Version 0.3.1: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.1)
+Version 0.3.2 (release candidate): [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.2)
 and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
 Requires Windows x64, Mewgenics Steam build 25143593 (1.1.21239), and
 Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
-dependency. Use the regular download for Vortex or manual game-folder setup,
-or the Mewtator download for its configured mods directory. Follow the
-[installation guide](INSTALL.md) and install only one variant.
+dependency. The same ZIP supports Vortex and Mewtator. Follow the
+[installation guide](INSTALL.md), including the update step for older Vortex installs.
 The mod stays inactive on unsupported game builds.
 
-See the [release notes](releases/0.3.1.md) for changes and the
+See the [release notes](releases/0.3.2.md) for changes and the
 [changelog](CHANGELOG.md) for changes.
 
 ## Release records
@@ -72,8 +71,8 @@ python tools/package_improved_inventory.py --game 'C:\Program Files (x86)\Steam\
 ```
 
 The packager runs fixtures, native font/art checks, release compilation and
-startup guard checks. It builds the DLL/assets once and writes regular and
-Mewtator ZIPs, each with a checksum and payload manifest, under
+startup guard checks. It builds the DLL/assets once and writes one ZIP
+with a checksum and payload manifest under
 `outputs/releases/improved-inventory/<version>/` and refuses to overwrite an
 existing candidate directory. Use `--output outputs/candidates/<new-name>`
 for another local test build. See [installation instructions](INSTALL.md).

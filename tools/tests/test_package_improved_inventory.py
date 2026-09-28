@@ -3,13 +3,37 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from package_improved_inventory import package_variants, write_archive
+from package_improved_inventory import package_variants, universal_package, write_archive
 
 
 class PackageVariantsTests(unittest.TestCase):
+    def test_universal_maps_every_payload_without_duplicate_dll_or_installer_choices(self):
+        files = {
+            'ImprovedInventory.dll': b'native build',
+            'ImprovedInventory/description.json': b'{}',
+            'ImprovedInventory/swfs/improved_inventory.swf': b'UI build',
+        }
+        packed = universal_package(files)
+        self.assertEqual([n for n in packed if n.endswith('.dll')],
+                         ['ImprovedInventory/ImprovedInventory.dll'])
+        xml = packed['fomod/ModuleConfig.xml']
+        self.assertFalse(xml.startswith(b'<?xml'))
+        config = ET.fromstring(xml)
+        self.assertIsNone(config.find('installSteps'))
+        deployed = {}
+        for entry in config.findall('requiredInstallFiles/file'):
+            source = entry.attrib['source'].replace('\\', '/')
+            destination = entry.attrib['destination'].replace('\\', '/')
+            self.assertNotIn(destination, deployed)
+            deployed[destination] = packed[source]
+        self.assertEqual(deployed, {'mods/' + name: data for name, data in files.items()})
+        self.assertEqual({k: v for k, v in packed.items() if not k.startswith('fomod/')},
+                         package_variants(files)['-Mewtator'])
+
     def test_only_dll_location_changes(self):
         files = {
             'ImprovedInventory.dll': b'native build',
