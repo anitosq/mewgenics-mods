@@ -148,3 +148,7 @@ for hosted download verification. The public update instructions retain the
 remove-and-deploy step for older Vortex packages. Vortex's Load Order view can
 show an unmanaged thumbnail because the FOMOD installer does not set the
 extension's modName attribute; its checkbox and launch arguments still work.
+
+The subsequent [association fix](improved-inventory-vortex-association.md)
+adds installer metadata to restore that link. It is tested locally and has
+not yet been published.

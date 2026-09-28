@@ -1,5 +1,9 @@
 # Improved Inventory changelog
 
+## Unreleased
+
+- Fixed the "Not managed by Vortex" label in Load Order.
+
 ## 0.3.2
 
 - One download now works with both Vortex and Mewtator.

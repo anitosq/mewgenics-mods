@@ -89,6 +89,16 @@ def universal_package(files):
     ET.indent(config)
     # Vortex's native installer rejects the optional XML declaration on the tested setup.
     nested['fomod/ModuleConfig.xml'] = ET.tostring(config, encoding='utf-8', xml_declaration=False)
+    # The FOMOD route bypasses the game's installer, which normally supplies
+    # this folder association for Vortex's Load Order view. A distinct source
+    # key preserves other attribute instructions (such as installerChoices).
+    # Vortex consumes this file without deploying it; Mewtator imports only
+    # the description.json subtree and ignores these sibling installer files.
+    metadata = 'vortex_override_instructions.json'
+    nested[metadata] = json_bytes([{
+        'type': 'attribute', 'source': metadata,
+        'key': 'modName', 'value': 'ImprovedInventory',
+    }])
     return nested
 
 

@@ -1,5 +1,6 @@
 """Guard the distinct discovery layouts and identical runtime payloads."""
 from pathlib import Path
+import json
 import sys
 import tempfile
 import unittest
@@ -31,8 +32,19 @@ class PackageVariantsTests(unittest.TestCase):
             self.assertNotIn(destination, deployed)
             deployed[destination] = packed[source]
         self.assertEqual(deployed, {'mods/' + name: data for name, data in files.items()})
-        self.assertEqual({k: v for k, v in packed.items() if not k.startswith('fomod/')},
+        self.assertEqual({k: v for k, v in packed.items() if k.startswith('ImprovedInventory/')},
                          package_variants(files)['-Mewtator'])
+
+        metadata = 'vortex_override_instructions.json'
+        instructions = json.loads(packed[metadata])
+        self.assertEqual(instructions, [{
+            'type': 'attribute', 'source': metadata,
+            'key': 'modName', 'value': 'ImprovedInventory',
+        }])
+        # Vortex merges overrides by source or type. Preserve the FOMOD
+        # installer's own attribute instead of replacing installerChoices.
+        self.assertNotEqual(instructions[0]['source'], 'attribute')
+        self.assertNotIn('mods/' + metadata, deployed)
 
     def test_only_dll_location_changes(self):
         files = {

@@ -33,6 +33,9 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
+An unpublished packaging fix restores Vortex's Load Order association. See
+the [test record](../../docs/research/improved-inventory-vortex-association.md).
+
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
 under "Available".

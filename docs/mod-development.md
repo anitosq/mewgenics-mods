@@ -148,6 +148,11 @@ name/version, then test that exact package through Vortex. Cover installation,
 disable/re-enable, removal, reinstall, updates and asset Load Order toggling.
 A renamed-mod migration and a same-name version upgrade are different tests.
 
+Check that the installed mod is associated with its Load Order entry, not
+only that files deploy and launch. A custom installer can bypass metadata
+normally supplied by the game extension; see the
+[Vortex association fix](research/improved-inventory-vortex-association.md).
+
 Check each manager's DLL discovery separately from its asset paths before
 claiming compatibility. Improved Inventory 0.3.0's sibling DLL worked with
 Mewjector's game-folder scan but was missed by Mewtator's per-mod discovery in
