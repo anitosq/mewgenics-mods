@@ -1,6 +1,6 @@
 # Improved Inventory installation
 
-Version 0.3.2 requires Windows x64, Mewgenics 1.1.21239 (Steam build
+Version 0.3.3 requires Windows x64, Mewgenics 1.1.21239 (Steam build
 25143593), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3. The same ZIP works with Vortex and Mewtator.
 
@@ -11,7 +11,7 @@ API v3. The same ZIP works with Vortex and Mewtator.
 3. Enable and deploy Improved Inventory, then launch Mewgenics through Vortex.
 
 **Updating from 0.3.1 or earlier:** remove the old version in Vortex and deploy
-before installing 0.3.2. This clears the old installation before Vortex places
+before installing the update. This clears the old installation before Vortex places
 the new package.
 
 If Vortex already manages your Mewgenics mods, you don't need a separate
@@ -27,8 +27,7 @@ follow its setup prompts.
 3. Launch the game through Mewtator.
 
 Your mods directory can be outside the game folder. When updating, replace
-the existing ImprovedInventory folder. The `fomod` folder is only for Vortex;
-Mewtator's ZIP importer skips it automatically.
+the existing ImprovedInventory folder. Mewtator's ZIP importer handles the archive automatically.
 
 If switching managers, remove the previous installation through that manager
 first. Vortex users should deploy after removing it.
@@ -47,7 +46,7 @@ Mewgenics/mods/ImprovedInventory/swfs/swflist.gon.append
 
 Keep Mewjector enabled and scanning `mods`. Include the full path to
 `mods/ImprovedInventory` in the game's `-modpaths` launch arguments alongside
-your other enabled mods. Do not copy the `fomod` folder into the game.
+your other enabled mods. Leave the installer files outside that folder out of the game directory.
 
 ## Removing the mod
 

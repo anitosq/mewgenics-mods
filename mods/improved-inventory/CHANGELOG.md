@@ -1,6 +1,6 @@
 # Improved Inventory changelog
 
-## Unreleased
+## 0.3.3
 
 - Fixed the "Not managed by Vortex" label in Load Order.
 
