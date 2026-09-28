@@ -148,6 +148,11 @@ name/version, then test that exact package through Vortex. Cover installation,
 disable/re-enable, removal, reinstall, updates and asset Load Order toggling.
 A renamed-mod migration and a same-name version upgrade are different tests.
 
+Check each manager's DLL discovery separately from its asset paths before
+claiming compatibility. Improved Inventory 0.3.0's sibling DLL worked with
+Mewjector's game-folder scan but was missed by Mewtator's per-mod discovery in
+an external directory. An asset-path fixture alone did not cover installation.
+
 Use [the package verifier](../tools/verify_mod_archive.py) to compare a frozen
 manifest with a local or downloaded ZIP. Nexus may rename a download; the
 filename doesn't determine whether its contents match. See the release

@@ -27,6 +27,10 @@ Close the game. Install and enable Mewjector if you don't already use it, then d
 
 See the [installation guide](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/INSTALL.md) for setup help and compatibility details. Controller support hasn't been tested.
 
+## Manual installation / Mewtator (0.3.0)
+
+Extract both the DLL and ImprovedInventory folder into the `mods` folder beside `Mewgenics.exe`, and enable the ImprovedInventory asset folder in your launch options. For 0.3.0, use this location rather than a separate Mewtator mods folder. See the installation guide for the folder layout and launch arguments.
+
 ## Links
 
 [GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.0) | [Source and issue tracker](https://github.com/anitosq/mewgenics-mods)

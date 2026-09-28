@@ -34,12 +34,27 @@ the game. Changes take effect after restarting the game.
 
 ## Manual installation
 
-This method hasn't been tested. Extract the ZIP into the game's `mods`
-directory, preserving both components shown above. Enable the full
+For 0.3.0, extract the ZIP into the `mods` directory beside `Mewgenics.exe`,
+preserving both components shown above. This is inside your game's installation
+folder, wherever Steam installed it; it does not have to be on C: or in Program
+Files. Enable the full
 `mods/ImprovedInventory` path in the game's
 `-modpaths` arguments alongside your other enabled mod paths. Mewjector must
 be enabled and scanning `mods`. Starting from Steam without the configured
 asset launch arguments will leave this mod inactive.
+
+### Mewtator and custom mod folders (0.3.0)
+
+Use the game's `mods` folder for this release. Extracting the ZIP into a separate
+Mewtator mods folder does not work with Mewtator's normal DLL discovery: our DLL
+sits beside the ImprovedInventory folder, while Mewtator scans inside enabled
+mod folders. Moving the DLL inside that folder also fails the mod's current
+asset check. Support for that layout needs a mod update.
+
+Keep the DLL beside the ImprovedInventory folder and enable its asset folder
+in the launch options as described above. One player reports this manual setup
+working with Mewtator; we have reproduced the custom-folder discovery problem
+in an isolated check, but have not run a full Mewtator gameplay test.
 
 ## Updating and removing
 
@@ -67,8 +82,10 @@ relevant log lines.
 ## Compatibility
 
 Mewjector is the only mod dependency; runtime v3.0 was used for testing.
-Controller and IME input, manual installation and broader resolution/UI-scale
-coverage haven't been tested. In-game performance with very large inventories
+Controller and IME input and broader resolution/UI-scale coverage haven't been
+tested. Manual installation has a player report, with the Mewtator limitation
+described above; our in-game release checks used Vortex.
+In-game performance with very large inventories
 also needs testing. Other game builds are unsupported.
 
 Item transfers are still manual, and End Day still deletes items left in Trash.
