@@ -11,7 +11,10 @@ Keep development and tagged releases in this GitHub repository. Each standalone
 mod gets its own versions, archive and Nexus page; closely related variants
 and compatibility patches can share that mod's page.
 
-Build one archive, test it, and upload it to both sites. GitHub records the
+Build once, test each installation variant, and upload each tested archive
+unchanged to both sites. Improved Inventory's regular ZIP stays the Vortex
+Main/primary download; the Mewtator ZIP is labelled separately. Both contain
+identical DLL/assets and must not be installed together. GitHub records the
 source commit, release notes and checksum. Nexus provides Vortex downloads.
 Check both downloads and version numbers before marking a release synchronized.
 

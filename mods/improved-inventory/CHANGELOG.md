@@ -1,5 +1,11 @@
 # Improved Inventory changelog
 
+## 0.3.1
+
+- Added a Mewtator download that supports its configured mods directory,
+  including folders outside the game installation.
+- Startup logs now distinguish disabled assets from missing or mismatched files.
+
 ## 0.3.0 (2026-09-28)
 
 - See separate Storage and Trash counts beside each set.

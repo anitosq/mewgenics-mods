@@ -32,6 +32,9 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
+The 0.3.1 Mewtator compatibility patch is in testing; 0.3.0 remains the public
+release. See the [candidate record](../../docs/releases/improved-inventory/0.3.1-candidate.md).
+
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
 under "Available".
@@ -70,7 +73,8 @@ python tools/package_improved_inventory.py --game 'C:\Program Files (x86)\Steam\
 ```
 
 The packager runs fixtures, native font/art checks, release compilation and
-startup guard checks. It writes the ZIP, checksum and payload manifest under
+startup guard checks. It builds the DLL/assets once and writes regular and
+Mewtator ZIPs, each with a checksum and payload manifest, under
 `outputs/releases/improved-inventory/<version>/` and refuses to overwrite an
 existing candidate directory. Use `--output outputs/candidates/<new-name>`
 for another local test build. See [installation instructions](INSTALL.md).

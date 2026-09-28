@@ -164,8 +164,19 @@ static DWORD WINAPI initialize(void* ignored) {
 #if IQ_RELEASE_BUILD
     wchar_t module[MAX_PATH];
     DWORD module_size=GetModuleFileNameW(own_module,module,MAX_PATH);
-    if(!module_size || module_size>=MAX_PATH || !iq_assets_enabled(module,GetCommandLineW())) {
-        report("Inactive: enable ImprovedInventory in the mod load order and deploy matching UI assets.");
+    int asset_status=(!module_size || module_size>=MAX_PATH)?IQ_ASSETS_INVALID_PATH:
+        iq_assets_status(module,GetCommandLineW());
+    if(asset_status!=IQ_ASSETS_READY) {
+        switch(asset_status) {
+        case IQ_ASSETS_DISABLED:
+            report("Inactive: ImprovedInventory asset folder is not enabled in -modpaths.");break;
+        case IQ_ASSETS_MISMATCHED:
+            report("Inactive: UI assets are missing or do not match this DLL. Reinstall the complete package.");break;
+        case IQ_ASSETS_AMBIGUOUS:
+            report("Inactive: both containing and sibling asset folders are enabled. Keep only one installation.");break;
+        default:
+            report("Inactive: cannot resolve the DLL or asset path within the supported path length.");break;
+        }
         return 0;
     }
     session_mode=2;

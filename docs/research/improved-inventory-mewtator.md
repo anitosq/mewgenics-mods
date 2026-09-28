@@ -66,6 +66,6 @@ Before releasing a patch:
    variant. Leave published 0.3.0 artifacts unchanged. Then replace the
    temporary listing note.
 
-The compatibility patch is proposed, not implemented. The 0.3.0 installation
-guide and listing now document the current workaround without claiming that a
-particular drive or Program Files path is required.
+The 0.3.1 patch implements both layouts and two archives; validation is tracked
+in the [candidate record](../releases/improved-inventory/0.3.1-candidate.md).
+The live 0.3.0 listing retains the workaround until the patch is published.

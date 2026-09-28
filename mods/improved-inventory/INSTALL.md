@@ -1,6 +1,6 @@
 # Improved Inventory installation
 
-Version 0.3.0 requires Windows x64, Steam build 25143593 (game version
+Version 0.3.1 requires Windows x64, Steam build 25143593 (game version
 1.1.21239), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3 (tested with runtime v3.0). The mod stays inactive on other game builds.
 
@@ -34,7 +34,7 @@ the game. Changes take effect after restarting the game.
 
 ## Manual installation
 
-For 0.3.0, extract the ZIP into the `mods` directory beside `Mewgenics.exe`,
+Extract `ImprovedInventory-0.3.1.zip` into the `mods` directory beside `Mewgenics.exe`,
 preserving both components shown above. This is inside your game's installation
 folder, wherever Steam installed it; it does not have to be on C: or in Program
 Files. Enable the full
@@ -43,35 +43,52 @@ Files. Enable the full
 be enabled and scanning `mods`. Starting from Steam without the configured
 asset launch arguments will leave this mod inactive.
 
-### Mewtator and custom mod folders (0.3.0)
+## Mewtator
 
-Use the game's `mods` folder for this release. Extracting the ZIP into a separate
-Mewtator mods folder does not work with Mewtator's normal DLL discovery: our DLL
-sits beside the ImprovedInventory folder, while Mewtator scans inside enabled
-mod folders. Moving the DLL inside that folder also fails the mod's current
-asset check. Support for that layout needs a mod update.
+1. Close Mewgenics and download `ImprovedInventory-0.3.1-Mewtator.zip`.
+2. Extract its `ImprovedInventory` folder into your configured Mewtator mods
+   directory. The DLL, `description.json` and `swfs` must be inside that folder.
+3. Enable Improved Inventory and DLL Mod Support in Mewtator. Mewjector must
+   be installed in the game directory.
+4. Launch the game through Mewtator.
 
-Keep the DLL beside the ImprovedInventory folder and enable its asset folder
-in the launch options as described above. One player reports this manual setup
-working with Mewtator; we have reproduced the custom-folder discovery problem
-in an isolated check, but have not run a full Mewtator gameplay test.
+Your Mewtator mods directory can be outside the game directory. Its package has
+this layout:
+
+```text
+ImprovedInventory/ImprovedInventory.dll
+ImprovedInventory/description.json
+ImprovedInventory/swfs/improved_inventory.swf
+ImprovedInventory/swfs/swflist.gon.append
+```
+
+Use only one download. If switching from the Vortex or manual package, remove
+that installation first, including the old `mods/ImprovedInventory.dll`. Vortex
+users should remove it through Vortex and deploy before switching managers.
 
 ## Updating and removing
 
 Close the game before changing the mod. Update the whole archive through
-Vortex, keep one version enabled, and deploy. The DLL and SWFs must come from
+Vortex, keep one version enabled, and deploy. For Mewtator, replace the whole
+ImprovedInventory folder with the new Mewtator download. The DLL and SWFs must come from
 the same archive; mismatched files leave the mod inactive.
 
 To uninstall, disable/remove Improved Inventory in Vortex and deploy. For a manual
 installation remove only `mods/ImprovedInventory.dll` and `mods/ImprovedInventory/`, and
 remove its asset launch argument.
+For Mewtator, disable the mod and remove its ImprovedInventory folder.
 
 ## Troubleshooting
 
 Look for ImprovedInventory and its version in `mod_logs/chainloader.log`.
 "Improved Inventory enabled; all UI hooks installed" confirms native startup.
-If it reports inactive assets, deploy the complete package and check that
-ImprovedInventory is enabled in Vortex's Load Order page. Launch with Vortex's
+If it reports that the asset folder is not enabled, check Improved Inventory
+in your manager's mod list (Vortex's Load Order page). If it reports missing or
+mismatched UI assets, reinstall the complete download for your manager.
+An ambiguous-folder message means both folder layouts are enabled; remove the
+old installation and keep one asset path.
+
+For Vortex, launch with its
 default Mewgenics tool (called Custom Launch in Tools). The
 [game-support extension](https://www.nexusmods.com/site/mods/1691) supplies the
 mod launch arguments; it is already present in a working Vortex setup.
@@ -83,13 +100,12 @@ relevant log lines.
 
 Mewjector is the only mod dependency; runtime v3.0 was used for testing.
 Controller and IME input and broader resolution/UI-scale coverage haven't been
-tested. Manual installation has a player report, with the Mewtator limitation
-described above; our in-game release checks used Vortex.
+tested. See the test checklist for manager and gameplay test coverage.
 In-game performance with very large inventories
 also needs testing. Other game builds are unsupported.
 
 Item transfers are still manual, and End Day still deletes items left in Trash.
 
-See the [release notes](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/releases/0.3.0.md)
+See the [release notes](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/releases/0.3.1.md)
 for features and the [test checklist](https://github.com/anitosq/mewgenics-mods/blob/main/mods/improved-inventory/RELEASE_CHECKLIST.md)
 for detailed coverage.

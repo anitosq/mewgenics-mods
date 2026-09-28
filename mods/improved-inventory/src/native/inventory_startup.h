@@ -10,30 +10,52 @@ static int iq_canonical_path(const wchar_t* input,wchar_t* output) {
     return 1;
 }
 
-static int iq_assets_enabled(const wchar_t* dll_path,const wchar_t* command) {
-    wchar_t root[MAX_PATH],wanted[MAX_PATH],actual[MAX_PATH];
-    if(!iq_canonical_path(dll_path,root))return 0;
-    wchar_t* slash=wcsrchr(root,L'\\');
-    if(!slash || (size_t)(slash-root)+32>=MAX_PATH)return 0;
-    wcscpy(slash+1,L"ImprovedInventory");
-    if(!iq_canonical_path(root,wanted))return 0;
+enum IQAssetStatus {
+    IQ_ASSETS_INVALID_PATH=0,
+    IQ_ASSETS_READY=1,
+    IQ_ASSETS_DISABLED=2,
+    IQ_ASSETS_MISMATCHED=3,
+    IQ_ASSETS_AMBIGUOUS=4
+};
+
+static int iq_assets_status(const wchar_t* dll_path,const wchar_t* command) {
+    wchar_t parent[MAX_PATH],sibling[MAX_PATH],actual[MAX_PATH];
+    if(!dll_path || !command || !iq_canonical_path(dll_path,parent))return IQ_ASSETS_INVALID_PATH;
+    wchar_t* slash=wcsrchr(parent,L'\\');
+    if(!slash)return IQ_ASSETS_INVALID_PATH;
+    /* Preserve a drive root's trailing separator. */
+    if(slash==parent+2)slash[1]=0;else *slash=0;
+    if(wcslen(parent)+20>=MAX_PATH)return IQ_ASSETS_INVALID_PATH;
+    wcscpy(sibling,parent);wcscat(sibling,L"\\ImprovedInventory");
+    if(!iq_canonical_path(sibling,actual))return IQ_ASSETS_INVALID_PATH;
+    wcscpy(sibling,actual);
     int argc=0,enabled=0,paths=0;
     wchar_t** argv=CommandLineToArgvW(command,&argc);
-    if(!argv)return 0;
+    if(!argv)return IQ_ASSETS_INVALID_PATH;
     for(int i=1;i<argc;i++) {
         if(!wcscmp(argv[i],L"-modpaths")) {paths=1;continue;}
         if(argv[i][0]==L'-') {paths=0;continue;}
-        if(paths && iq_canonical_path(argv[i],actual) && !_wcsicmp(wanted,actual))enabled=1;
+        if(paths && argv[i][0] && iq_canonical_path(argv[i],actual)) {
+            if(!_wcsicmp(parent,actual))enabled|=1;
+            if(!_wcsicmp(sibling,actual))enabled|=2;
+        }
     }
     LocalFree(argv);
-    if(!enabled)return 0;
-    if(wcslen(root)+40>=MAX_PATH)return 0;
+    if(!enabled)return IQ_ASSETS_DISABLED;
+    /* Never guess between two enabled copies of the UI assets. */
+    if(enabled==3)return IQ_ASSETS_AMBIGUOUS;
+    const wchar_t* root=enabled==1?parent:sibling;
+    if(wcslen(root)+40>=MAX_PATH)return IQ_ASSETS_INVALID_PATH;
     wcscpy(actual,root);wcscat(actual,L"\\swfs\\improved_inventory.swf");
-    if(!iq_file_matches(actual,EXPECTED_UI_SHA256))return 0;
+    if(!iq_file_matches(actual,EXPECTED_UI_SHA256))return IQ_ASSETS_MISMATCHED;
     wcscpy(actual,root);wcscat(actual,L"\\swfs\\swflist.gon.append");
-    return iq_file_matches(actual,EXPECTED_APPEND_SHA256);
+    return iq_file_matches(actual,EXPECTED_APPEND_SHA256)?IQ_ASSETS_READY:IQ_ASSETS_MISMATCHED;
 }
 
 __declspec(dllexport) int ImprovedInventoryValidateAssetsW(const wchar_t* dll_path,const wchar_t* command) {
-    return dll_path && command && iq_assets_enabled(dll_path,command);
+    return iq_assets_status(dll_path,command)==IQ_ASSETS_READY;
+}
+
+__declspec(dllexport) int ImprovedInventoryAssetStatusW(const wchar_t* dll_path,const wchar_t* command) {
+    return iq_assets_status(dll_path,command);
 }

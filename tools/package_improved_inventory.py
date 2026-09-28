@@ -1,4 +1,4 @@
-"""Build and verify one candidate archive from a clean commit; never deploy/publish."""
+"""Build once and package Vortex/manual and Mewtator candidates; never deploy/publish."""
 import argparse
 import hashlib
 import json
@@ -65,6 +65,13 @@ def write_archive(path, files):
                 raise RuntimeError(f'Archive content mismatch: {name}')
 
 
+def package_variants(files):
+    """Only DLL placement differs; all bytes come from the same build."""
+    nested = dict(files)
+    nested['ImprovedInventory/ImprovedInventory.dll'] = nested.pop('ImprovedInventory.dll')
+    return {'': files, '-Mewtator': nested}
+
+
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--game', required=True, type=Path)
@@ -98,15 +105,16 @@ def main():
         raise SystemExit('Game changed during build; candidate withheld.')
     files = payload(version, commit, game_hash)
     output.mkdir(parents=True)
-    archive = output / f'ImprovedInventory-{version}.zip'
-    write_archive(archive, files)
-    checksum = digest(archive.read_bytes())
-    archive.with_suffix('.zip.sha256').write_text(f'{checksum}  {archive.name}\n', encoding='ascii')
-    manifest = {'version': version, 'source_commit': commit, 'archive': archive.name,
-                'sha256': checksum, 'files': {name: digest(data) for name, data in sorted(files.items())}}
-    archive.with_suffix('.manifest.json').write_bytes(json_bytes(manifest))
-    print(f'Candidate (not published): {archive}')
-    print(f'SHA-256: {checksum}')
+    for suffix, variant in package_variants(files).items():
+        archive = output / f'ImprovedInventory-{version}{suffix}.zip'
+        write_archive(archive, variant)
+        checksum = digest(archive.read_bytes())
+        archive.with_suffix('.zip.sha256').write_text(f'{checksum}  {archive.name}\n', encoding='ascii')
+        manifest = {'version': version, 'source_commit': commit, 'archive': archive.name,
+                    'sha256': checksum, 'files': {name: digest(data) for name, data in sorted(variant.items())}}
+        archive.with_suffix('.manifest.json').write_bytes(json_bytes(manifest))
+        print(f'Candidate (not published): {archive}')
+        print(f'SHA-256: {checksum}')
 
 
 if __name__ == '__main__':
