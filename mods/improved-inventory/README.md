@@ -11,29 +11,28 @@ and while choosing your cats' equipment before an adventure.
 
 ## Download and install
 
-Version 0.3.0: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.0)
+Version 0.3.1: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.1)
 and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
 Requires Windows x64, Mewgenics Steam build 25143593 (1.1.21239), and
 Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
-dependency. Follow the [installation guide](INSTALL.md) for Vortex or manual setup.
+dependency. Use the regular download for Vortex or manual game-folder setup,
+or the Mewtator download for its configured mods directory. Follow the
+[installation guide](INSTALL.md) and install only one variant.
 The mod stays inactive on unsupported game builds.
 
-See the [release notes](releases/0.3.0.md) for features and the
+See the [release notes](releases/0.3.1.md) for changes and the
 [changelog](CHANGELOG.md) for changes.
 
 ## Release records
 
-The [candidate record](../../docs/releases/improved-inventory/0.3.0-candidate.md)
+The [candidate record](../../docs/releases/improved-inventory/0.3.1-candidate.md)
 contains the Vortex and gameplay test results. The
 [release checklist](RELEASE_CHECKLIST.md) tracks remaining tests, and the
-[publication record](../../docs/releases/improved-inventory/0.3.0-publication.md)
+[publication record](../../docs/releases/improved-inventory/0.3.1-publication.md)
 records download verification. Use the [publishing workflow](../../docs/releases/README.md)
 for updates to Nexus Mods and GitHub.
 
 ## Development
-
-The 0.3.1 Mewtator compatibility patch is in testing; 0.3.0 remains the public
-release. See the [candidate record](../../docs/releases/improved-inventory/0.3.1-candidate.md).
 
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
