@@ -1,7 +1,7 @@
 # Release and publishing workflow
 
-Policy established 25 September 2026. Improved Inventory 0.3.1 is published;
-see its [publication record](improved-inventory/0.3.1-publication.md) for
+Policy established 25 September 2026. Improved Inventory 0.3.2 is published;
+see its [publication record](improved-inventory/0.3.2-publication.md) for
 verified GitHub and Nexus downloads.
 
 ## Destinations and source of truth
@@ -11,20 +11,19 @@ Keep development and tagged releases in this GitHub repository. Each standalone
 mod gets its own versions, archive and Nexus page; closely related variants
 and compatibility patches can share that mod's page.
 
-Build once, test each installation variant, and upload each tested archive
-unchanged to both sites. Improved Inventory's regular ZIP stays the Vortex
-Main/primary download; the Mewtator ZIP is labelled separately. Both contain
-identical DLL/assets and must not be installed together. GitHub records the
-source commit, release notes and checksum. Nexus provides Vortex downloads.
+Build once, test the same archive with each supported manager, and upload it
+unchanged to both sites. Improved Inventory uses one ZIP for Vortex and
+Mewtator, listed as Main/primary on Nexus. GitHub records the source commit,
+release notes and checksum. Nexus provides Vortex downloads.
 Check both downloads and version numbers before marking a release synchronized.
 
-For the next Improved Inventory release, the target is **one ZIP for both
-Vortex and Mewtator**, with placement handled automatically. Download selection
-and installation effort are part of the player experience. The opt-in
-`--layout universal` candidate and its remaining validation are tracked in the
-[packaging investigation](../research/improved-inventory-universal-package.md).
-The two-package instructions above describe published 0.3.1, not the desired
-long-term workflow. Do not change frozen archives in place.
+The default universal layout includes a required-file FOMOD mapping for Vortex
+and one self-contained mod folder for Mewtator's importer. Validate both routes,
+including external Mewtator paths and Vortex's generated launch arguments.
+For Vortex updates from 0.3.1 or earlier, remove the old mod and deploy before
+installing 0.3.2; the deployment root changed. Do not change frozen archives
+in place. The [packaging investigation](../research/improved-inventory-universal-package.md)
+records why this layout was chosen.
 
 Use the manual first-release procedure below. Later uploads can use Nexus's
 official action, which requires an existing mod page and at least one uploaded
@@ -269,15 +268,14 @@ Never roll back a user's save as part of a mod update or uninstall.
 
 ## Current release and next step
 
-Version 0.3.1 has regular and Mewtator downloads on GitHub and Nexus. The regular
-ZIP remains Main/primary on Nexus; Mewtator is an Optional manual download.
-The normal Vortex download and current-profile update succeeded. See the
-[publication record](improved-inventory/0.3.1-publication.md) for download checks
-and scan status.
+Version 0.3.2 uses one download on GitHub and Nexus for both managers. See the
+[publication record](improved-inventory/0.3.2-publication.md) for download checks,
+scan status and public Vortex installation results.
 
 For future automated updates, the existing Nexus target is API file ID
-`8024283` for the regular package and `8041395` for Mewtator, mod ID `526`,
-game ID `8802`. Do not use legacy version IDs `1669` and `1670` as the upload
-action's file IDs. No API key or automatic mirror is configured.
+`8024283` for the universal package, mod ID `526`, game ID `8802`. The separate
+Mewtator API file `8041395` belongs to retired 0.3.1 packaging and should not
+receive new uploads. Do not use legacy version ID `1671` as the upload action's
+file ID. No API key or automatic mirror is configured.
 Automating this mirror remains the next workflow improvement. Candidate
 records and the readiness checklist retain the broader runtime test coverage.

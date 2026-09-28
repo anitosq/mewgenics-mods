@@ -135,3 +135,16 @@ SHA-256: 96a9f05b5e91c4ca8a91262cac5d5b2dfbbaeb9e133dc1bb9da6c84385fd2a65
 
 Its bundled installation text still describes the public two-package release.
 This archive is only an experiment and must not be uploaded as a release.
+
+## Release outcome, 28 September 2026
+
+Version 0.3.2 adopts the universal ZIP as the default. The final archive passed
+Vortex installation, asset enable/disable checks and a Storage/Trash smoke test.
+The same ZIP passed Mewtator's actual import/replace and launcher services in
+an external directory, plus an equipment-selection smoke test. See the
+[candidate record](../releases/improved-inventory/0.3.2-candidate.md) for scope
+and the [publication record](../releases/improved-inventory/0.3.2-publication.md)
+for hosted download verification. The public update instructions retain the
+remove-and-deploy step for older Vortex packages. Vortex's Load Order view can
+show an unmanaged thumbnail because the FOMOD installer does not set the
+extension's modName attribute; its checkbox and launch arguments still work.
