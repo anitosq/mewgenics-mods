@@ -1,18 +1,13 @@
 # Guaranteed Boss Loot
 
-Losing a cat to the loot roll after winning a boss fight is a rough way to
-end an act. Guaranteed Boss Loot makes the three act-ending loot choices
-succeed, so the cat who searches survives and you get the normal reward.
-
-## What changes
+Makes these three boss-loot choices always succeed without killing the cat
+who searches:
 
 - **Dead King:** looting the Throbbing King's body succeeds.
 - **The Rift:** reaching into the rift succeeds.
 - **Dead God:** examining the Creator's remains succeeds.
 
-The original reward pools and successful outcomes stay the same. This does
-not change boss fights, other events, item rarity or the number of rewards.
-You still choose whether to loot and which cat takes the action.
+Rewards, boss fights and other events are unchanged.
 
 ## Install
 
@@ -35,22 +30,13 @@ This is a data-only mod. It does not require Mewjector or a DLL loader.
 
 ## Compatibility
 
-Disable **Never Fail Boss Looting** if it is installed; you only need one.
-Load Guaranteed Boss Loot after **FewerBadEvents**, **Event Descriptions**,
-and any other mod that changes these boss events. A later event override
-can undo the guarantee. Event-description mods may still display their
-original warning text.
+Load after other mods that change these boss events, including FewerBadEvents
+and Event Descriptions. Later overrides can undo the guarantee.
+Event-description mods may still display their original warning text.
 
-The patch changes only the success chance and failure outcome of these
-three choices. It does not replace the full event file or alter saves.
-Disabling or removing it restores normal behavior for future events;
-it does not undo rewards or deaths that already happened.
+Disable or remove the mod to restore normal behavior for future events.
 
 ## Credits and source
-
-Inspired by BaronMcChicken's
-[Never Fail Boss Looting](https://www.nexusmods.com/mewgenics/mods/80).
-This is an independent implementation by anitosq.
 
 Original mod source is under the MIT License. Mewgenics and its artwork
 belong to Edmund McMillen, Tyler Glaiel and their respective rights holders.
