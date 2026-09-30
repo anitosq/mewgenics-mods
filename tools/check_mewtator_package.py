@@ -20,6 +20,7 @@ def main():
     cli.add_argument('--source', required=True, type=Path)
     cli.add_argument('--archive', required=True, type=Path)
     cli.add_argument('--manifest', required=True, type=Path)
+    cli.add_argument('--mod-name', default='ImprovedInventory')
     args = cli.parse_args()
     # Verify before extraction/loading; manifest must come from our trusted build.
     verify_archive(args.manifest, args.archive)
@@ -34,13 +35,13 @@ def main():
         mods = root / 'External mods with spaces and ñ'
         with zipfile.ZipFile(args.archive) as archive:
             archive.extractall(mods)
-        assets = mods / 'ImprovedInventory'
-        module = assets / 'ImprovedInventory.dll'
-        mod = SimpleNamespace(name='ImprovedInventory', path=str(assets), dll_order=None)
+        assets = mods / args.mod_name
+        module = assets / f'{args.mod_name}.dll'
+        mod = SimpleNamespace(name=args.mod_name, path=str(assets), dll_order=None)
         enabled = SimpleNamespace(enabled_mods=[mod])
         disabled = SimpleNamespace(enabled_mods=[])
         found = service.scan_for_dll_mods(enabled)
-        assert found == [('ImprovedInventory', [module.absolute()])], found
+        assert found == [(args.mod_name, [module.absolute()])], found
         assert service.scan_for_dll_mods(disabled) == []
         ini = game / 'chainloader.ini'
         original = '[Chainloader]\nScanPath=mods\nMewtatorManifest=\n; retained\n'
@@ -52,7 +53,7 @@ def main():
         assert 'ScanPath=mods' in ini.read_text(encoding='utf-8')
         dll = ctypes.WinDLL(str(module))
         try:
-            gate = dll.ImprovedInventoryValidateAssetsW
+            gate = getattr(dll, f'{args.mod_name}ValidateAssetsW')
             gate.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
             command = subprocess.list2cmdline(['Mewgenics.exe', '-modpaths', str(assets)])
             assert gate(str(module), command) == 1
