@@ -1,5 +1,40 @@
 # Release and publishing workflow
 
+## Start or resume efficiently
+
+Use the local `mewgenics-publish` skill when available. It contains this
+project's tool routing, artwork references and observed Nexus editor pitfalls;
+this document and each mod's latest release record remain the source of truth.
+
+Start with the selected mod, not the repository's global latest release. Read
+its current README, version, compatibility information and latest candidate or
+publication record. Classify the work as first release, update, resume,
+listing-only, or preparation-only. Reuse unchanged copy, approved artwork and
+documented coverage; do not repeat general mod research for every release.
+
+Keep a checkpoint in the existing candidate/publication record: source commit,
+version, frozen archive/manifest/hash, test evidence, destination URLs and IDs,
+current stage and next action. Keep private logs and local paths under ignored
+work/ or outputs/. Before retrying an interrupted upload, inspect the existing
+remote result. Never rebuild a frozen artifact just to retry a mirror.
+
+Resolve native startup/asset guards and installation gaps before freezing.
+Finish relevant tests on the frozen ZIP before creating its release tag. Native
+mods and data-only mods have different requirements: the ordinary Vortex
+asset-installer fixture rejects FOMOD archives by design, so use actual FOMOD
+installation checks for that route. Label fixtures and user gameplay separately.
+
+For Nexus, verify saved fields rather than merely filled inputs: switch a
+BBCode source edit back to its rendered view before saving, confirm language
+selection, and wait for the next page's state after navigation. Check persisted
+description, file notes and version before publication.
+
+Track publication, verified download bytes and scan status separately.
+"Some files not scanned" does not mean "Safe to use" or prove a scan is queued.
+Do not bypass a blocked or flagged download. Record and report unresolved scan
+wording even if both hosts' downloads match. Stop after the promised checks;
+preserve a specific next action when an external gate prevents completion.
+
 Policy established 25 September 2026. Improved Inventory 0.3.3 is published;
 see its [publication record](improved-inventory/0.3.3-publication.md) for
 verified GitHub and Nexus downloads.

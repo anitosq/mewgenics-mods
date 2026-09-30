@@ -32,6 +32,8 @@ for current status; dated research notes describe experiments at that time.
   Native hooks must validate the supported executable and their entry bytes;
   paired DLL/assets must fail safely when missing, disabled or mismatched.
 - For releases, follow [the publishing workflow](docs/releases/README.md).
+  Use the local `mewgenics-publish` skill when available to prepare, publish or
+  resume releases; it indexes the existing tools and known Nexus UI pitfalls.
   Keep Nexus display names version-free; use version fields and versioned
   archive names. Build once and use the tested archive on both hosts.
 - Write player copy about features, installation and relevant known issues.
