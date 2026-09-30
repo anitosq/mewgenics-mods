@@ -1,0 +1,9 @@
+Quest_DeadKing {
+    main { options { loot { fixed_chance 100% bad.overwrite null } } }
+}
+Quest_DimensionXRift {
+    main { options { loot { fixed_chance 100% bad.overwrite null } } }
+}
+Quest_DeadGod {
+    main { options { examine { fixed_chance 100% bad.overwrite null } } }
+}

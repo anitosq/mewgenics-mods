@@ -4,6 +4,7 @@ Mewgenics mods by anitosq. Each mod has its own source, tests and documentation.
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
+| [Guaranteed Boss Loot](mods/guaranteed-boss-loot/) | Guaranteed act-ending loot without losing the searching cat | [GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/guaranteed-boss-loot/v0.1.1) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/536) |
 | [Improved Inventory](mods/improved-inventory/) | Scrolling grids, search and filters for Storage, Trash and adventure equipment selection | [0.2.0 on GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.2.0) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/526) |
 
 ## Repository layout
