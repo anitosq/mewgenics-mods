@@ -35,8 +35,8 @@ Do not bypass a blocked or flagged download. Record and report unresolved scan
 wording even if both hosts' downloads match. Stop after the promised checks;
 preserve a specific next action when an external gate prevents completion.
 
-Policy established 25 September 2026. Improved Inventory 0.3.3 is published;
-see its [publication record](improved-inventory/0.3.3-publication.md) for
+Policy established 25 September 2026. Improved Inventory 0.3.4 is published;
+see its [publication record](improved-inventory/0.3.4-publication.md) for
 verified GitHub and Nexus downloads.
 
 ## Destinations and source of truth
