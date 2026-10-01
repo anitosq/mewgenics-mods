@@ -132,10 +132,10 @@ static int iq_visible(const IQDrawer* d) {
 static void iq_present(IQDrawer* d) {
     if(!iq_reference_valid(d->reference))return;
     unsigned char* drawer=d->drawer;
-    void* renderer=iq_ptr(drawer,iq.equipment?0x40:0x50);
-    void* button=iq_drawer_button(drawer);
-    void* transform=iq_ptr(drawer,iq.equipment?0x50:0x60);
-    if (!renderer || !button || !transform) return;
+    void* components[3]; /* Adjacent renderer, button and transform pointers. */
+    if(!iq_read(drawer+(iq.equipment?0x40:0x50),components,sizeof(components)) ||
+       !components[0] || !components[1] || !components[2])return;
+    void* renderer=components[0];
     const int side=d->side;
     int cols=iq.columns[side];
     double pitch=iq.span[side]/cols*(side==0?0.90:1.0);

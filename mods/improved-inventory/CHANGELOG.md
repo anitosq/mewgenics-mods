@@ -1,5 +1,9 @@
 # Improved Inventory changelog
 
+## 0.3.4
+
+- Reduced inventory update overhead, especially with large inventories.
+
 ## 0.3.3
 
 - Fixed the "Not managed by Vortex" label in Load Order.
