@@ -4,11 +4,11 @@ Arrange rooms automatically using furniture you own. Choose which stats to
 improve, set optional Min and Max values, keep pieces pinned, or return
 furniture from one room or the whole house. Includes one-step Undo.
 
-Version 0.1.0 requires Windows x64, Mewgenics 1.1.21239 (Steam build 25143593),
+Version 0.1.1 requires Windows x64, Mewgenics 1.1.21239 (Steam build 25143593),
 and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218) API 3 or newer.
 
 [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/538) |
-[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/auto-furniture/v0.1.0)
+[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/auto-furniture/v0.1.1)
 
 ## Install
 

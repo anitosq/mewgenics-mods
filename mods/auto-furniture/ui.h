@@ -8,7 +8,7 @@ static Update original_furniture_hover;
 static int ui_enabled;
 typedef struct {
     byte* renderer;uint64_t generation;char text[4+6*AF_STATS][180];
-    byte* feedback[3][24];int feedback_count;
+    byte* feedback[3][24];int feedback_count,visible;
 } Control;
 static struct {
     void* owner;void* scene;uint64_t generation;int allowed,modal,action,focus,captured;
@@ -23,7 +23,11 @@ static int control_valid(Control* c) {
     byte dead=1;
     return c->renderer&&generation(c->renderer)==c->generation&&read_bytes(c->renderer+15,&dead,1)&&!dead;
 }
-static void control_hide(Control* c) {if(control_valid(c))c->renderer[0x51]=0;}
+static void control_hide(Control* c) {
+    if(!c->visible)return;
+    c->visible=0;
+    if(control_valid(c))c->renderer[0x51]=0;
+}
 static void* layer_camera(int layer) {
     byte* list=ptr(ptr(ui_state.scene,0x20),0x70);int n=integer(list,12);byte* data=ptr(list,16);
     if(n<0||n>64)return NULL;
@@ -45,7 +49,7 @@ static void control_show(Control* c,const char* symbol,double x,double y,double 
     }
     byte* t=ptr(c->renderer,0x40);if(!t)return;
     memcpy(t+0x80,&x,8);memcpy(t+0x88,&y,8);scale*=32;
-    memcpy(t+0x98,&scale,8);memcpy(t+0xa0,&scale,8);c->renderer[0x51]=1;
+    memcpy(t+0x98,&scale,8);memcpy(t+0xa0,&scale,8);c->renderer[0x51]=1;c->visible=1;
     if(!c->feedback_count&&!strncmp(symbol,"AF",2)) {
         void* clip=ptr(c->renderer,0x80);
         for(int i=0;clip&&i<24;i++) {
@@ -389,7 +393,7 @@ static unsigned char ui_input(void* input,void* event) {
     return original_input(input,event);
 }
 static unsigned char ui_hit(void* button) {
-    if(ui_live()&&ui_state.modal)return 0;
+    if(ui_state.modal&&ui_live())return 0;
     return original_hit(button);
 }
 static void ui_furniture_hover(void* house) {

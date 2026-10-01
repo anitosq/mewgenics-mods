@@ -6,10 +6,13 @@ Build from the repository root:
 ```powershell
 python -B mods/auto-furniture/build.py --exe "<game>/Mewgenics.exe" --zig "<toolchain>/zig.exe"
 python -B mods/auto-furniture/test_probe.py
-& "<toolchain>/zig.exe" cc -O2 -Wall -Wextra -Werror mods/auto-furniture/test_solver.c -o mods/auto-furniture/build/test_solver.exe
+& "<toolchain>/zig.exe" cc -O2 -UNDEBUG -Wall -Wextra -Werror mods/auto-furniture/test_solver.c -o mods/auto-furniture/build/test_solver.exe
 ./mods/auto-furniture/build/test_solver.exe
 python -B mods/auto-furniture/package.py
 ```
+
+The build also runs `test_ui.c` with assertions enabled, checking idle read
+counts, modal input blocking and retained control lifetime guards.
 
 The build rejects executables other than SHA-256
 `4127cd6a792ae528bca6f65a8873dd61789591937d87656c2b586a5e30eb77ea`.

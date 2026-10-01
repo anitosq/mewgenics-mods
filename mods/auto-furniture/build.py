@@ -48,6 +48,10 @@ def main():
                     "-Wall", "-Wextra", "-Werror", "-I" + str(out), str(ROOT / "native.c"),
                     "-o", str(out / f"{name}.dll"), "-lbcrypt", "-luser32", "-lshell32"], check=True)
         print(out / f"{name}.dll")
+    subprocess.run([str(args.zig), "cc", "-O2", "-UNDEBUG", "-DAF_RELEASE",
+                    "-Wall", "-Wextra", "-Werror", "-I" + str(out), str(ROOT / "test_ui.c"),
+                    "-o", str(out / "test_ui.exe"), "-lbcrypt", "-luser32", "-lshell32"], check=True)
+    subprocess.run([str(out / "test_ui.exe")], check=True)
 
 
 if __name__ == "__main__":
