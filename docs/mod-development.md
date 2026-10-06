@@ -112,6 +112,18 @@ positive or add exclusions as a routine development step.
 
 ## Check compatibility and performance deliberately
 
+For repeat performance audits, rebuild the inventory from the current deployed
+files, both load orders, package mappings and logs before reusing earlier findings.
+Record version/hash identity and reclassify data versus native behavior. The owner's
+6 October 2026 re-audit request exposed why: Personal Compatibility Patches had
+grown from data-only 1.2.0 to native 1.6.0 with periodic repair and uncapped storage.
+Check current save counts before proposing disable/remove comparisons; restoring
+a capacity limit can move existing items. Honor owner-only testing instructions.
+The owner's follow-up on 6 October 2026 distinguishes avoidable work from spike
+attribution: before rejecting a small optimization for lack of profiling, check
+whether source proves repeated no-op work and a narrow, lifecycle-safe fix. Record
+that evidence separately from any unmeasured effect on frame time.
+
 Test the loader plus our mod in isolation, then the usual mod collection.
 Record both DLL load order and asset/data order. The Used Princess Hat
 tooltip problem came from full-file item replacements erasing earlier
