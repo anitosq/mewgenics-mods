@@ -16,6 +16,32 @@ static BOOL counted_read(HANDLE process,LPCVOID source,LPVOID target,SIZE_T size
 
 static unsigned char native_hit(void* button) {(void)button;hits++;return 42;}
 
+static void piece_entry_snapshot(void) {
+    byte pieces_memory[3][0x2e0]={{0}},items[2]={0};
+    byte* live[]={pieces_memory[0],pieces_memory[1],pieces_memory[2]};
+    byte* entries[3];byte* first=&items[0];byte* second=&items[1];
+    memcpy(live[0]+0x2d8,&first,sizeof(first));
+    memcpy(live[1]+0x2d8,&second,sizeof(second));
+    memcpy(live[2]+0x2d8,&first,sizeof(first));
+    reads=0;piece_entries(live,3,entries);
+    assert(reads==3&&entries[0]==first&&entries[1]==second&&entries[2]==first);
+    for(int item=0;item<400;item++) {
+        unsigned matches=0;
+        for(unsigned j=0;j<3;j++)matches+=entries[j]==first;
+        assert(matches==2); /* Duplicate matches remain visible to the transaction guard. */
+    }
+    assert(reads==3);
+    memcpy(live[0]+0x2d8,&second,sizeof(second));
+    memset(live[2]+0x2d8,0,sizeof(first));
+    piece_entries(live,3,entries);
+    assert(reads==6&&entries[0]==second&&entries[1]==second&&!entries[2]);
+    piece_entries(NULL,0,NULL);assert(reads==6);
+    byte* unreadable=VirtualAlloc(NULL,4096,MEM_RESERVE|MEM_COMMIT,PAGE_NOACCESS);
+    assert(unreadable);live[0]=unreadable;
+    piece_entries(live,1,entries);assert(reads==7&&!entries[0]);
+    assert(VirtualFree(unreadable,0,MEM_RELEASE));
+}
+
 static void translation_catalog(const char* path) {
     FILE* file=fopen(path,"rb");assert(file);
     char english[AF_TEXT_BYTES],translated[AF_TEXT_BYTES],formatted[AF_TEXT_BYTES],actual[AF_TEXT_BYTES];
@@ -58,6 +84,7 @@ static void translation_catalog(const char* path) {
 }
 
 int main(int argc,char** argv) {
+    piece_entry_snapshot();
     if(argc==2)translation_catalog(argv[1]);
     else assert(argc==1);
     char label[128]="Calculate";

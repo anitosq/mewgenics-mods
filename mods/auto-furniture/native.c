@@ -145,6 +145,10 @@ static int pieces(void* scene,byte** out,unsigned* n) {
     }
     return 1;
 }
+/* Operation-local snapshot; never reuse across native scene mutations. */
+static void piece_entries(byte* const* live,unsigned n,byte** entries) {
+    for(unsigned i=0;i<n;i++)entries[i]=ptr(live[i],0x2d8);
+}
 static void refresh(void* ui) {
     *((byte*)ui+0x58)=1;
     original_update(ui); /* Rebuild placed IDs before rebuilding the drawer. */

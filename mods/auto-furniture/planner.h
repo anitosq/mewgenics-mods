@@ -115,6 +115,7 @@ static void preview(void* ui,const char* room_name,unsigned selected,unsigned ta
     FN(void*(*)(void*,const char*,size_t),0x520d0)(&path,filename,strlen(filename));
     byte* asset=FN(byte*(*)(void*,void*),0x1b0cb0)(NULL,&path);
     if(!asset){report("Cannot load furniture shapes.");return;}
+    byte* entries[MAX_ITEMS];piece_entries(live,n,entries);
     AFLayout initial={0};unsigned fixed=0;unsigned char immovable[AF_ITEMS]={0};
     for(unsigned i=0;i<plan_count;i++) {
         Item* item=&plan_items[i];int here=!strcmp(item->room,room_name);
@@ -128,7 +129,7 @@ static void preview(void* ui,const char* room_name,unsigned selected,unsigned ta
         }
         AFPlacement v={item->placement[0],item->placement[1],item->placement[2],item->placement[3],here};
         if(here) {
-            byte* piece=NULL;for(unsigned j=0;j<n;j++)if(ptr(live[j],0x2d8)==item->entry)piece=live[j];
+            byte* piece=NULL;for(unsigned j=0;j<n;j++)if(entries[j]==item->entry)piece=live[j];
             int actual[2];uint64_t cell=0;
             if(!piece){report("A placed item could not be found. Reopen the room and try again.");return;}
             FN(void(*)(void*,int*,uint64_t,void*),0x2ef3a0)(piece,actual,cell,plan_room);

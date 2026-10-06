@@ -63,11 +63,12 @@ static int transaction_begin(void* ui) {
 static int transaction_restore(const Item* target) {
     byte* live[MAX_ITEMS];byte* matches[MAX_ITEMS]={0};unsigned n=0,total=0;void* inv=NULL;
     if(!capture(current,&total,&inv)||total!=count||inv!=saved_inventory||!pieces(saved_scene,live,&n))return 0;
+    byte* entries[MAX_ITEMS];piece_entries(live,n,entries);
     for(unsigned i=0;i<count;i++) {
         Item* source=NULL;
         for(unsigned j=0;j<total;j++)if(current[j].id==target[i].id)source=&current[j];
         if(!source||source->entry!=target[i].entry||source->variant!=target[i].variant||strcmp(source->name,target[i].name))return 0;
-        for(unsigned j=0;j<n;j++)if(ptr(live[j],0x2d8)==source->entry) {
+        for(unsigned j=0;j<n;j++)if(entries[j]==source->entry) {
             if(matches[i])return 0;matches[i]=live[j];
         }
         if(!!source->room[0]!=!!matches[i])return 0;
