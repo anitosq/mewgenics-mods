@@ -4,6 +4,7 @@ Mewgenics mods by anitosq. Each mod has its own source, tests and documentation.
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
+| [Better Breeding Plus](mods/better-breeding-plus/) | Mutation inheritance and event/combat replacement choices | 0.1.0 candidate; Nexus unpublished; awaiting owner testing |
 | [Auto Furniture](mods/auto-furniture/) | Automatic room layouts with stat targets, pins, bulk return and Undo | [GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/auto-furniture/v0.1.1) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/538) |
 | [Guaranteed Boss Loot](mods/guaranteed-boss-loot/) | Guaranteed act-ending loot without losing the searching cat | [GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/guaranteed-boss-loot/v0.1.1) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/536) |
 | [Improved Inventory](mods/improved-inventory/) | Scrolling grids, search and filters for Storage, Trash and adventure equipment selection | [0.2.0 on GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.2.0) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/526) |
