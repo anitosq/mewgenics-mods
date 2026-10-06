@@ -33,7 +33,7 @@ not proof of in-game rendering or a full manager lifecycle.
 and safeguards before using it; never replace intentional player progress.
 Gameplay and publication evidence belongs in docs/releases/auto-furniture.
 
-## Localization (Unreleased)
+## Localization
 
 `translations.csv` contains the main panel, Pins, room names, tooltip and player
 status messages for all ten languages in the current game's `combined.csv`:
@@ -70,7 +70,8 @@ Edmundm font metrics were also used to check 144 fully covered labels; the
 Spanish Clear label was shortened after this check. Fallback fonts still need
 in-game checks. Neither offline check establishes visual correctness.
 
-Do not replace the frozen 0.1.1 archive. The localization work remains unreleased.
+Localization ships in 0.2.0. Do not replace frozen release archives. See the
+0.2.0 publication checkpoint under `docs/releases/auto-furniture` for host status.
 
 ### Full-language verification
 

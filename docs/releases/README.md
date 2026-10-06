@@ -28,6 +28,11 @@ For Nexus, verify saved fields rather than merely filled inputs: switch a
 BBCode source edit back to its rendered view before saving, confirm language
 selection, and wait for the next page's state after navigation. Check persisted
 description, file notes and version before publication.
+On 6 October 2026, both the file-description AX setter and Playwright `fill`
+displayed text without saving it. `pressSequentially` updated the character
+counter and persisted after Save file. Allow enough typing time, inspect any
+partial input after a timeout, then verify the reopened file editor. The
+changelog and BBCode editor have separate save behavior and need their own checks.
 
 Track publication, verified download bytes and scan status separately.
 "Some files not scanned" does not mean "Safe to use" or prove a scan is queued.
