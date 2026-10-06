@@ -4,6 +4,10 @@
   Good Genes - Better Breeding and Mutation Control. Use GoodGenes for install
   identity and good-genes for repository/release paths. Update DLL, asset gate,
   SWF symbols and manager mappings together; never deploy two renamed copies.
+  Owner Vortex feedback, 2026-10-07: avoid a repeated Good Genes suffix. Keep
+  the Nexus main-file display name identical to the full Nexus title so Vortex
+  does not concatenate dissimilar page/file names. Check both names before
+  future uploads; retain GoodGenes as the asset association, not a UI label.
 
 - Owner release decision, 2026-10-06: replace the inherited third-party breeding
   patch table with our own implementation before distribution. No copied table
