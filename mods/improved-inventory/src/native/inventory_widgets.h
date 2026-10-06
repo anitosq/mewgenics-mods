@@ -1,4 +1,4 @@
-typedef struct {void* renderer;uint64_t generation;IQReference reference; wchar_t cached[32][200];void* feedback[2][18];int feedback_count;} IQControl;
+#include "inventory_control_lifetime.h"
 enum { IQ_RARITY_COUNT=5, IQ_POPUP_COUNT=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4 };
 static const double iq_rarity_popup_scale=0.70;
 static struct {
@@ -14,7 +14,6 @@ static void* iq_text_window;
 static int iq_started_text;
 static void iq_refilter(void);
 static void iq_feedback_update(void);
-static int iq_control_valid(IQControl* c);
 static void iq_overlay_camera(IQControl* c);
 static int iq_control_point(IQControl* c,double* output);
 static double iq_control_units(void) {return iq.equipment?1.0:32.0;}
@@ -68,8 +67,6 @@ static void iq_focus_set(int focus) {
     if(!focus){iq_text_window=NULL;iq_started_text=0;}
     iq_cursor=(int)wcslen(focus==2?iq_set_query:iq_search.query);iq_select_all=0;
 }
-static int iq_control_valid(IQControl* c) {return iq_reference_valid(c->reference);}
-static void iq_control_hide(IQControl* c) {if(iq_control_valid(c))*((unsigned char*)c->renderer+0x51)=0;}
 static void iq_hide_all(void) {
     for(int i=0;i<IQ_TYPE_COUNT*IQ_RARITY_COUNT;i++)iq_control_hide(&iq_controls.bars[i]);
     for(int i=0;i<IQ_POPUP_COUNT;i++)iq_control_hide(&iq_controls.popups[i]);
@@ -94,6 +91,8 @@ static void iq_ui_capture(void) {
     }
 }
 static void iq_control_show(IQControl* c,const char* name,double x,double y) {
+    /* Creation can leave a visible renderer even if later setup cannot finish. */
+    c->hidden=0;
     if(!iq_control_valid(c)) {
         void* scene=iq.scene_ref.pointer;
         void* entity=((void*(__cdecl*)(void*))(void*)(game_base+0x96b3e0))(scene);

@@ -1,5 +1,9 @@
 # Improved Inventory changelog
 
+## 0.3.5
+
+- Reduced repeated work for hidden inventory controls.
+
 ## 0.3.4
 
 - Reduced inventory update overhead, especially with large inventories.
