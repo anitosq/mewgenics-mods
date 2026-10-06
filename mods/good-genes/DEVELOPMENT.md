@@ -67,6 +67,11 @@ inspection are permitted.
   differing base stats. Check seven inherited base stats independently.
 - Repeat Unstable DNA, special-to-stat and stat-to-special choices, battle
   end, room change, and exit with queued offers.
+- For paired mutations, combine a special on one side with a stat downgrade
+  on the other: offer Keep/Replace for the whole roll in either part order.
+  Unknown definitions must still block it; stat-only downgrades stay automatic Keep.
+- Navigate descriptions across pages and parts in both directions, including
+  wraparound. Page counts reset per offer; each click renders only once.
 - Verify manager install and uninstall, DLL-only startup, disabled UI assets,
   mismatched UI assets, and duplicate enabled copies.
 

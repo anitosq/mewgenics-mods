@@ -29,15 +29,23 @@ static int improves(MutationQuality old, MutationQuality next) {
     return better;
 }
 
-typedef enum { KEEP_MUTATION, VANILLA_MUTATION, CHOOSE_MUTATION } MutationDecision;
+typedef enum { KEEP_MUTATION, VANILLA_MUTATION, CHOOSE_MUTATION, INVALID_MUTATION } MutationDecision;
 
 /* Only specials need consent. Stat-only changes require a clear improvement. */
 static MutationDecision mutation_decision(MutationQuality old, MutationQuality next) {
     if (old.kind == UNMUTATED) return VANILLA_MUTATION;
-    if (old.kind == UNKNOWN || next.kind == UNKNOWN || next.kind == UNMUTATED) return KEEP_MUTATION;
+    if (old.kind == UNKNOWN || next.kind == UNKNOWN || next.kind == UNMUTATED) return INVALID_MUTATION;
     if (old.kind == SPECIAL_MUTATION || next.kind == SPECIAL_MUTATION) return CHOOSE_MUTATION;
     old.kind = next.kind = STAT_MUTATION;
     return improves(old, next) ? VANILLA_MUTATION : KEEP_MUTATION;
+}
+
+/* One native roll changes all affected parts; a choice may accept stat trade-offs. */
+static MutationDecision combine_mutation_decisions(MutationDecision a, MutationDecision b) {
+    if (a == INVALID_MUTATION || b == INVALID_MUTATION) return INVALID_MUTATION;
+    if (a == CHOOSE_MUTATION || b == CHOOSE_MUTATION) return CHOOSE_MUTATION;
+    if (a == KEEP_MUTATION || b == KEEP_MUTATION) return KEEP_MUTATION;
+    return VANILLA_MUTATION;
 }
 
 #endif

@@ -76,9 +76,22 @@ def check_footer_layout_contract():
     assert "*(float *)(stat_art[side][stat]+0x70) += shift;" in source
 
 
+def check_selector_navigation():
+    source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
+    navigation = source.split("if (choice->action >= 2) {", 1)[1].split("Offer verify = active;", 1)[0]
+    assert navigation.count("render_comparison();") == 1, "Navigate first, then render once"
+    assert "++view_page >= view_pages[view_part]" in navigation
+    assert "view_page = view_pages[view_part] - 1;" in navigation
+    assert "view_pages[i] = 1;" in source, "Reset page counts for each offer"
+    assert "if (pages > view_pages[i]) view_pages[i] = pages;" in source
+    assert "result = combine_mutation_decisions(result, decision);" in source
+    assert "result == INVALID_MUTATION) return KEEP_MUTATION;" in source
+
+
 if __name__ == "__main__":
     check_set_piece_branch()
     check_birth_hooks()
     check_sprite_construction()
     check_footer_layout_contract()
-    print("Hook, sprite-construction, and footer-layout source contracts match.")
+    check_selector_navigation()
+    print("Hook, sprite-construction, footer-layout, and selector source contracts match.")

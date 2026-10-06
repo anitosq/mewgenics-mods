@@ -54,9 +54,21 @@ int main(void) {
     assert(mutation_decision(defect, plain) == VANILLA_MUTATION);
     assert(mutation_decision(bad, less_bad) == VANILLA_MUTATION);
     assert(mutation_decision(plain, defect) == KEEP_MUTATION);
-    assert(mutation_decision(unknown, plain) == KEEP_MUTATION);
-    assert(mutation_decision(plain, unknown) == KEEP_MUTATION);
-    assert(mutation_decision(special, empty) == KEEP_MUTATION);
+    assert(mutation_decision(unknown, plain) == INVALID_MUTATION);
+    assert(mutation_decision(plain, unknown) == INVALID_MUTATION);
+    assert(mutation_decision(special, empty) == INVALID_MUTATION);
+    /* A paired roll must offer consent in either part order, but never for unknowns. */
+    MutationDecision choose = mutation_decision(special, plain);
+    MutationDecision reject = mutation_decision(stronger, plain);
+    MutationDecision invalid = mutation_decision(unknown, plain);
+    assert(combine_mutation_decisions(choose, reject) == CHOOSE_MUTATION);
+    assert(combine_mutation_decisions(reject, choose) == CHOOSE_MUTATION);
+    assert(combine_mutation_decisions(choose, invalid) == INVALID_MUTATION);
+    assert(combine_mutation_decisions(invalid, choose) == INVALID_MUTATION);
+    assert(combine_mutation_decisions(combine_mutation_decisions(choose, invalid), reject) == INVALID_MUTATION);
+    assert(combine_mutation_decisions(VANILLA_MUTATION, reject) == KEEP_MUTATION);
+    assert(combine_mutation_decisions(reject, VANILLA_MUTATION) == KEEP_MUTATION);
+    assert(combine_mutation_decisions(VANILLA_MUTATION, VANILLA_MUTATION) == VANILLA_MUTATION);
     for (int i = 0; i < MUTATION_STATS; ++i) {
         MutationQuality positive = {STAT_MUTATION, {0}};
         positive.stats[i] = 1;

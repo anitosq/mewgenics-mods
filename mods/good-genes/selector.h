@@ -24,7 +24,7 @@ static _Thread_local int creating_selector;
 /* ponytail: bounded FIFO keeps hooks allocation-free; raise only for proven larger effects. */
 static Offer offers[64], active;
 static unsigned queue_head, queue_count, view_part, view_page;
-static unsigned view_indices[15], view_count;
+static unsigned view_indices[15], view_pages[15], view_count;
 static int navigation_needed;
 /* Attached clips are owned by the modal's display tree, never the live cat. */
 static byte *part_art[2][9];
@@ -105,10 +105,9 @@ static MutationDecision snapshot_offer(Offer *offer) {
         changed = 1;
         MutationQuality old = quality(slot->part, slot->old);
         MutationDecision decision = mutation_decision(old, quality(slot->part, id));
-        if (decision == KEEP_MUTATION) result = KEEP_MUTATION;
-        else if (decision == CHOOSE_MUTATION && result != KEEP_MUTATION) result = CHOOSE_MUTATION;
+        result = combine_mutation_decisions(result, decision);
     }
-    if (!changed || !offer->count) return KEEP_MUTATION;
+    if (!changed || !offer->count || result == INVALID_MUTATION) return KEEP_MUTATION;
     return result;
 }
 
@@ -488,36 +487,33 @@ static int render_part_art(unsigned side, PartSnapshot *part, int id) {
     return fit_art(clip, side ? 800 : 480, 319, 157.5f, 69);
 }
 
-static unsigned render_comparison(void) {
+static void render_comparison(void) {
     PartSnapshot *part = &active.parts[view_indices[view_part]];
     wchar_t current[4096], incoming[4096], a[4096], b[4096], title[256];
     describe_mutation(part->part, part->old, current);
     describe_mutation(part->part, (int)(active.pair >> 32), incoming);
-    unsigned pages_a = text_page(current, view_page, a), pages_b = text_page(incoming, view_page, b);
-    unsigned pages = pages_a > pages_b ? pages_a : pages_b;
+    text_page(current, view_page, a);
+    text_page(incoming, view_page, b);
     panel_text("old_art_note", render_part_art(0, part, part->old) ? L"" : L"Preview unavailable");
     panel_text("new_art_note", render_part_art(1, part, (int)(active.pair >> 32)) ? L"" : L"Preview unavailable");
     render_effects(0, a);
     render_effects(1, b);
     swprintf(title, COUNT(title), L"%ls", part_name(part->part));
     panel_text("part", title);
-    swprintf(title, COUNT(title), L"Comparison %u/%u  |  Page %u/%u", view_part+1, view_count, view_page+1, pages);
+    swprintf(title, COUNT(title), L"Comparison %u/%u  |  Page %u/%u", view_part+1, view_count, view_page+1, view_pages[view_part]);
     panel_text("page", navigation_needed ? title : L"");
-    return pages;
 }
 
 static void show_next_offer(void);
 static void choice_invoke(Choice *choice) {
     if (choice->ticket != active.ticket || !active_prompt) return;
     if (choice->action >= 2) {
-        unsigned pages = render_comparison();
         if (choice->action == 3) {
-            if (++view_page >= pages) { view_page = 0; view_part = (view_part+1) % view_count; }
+            if (++view_page >= view_pages[view_part]) { view_page = 0; view_part = (view_part+1) % view_count; }
         } else if (view_page) --view_page;
         else {
             view_part = (view_part + view_count - 1) % view_count;
-            view_page = 0;
-            view_page = render_comparison() - 1;
+            view_page = view_pages[view_part] - 1;
         }
         render_comparison();
         return;
@@ -603,9 +599,12 @@ static void show_next_offer(void) {
         for (unsigned i = 0; i < view_count; ++i) {
             wchar_t text[4096], page[4096];
             PartSnapshot *part = &active.parts[view_indices[i]];
+            view_pages[i] = 1;
             for (unsigned side = 0; side < 2; ++side) {
                 if (!describe_mutation(part->part, side ? (int)(active.pair >> 32) : part->old, text)) described = 0;
-                if (text_page(text, 0, page) > 1) navigation_needed = 1;
+                unsigned pages = text_page(text, 0, page);
+                if (pages > view_pages[i]) view_pages[i] = pages;
+                if (pages > 1) navigation_needed = 1;
                 unsigned rows = 0;
                 for (const wchar_t *p = page; *p; ++p) if (*p == L'\n') ++rows;
                 if (rows > effect_rows) effect_rows = rows;

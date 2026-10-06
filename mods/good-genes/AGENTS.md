@@ -20,6 +20,9 @@
   involving a special on either side. Automatically apply only clear stat-only
   improvements; silently keep equal/incomparable stat changes. Identical IDs
   never prompt. Check both special-to-stat and stat-to-special cases before delivery.
+  Owner review, 2026-10-07: paired rolls must still offer that choice when another
+  affected side rejects a stat-only change. Check both part orders; unknown
+  definitions must block the whole roll, not be treated as optional trade-offs.
 - Owner will test. Compilation and read-only inspection are allowed, but do not
   run tests, load the DLL, launch the game, install, or touch saves unless asked.
 - Owner correction, 2026-10-06: keep the current version fixed during local
