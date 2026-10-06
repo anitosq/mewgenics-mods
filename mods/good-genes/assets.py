@@ -73,7 +73,7 @@ def build(game, tools):
     for side, x in (("cur",344), ("inc",664)):
         for row in range(4):
             parts.append((m.field(x, 368+row*26, 272, 26, 20), f"{side}{row}"))
-    m.sprite("BBPMutationSelector", parts)
+    m.sprite("GoodGenesMutationSelector", parts)
     root = ROOT / "build/data-mod/swfs"
-    m.write(root / "better_breeding_plus.swf")
-    (root / "swflist.gon.append").write_text("game [ better_breeding_plus.swf ]\n", encoding="ascii")
+    m.write(root / "good_genes.swf")
+    (root / "swflist.gon.append").write_text("game [ good_genes.swf ]\n", encoding="ascii")

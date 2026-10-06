@@ -540,7 +540,7 @@ static void *choice_copy(Choice *source, void *destination) {
 }
 static const void *choice_type(void *self) {
     (void)self;
-    static struct { void *vtable, *cached_name; char name[32]; } info = {NULL, NULL, ".?AVBBPMutationChoice@@"};
+    static struct { void *vtable, *cached_name; char name[32]; } info = {NULL, NULL, ".?AVGoodGenesMutationChoice@@"};
     /* Type descriptor returned by the native prompt lambda's _Target_type. */
     info.vtable = *(void **)(base + 0x13184f0);
     return &info;
@@ -570,7 +570,7 @@ static void destroy_function(GameFunction *function) {
 static int selector_available(void) {
     void *library = NULL;
     if (!read_bytes(base + 0x13c4a30, &library, 8) || !library) return 0;
-    GameString symbol = small_string("BBPMutationSelector");
+    GameString symbol = small_string("GoodGenesMutationSelector");
     return FN(void *(*)(void *, GameString *), 0x9bb6f0)(library, &symbol) != NULL;
 }
 
@@ -612,7 +612,7 @@ static void show_next_offer(void) {
             }
         }
         if (!described) { log_message(OWNER, "Kept mutation: full comparison unavailable."); continue; }
-        GameString name = small_string("BBPMutationChoice");
+        GameString name = small_string("GoodGenesMutationChoice");
         byte *scene = FN(byte *(*)(void *, GameString *), 0x9d4950)(active.manager, &name);
         if (!scene || scene[0x4b0]) continue;
         void *entity = FN(void *(*)(void *), 0x96b3e0)(scene);
@@ -690,7 +690,7 @@ static int offer_mutation(void *cat, uint64_t pair) {
 
 static void selector_panel(void *panel, GameString *symbol) {
     if (creating_selector) {
-        const char *name = "BBPMutationSelector";
+        const char *name = "GoodGenesMutationSelector";
         FN(void (*)(GameString *, const char *, size_t), 0x520d0)(symbol, name, strlen(name));
     }
     original_panel(panel, symbol);

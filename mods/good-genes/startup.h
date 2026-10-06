@@ -26,7 +26,7 @@ static int iq_assets_status(const wchar_t* dll_path,const wchar_t* command) {
     /* Preserve a drive root's trailing separator. */
     if(slash==parent+2)slash[1]=0;else *slash=0;
     if(wcslen(parent)+20>=MAX_PATH)return IQ_ASSETS_INVALID_PATH;
-    wcscpy(sibling,parent);wcscat(sibling,L"\\BetterBreedingPlus");
+    wcscpy(sibling,parent);wcscat(sibling,L"\\GoodGenes");
     if(!iq_canonical_path(sibling,actual))return IQ_ASSETS_INVALID_PATH;
     wcscpy(sibling,actual);
     int argc=0,enabled=0,paths=0;
@@ -46,16 +46,16 @@ static int iq_assets_status(const wchar_t* dll_path,const wchar_t* command) {
     if(enabled==3)return IQ_ASSETS_AMBIGUOUS;
     const wchar_t* root=enabled==1?parent:sibling;
     if(wcslen(root)+48>=MAX_PATH)return IQ_ASSETS_INVALID_PATH;
-    wcscpy(actual,root);wcscat(actual,L"\\swfs\\better_breeding_plus.swf");
+    wcscpy(actual,root);wcscat(actual,L"\\swfs\\good_genes.swf");
     if(!iq_file_matches(actual,EXPECTED_UI_SHA256))return IQ_ASSETS_MISMATCHED;
     wcscpy(actual,root);wcscat(actual,L"\\swfs\\swflist.gon.append");
     return iq_file_matches(actual,EXPECTED_APPEND_SHA256)?IQ_ASSETS_READY:IQ_ASSETS_MISMATCHED;
 }
 
-__declspec(dllexport) int BetterBreedingPlusValidateAssetsW(const wchar_t* dll_path,const wchar_t* command) {
+__declspec(dllexport) int GoodGenesValidateAssetsW(const wchar_t* dll_path,const wchar_t* command) {
     return iq_assets_status(dll_path,command)==IQ_ASSETS_READY;
 }
 
-__declspec(dllexport) int BetterBreedingPlusAssetStatusW(const wchar_t* dll_path,const wchar_t* command) {
+__declspec(dllexport) int GoodGenesAssetStatusW(const wchar_t* dll_path,const wchar_t* command) {
     return iq_assets_status(dll_path,command);
 }

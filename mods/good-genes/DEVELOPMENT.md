@@ -10,12 +10,17 @@ need fresh owner testing.
 From the repository root:
 
 ```powershell
-python mods/better-breeding-plus/build.py --exe "C:/Program Files (x86)/Steam/steamapps/common/Mewgenics/Mewgenics.exe" --zig work/toolchains/zig-x86_64-windows-0.15.2/zig.exe
-python mods/better-breeding-plus/package.py
+python mods/good-genes/build.py --exe "C:/Program Files (x86)/Steam/steamapps/common/Mewgenics/Mewgenics.exe" --zig work/toolchains/zig-x86_64-windows-0.15.2/zig.exe
+python mods/good-genes/package.py
 ```
 
 The builder only reads game files and writes local build output. Packaging
 requires committed source and does not install or load the DLL.
+
+The current identity is GoodGenes (DLL and asset folder), with good_genes.swf
+and GoodGenesMutationSelector. When replacing a pre-rename local prototype,
+close the game and remove its DLL and enabled asset entry first. Renaming the
+source does not migrate an installed package or its manager configuration.
 
 ## Independent Breeding Implementation
 

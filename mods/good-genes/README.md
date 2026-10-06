@@ -1,4 +1,4 @@
-# Better Breeding Plus
+# Good Genes
 
 Pass mutations to kittens and protect occupied mutation slots during events
 and combat.
@@ -37,9 +37,9 @@ Steam game build: 1.1.21239 / Steam build 25143593.
 Install and enable the archive through your mod manager. Enable its asset
 entry in the game's mod load order as well as the native DLL.
 
-For manual installation, place BetterBreedingPlus.dll in the game's mods
-directory and the BetterBreedingPlus folder beside it. Launch with
-`-modpaths mods/BetterBreedingPlus` included among the enabled asset paths.
+For manual installation, place GoodGenes.dll in the game's mods
+directory and the GoodGenes folder beside it. Launch with
+`-modpaths mods/GoodGenes` included among the enabled asset paths.
 Preserve the paths for any other enabled assets.
 
 Close the game before installing, updating, or removing the mod. Back up
@@ -54,4 +54,4 @@ loaded text.
 
 ## Source
 
-[Source and issue reports](https://github.com/anitosq/mewgenics-mods/tree/main/mods/better-breeding-plus).
+[Source and issue reports](https://github.com/anitosq/mewgenics-mods/tree/main/mods/good-genes).

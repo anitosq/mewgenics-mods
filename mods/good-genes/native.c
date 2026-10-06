@@ -26,7 +26,7 @@ static RandomMutation original_random;
 static MutatePiece original_mutate;
 static SetPiece original_set;
 static _Thread_local MutationContext *context;
-#define OWNER "BetterBreedingPlus"
+#define OWNER "GoodGenes"
 #define COUNT(a) (sizeof(a) / sizeof(*(a)))
 #define FN(type,rva) ((type)(void *)(base + (rva)))
 

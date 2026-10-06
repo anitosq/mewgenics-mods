@@ -48,7 +48,7 @@ def main():
         arrays[name] = rva_bytes(data, rva, {"SET_BYTES": 28, "BUTTON_UPDATE_BYTES": 17,
                                          "INHERIT_PART_BYTES": 23, "INHERIT_STAT_BYTES": 17}.get(name, 16))
     assets.build(args.exe.parent, args.tools)
-    for name, relative in {"EXPECTED_UI_SHA256": "swfs/better_breeding_plus.swf",
+    for name, relative in {"EXPECTED_UI_SHA256": "swfs/good_genes.swf",
                            "EXPECTED_APPEND_SHA256": "swfs/swflist.gon.append"}.items():
         arrays[name] = hashlib.sha256((out / "data-mod" / relative).read_bytes()).digest()
     header = "\n".join(f"static const unsigned char {name}[] = {{{byte_list(value)}}};"
@@ -72,7 +72,7 @@ def main():
         header += f"    {{0x{start:x}, {size}, {{{byte_list(before)}}}, {{{byte_list(after)}}}}},\n"
     header += "};\n"
     (out / "guard.h").write_text(header, encoding="ascii")
-    dll = out / "BetterBreedingPlus.dll"
+    dll = out / "GoodGenes.dll"
     subprocess.run([str(args.zig), "cc", "-target", "x86_64-windows-gnu", "-std=c11", "-shared", "-O2",
                     "-Wall", "-Wextra", "-Werror", "-I" + str(out), str(ROOT / "native.c"),
                     "-o", str(dll), "-lbcrypt", "-lshell32"], check=True)
@@ -87,7 +87,7 @@ def main():
         "source_sha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
                           for name in ("native.c", "selector.h", "policy.h", "breeding.h", "startup.h",
                                        "assets.py", "build.py", "test_policy.c", "test_hook_layout.py")},
-        "ui_asset_sha256": hashlib.sha256((out / "data-mod/swfs/better_breeding_plus.swf").read_bytes()).hexdigest(),
+        "ui_asset_sha256": hashlib.sha256((out / "data-mod/swfs/good_genes.swf").read_bytes()).hexdigest(),
     }
     manifest = out / "build-info.json"
     manifest.write_text(json.dumps(info, indent=2) + "\n", encoding="ascii")

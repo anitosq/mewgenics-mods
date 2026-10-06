@@ -1,4 +1,9 @@
-# BetterBreedingPlus
+# GoodGenes
+
+- Owner naming decision, 2026-10-06: Good Genes; Nexus title is
+  Good Genes - Better Breeding and Mutation Control. Use GoodGenes for install
+  identity and good-genes for repository/release paths. Update DLL, asset gate,
+  SWF symbols and manager mappings together; never deploy two renamed copies.
 
 - Owner release decision, 2026-10-06: replace the inherited third-party breeding
   patch table with our own implementation before distribution. No copied table
