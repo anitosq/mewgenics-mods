@@ -43,6 +43,8 @@ int main(void) {
     assert(mutation_decision(empty, special) == VANILLA_MUTATION);
     assert(mutation_decision(empty, tradeoff) == VANILLA_MUTATION);
     assert(mutation_decision(empty, defect) == VANILLA_MUTATION);
+    assert(mutation_decision(empty, unknown) == INVALID_MUTATION);
+    assert(mutation_decision(special, defect) == CHOOSE_MUTATION);
     assert(mutation_decision(plain, tradeoff) == KEEP_MUTATION);
     assert(mutation_decision(tradeoff, plain) == KEEP_MUTATION);
     assert(mutation_decision(plain, plain) == KEEP_MUTATION);
@@ -69,6 +71,37 @@ int main(void) {
     assert(combine_mutation_decisions(VANILLA_MUTATION, reject) == KEEP_MUTATION);
     assert(combine_mutation_decisions(reject, VANILLA_MUTATION) == KEEP_MUTATION);
     assert(combine_mutation_decisions(VANILLA_MUTATION, VANILLA_MUTATION) == VANILLA_MUTATION);
+    /* eyes.750 (+1 INT) + eyes.303 (+1 INT/+1 CHA) must not collapse for free. */
+    MutationQuality int_eye = {STAT_MUTATION, {0,0,0,1,0,0,0}};
+    MutationQuality int_cha_eye = {STAT_MUTATION, {0,0,0,1,0,1,0}};
+    MutationQuality two_int_cha_eye = {STAT_MUTATION, {0,0,0,2,0,1,0}};
+    MutationBonus before[] = {{6,750,int_eye}, {6,303,int_cha_eye}};
+    MutationBonus after[] = {{6,303,int_cha_eye}, {6,303,int_cha_eye}};
+    assert(mutation_decision(int_eye, int_cha_eye) == VANILLA_MUTATION);
+    assert(!effective_stats_improve(before, after, 2));
+    MutationBonus reverse[] = {before[1], before[0]};
+    assert(!effective_stats_improve(reverse, after, 2));
+    after[0] = after[1] = (MutationBonus){6,999,two_int_cha_eye};
+    assert(!effective_stats_improve(before, after, 2)); /* Equal effective totals. */
+    after[0].quality.stats[5] = after[1].quality.stats[5] = 2;
+    assert(effective_stats_improve(before, after, 2)); /* Genuine combined improvement. */
+    before[0] = before[1] = (MutationBonus){6,750,int_eye};
+    after[0] = (MutationBonus){6,303,int_cha_eye};
+    after[1] = before[1];
+    assert(effective_stats_improve(before, after, 2)); /* Split a matching pair. */
+    after[1] = after[0];
+    assert(effective_stats_improve(before, after, 2)); /* Matching pair counts once. */
+    before[1].quality = unknown;
+    assert(!effective_stats_improve(before, after, 2)); /* Unknown counterpart is protected. */
+    before[0] = (MutationBonus){3,300,plain};
+    before[1] = (MutationBonus){4,300,plain};
+    after[0] = before[0];
+    after[1] = (MutationBonus){4,301,stronger};
+    assert(effective_stats_improve(before, after, 2)); /* Arms and legs count separately. */
+    before[0] = (MutationBonus){8,-2,defect};
+    before[1] = before[0];
+    after[0] = after[1] = (MutationBonus){8,300,plain};
+    assert(effective_stats_improve(before, after, 2)); /* Defined negative IDs participate. */
     for (int i = 0; i < MUTATION_STATS; ++i) {
         MutationQuality positive = {STAT_MUTATION, {0}};
         positive.stats[i] = 1;

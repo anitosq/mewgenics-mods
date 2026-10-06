@@ -31,6 +31,14 @@
   Owner review, 2026-10-07: paired rolls must still offer that choice when another
   affected side rejects a stat-only change. Check both part orders; unknown
   definitions must block the whole roll, not be treated as optional trade-offs.
+- Owner review, 2026-10-07: automatic replacements must also improve combined
+  bonuses after deduplicating identical part-group/ID pairs. Include an unchanged
+  counterpart in the comparison and stale-offer snapshot, but not as a changed
+  UI comparison. Retain empty-slot vanilla behavior and explicit special choices.
+  Validate negative IDs through definitions: -2 can be a valid missing part;
+  undefined negative IDs must not be mistaken for ordinary unmutated parts.
+  Cover the eyes.750/eyes.303 collapse, reverse side order, matching pairs,
+  valid missing parts, and undefined negatives in deferred regression checks.
 - Owner will test. Compilation and read-only inspection are allowed, but do not
   run tests, load the DLL, launch the game, install, or touch saves unless asked.
 - Owner correction, 2026-10-06: keep the current version fixed during local

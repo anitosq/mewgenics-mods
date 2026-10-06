@@ -85,11 +85,27 @@ existing 20px effects-to-button gap. This revision is local, not published.
 
 ### Checks to run with owner authorization
 
+The second 0.1.1 candidate fixes two owner review findings. SetPiece's per-side
+comparison now has an additional combined-stat guard for automatic occupied-slot
+replacements. It deduplicates by canonical part group and ID, including an
+unchanged counterpart, matching the unique-list step at 0xcb5e6-0xcb685 in the
+supported executable. The current game archive defines eyes.750 as +1 INT and
+eyes.303 as +1 INT/+1 CHA; collapsing those into matching eyes.303 must be kept.
+Special choices and entirely unmutated selected slots retain their policies.
+
+The sign check on incoming IDs is removed. The definition lookup at 0x7bdac0
+converts the ID to a signed string key; the current eyes, ears, eyebrows and
+mouth tables have valid -2 definitions. Undefined negative keys remain UNKNOWN,
+including when the current part is unmutated. Known -2 previews show Missing
+part rather than a generic unavailable-art message. Neither fix changes hooks.
+
 Owner instruction: do not execute tests, load the DLL, install it, launch the
 game, or alter saves without explicit permission. Compilation and static
 inspection are permitted.
 
 - `test_policy.c`: mutation comparisons and parental occupancy policy.
+  Includes deduplicated before/after totals, unchanged counterparts, side order,
+  distinct arms/legs groups, and unknown/negative-ID policy cases.
 - `test_hook_layout.py`: copied instructions, birth branch destinations,
   selector lifetime safeguards, and layout contracts.
 - On a backed-up test slot, breed one-mutated and two-mutated parents;
@@ -110,6 +126,11 @@ inspection are permitted.
   ID and an all-limbs roll. Grouped effects must not be doubled.
 - Inspect 16px pager clearance above/below, no hidden-row gap, stable footer
   position on mixed-length pages, and navigation hover/click sounds.
+- Try eyes.750 plus eyes.303 becoming a matching pair: automatic replacement
+  must be rejected in either direction. Check a true combined improvement,
+  paired writes, a matching pair splitting into different IDs, and an empty slot.
+- Check defined -2 event outcomes against ordinary parts and special mutations;
+  verify special comparisons, Missing part artwork labels, and unknown-ID safety.
 - Verify manager install and uninstall, DLL-only startup, disabled UI assets,
   mismatched UI assets, and duplicate enabled copies.
 

@@ -5,7 +5,7 @@ typedef struct { union { wchar_t local[8]; const wchar_t *pointer; }; size_t siz
 typedef struct { byte storage[56]; void *callable; } GameFunction;
 typedef struct { void **vtable; uint64_t ticket; int action; } Choice;
 _Static_assert(sizeof(wchar_t) == 2 && sizeof(GameFunction) == 64 && sizeof(Choice) <= 56, "Native ABI mismatch");
-typedef struct { int part, old; unsigned offset; } PartSnapshot;
+typedef struct { int part, old, selected; unsigned offset; } PartSnapshot;
 typedef struct {
     void *cat;
     byte *origin, *manager;
@@ -79,7 +79,13 @@ static int offer_alive(const Offer *offer) {
         read_bytes(offer->cat, identity, sizeof(identity)) && !memcmp(identity, offer->identity, sizeof(identity));
 }
 
-/* Match every write of SetPiece, not just one side of a paired part. */
+static int comparison_group(int part) {
+    if (part >= 11 && part <= 14) return 3 + (part-11)/2;
+    if (part >= 15 && part <= 20) return 6 + (part-15)/2;
+    return part;
+}
+
+/* Track SetPiece writes and unchanged counterparts that share their bonuses. */
 static MutationDecision snapshot_offer(Offer *offer) {
     static const struct { int part; unsigned offset; } slots[] = {
         {0,0x90}, {1,0xe4}, {2,0x138}, {11,0x18c}, {12,0x1e0},
@@ -87,8 +93,9 @@ static MutationDecision snapshot_offer(Offer *offer) {
         {18,0x3d8}, {19,0x42c}, {20,0x480}, {9,0x4d4}, {10,0x78}
     };
     int part = (int)(uint32_t)offer->pair, id = (int)(offer->pair >> 32);
-    if (!offer->cat || part < 0 || part > 20 || id < 0) return KEEP_MUTATION;
-    int changed = 0;
+    if (!offer->cat || part < 0 || part > 20) return KEEP_MUTATION;
+    int changed = 0, occupied = 0;
+    MutationBonus before[15], after[15];
     offer->count = 0;
     MutationDecision result = VANILLA_MUTATION;
     for (unsigned i = 0; i < COUNT(slots); ++i) {
@@ -97,18 +104,27 @@ static MutationDecision snapshot_offer(Offer *offer) {
             (part == 3 && (p == 11 || p == 12)) || (part == 4 && (p == 13 || p == 14)) ||
             (part == 5 && p >= 11 && p <= 14) || (part == 6 && (p == 15 || p == 16)) ||
             (part == 7 && (p == 17 || p == 18)) || (part == 8 && (p == 19 || p == 20));
-        if (!selected) continue;
+        int counterpart = part >= 11 && part <= 20 && p == 11 + ((part-11)^1);
+        if (!selected && !counterpart) continue;
         PartSnapshot *slot = &offer->parts[offer->count++];
         slot->part = part == 10 ? 10 : p;
+        slot->selected = selected;
         slot->offset = slots[i].offset + (part == 10 && p != 10 ? 4 : 0);
         if (!read_bytes((byte *)offer->cat + slot->offset, &slot->old, 4)) return KEEP_MUTATION;
-        if (slot->old == id) continue;
-        changed = 1;
         MutationQuality old = quality(slot->part, slot->old);
-        MutationDecision decision = mutation_decision(old, quality(slot->part, id));
+        int next_id = selected ? id : slot->old;
+        MutationQuality next = next_id == slot->old ? old : quality(slot->part, next_id);
+        before[offer->count-1] = (MutationBonus){comparison_group(slot->part), slot->old, old};
+        after[offer->count-1] = (MutationBonus){comparison_group(slot->part), next_id, next};
+        if (!selected || slot->old == id) continue;
+        changed = 1;
+        if (old.kind != UNMUTATED) occupied = 1;
+        MutationDecision decision = mutation_decision(old, next);
         result = combine_mutation_decisions(result, decision);
     }
     if (!changed || !offer->count || result == INVALID_MUTATION) return KEEP_MUTATION;
+    if (result == VANILLA_MUTATION && occupied && !effective_stats_improve(before, after, offer->count))
+        return KEEP_MUTATION;
     return result;
 }
 
@@ -126,12 +142,6 @@ static const wchar_t *part_name(int part) {
         L"Ears",L"Mouth",L"Fur",L"Left arm",L"Right arm",L"Left leg",L"Right leg",L"Left eye",L"Right eye",
         L"Left eyebrow",L"Right eyebrow",L"Left ear",L"Right ear"};
     return part >= 0 && part < (int)COUNT(names) ? names[part] : L"Mutation";
-}
-
-static int comparison_group(int part) {
-    if (part >= 11 && part <= 14) return 3 + (part-11)/2;
-    if (part >= 15 && part <= 20) return 6 + (part-15)/2;
-    return part;
 }
 
 static int same_comparison(const PartSnapshot *a, const PartSnapshot *b) {
@@ -510,8 +520,9 @@ static void render_comparison(void) {
     describe_mutation(part->part, (int)(active.pair >> 32), incoming);
     text_page(current, view_page, a);
     text_page(incoming, view_page, b);
-    panel_text("old_art_note", render_part_art(0, part, part->old) ? L"" : L"Preview unavailable");
-    panel_text("new_art_note", render_part_art(1, part, (int)(active.pair >> 32)) ? L"" : L"Preview unavailable");
+    int incoming_id = (int)(active.pair >> 32);
+    panel_text("old_art_note", render_part_art(0, part, part->old) ? L"" : part->old == -2 ? L"Missing part" : L"Preview unavailable");
+    panel_text("new_art_note", render_part_art(1, part, incoming_id) ? L"" : incoming_id == -2 ? L"Missing part" : L"Preview unavailable");
     render_effects(0, a);
     render_effects(1, b);
     panel_text("part", part_name(view_labels[view_part]));
@@ -606,7 +617,7 @@ static void show_next_offer(void) {
         view_count = 0;
         for (unsigned i = 0; i < active.count; ++i) {
             PartSnapshot *part = &active.parts[i];
-            if (part->old == (int)(active.pair >> 32)) continue;
+            if (!part->selected || part->old == (int)(active.pair >> 32)) continue;
             unsigned j = 0;
             while (j < view_count && !same_comparison(&active.parts[view_indices[j]], part)) ++j;
             if (j == view_count) {

@@ -56,7 +56,7 @@ static MutationQuality quality(int part, int id) {
     byte *definition = definition_for(part, id);
     int type;
     if (!definition || !read_bytes(definition + 0xa8, &type, 4)) return q;
-    if (!type) { q.kind = UNMUTATED; return q; }
+    if (!type) { q.kind = id < 0 ? UNKNOWN : UNMUTATED; return q; }
     if (type != 3) return q;
     uintptr_t start, end;
     if (!read_bytes(definition + 0x38, &start, 8) || !read_bytes(definition + 0x40, &end, 8) ||

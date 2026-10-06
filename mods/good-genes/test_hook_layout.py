@@ -109,6 +109,21 @@ def check_paired_comparisons():
     assert "original_set(active.cat, active.pair);" in source, "Keep the original roll atomic"
 
 
+def check_effective_bonuses_and_missing_parts():
+    root = Path(__file__).resolve().parent
+    source = (root / "selector.h").read_text(encoding="ascii")
+    native = (root / "native.c").read_text(encoding="ascii")
+    snapshot = source.split("static MutationDecision snapshot_offer(", 1)[1].split("static int snapshot_unchanged(", 1)[0]
+    assert "id < 0" not in snapshot, "Definitions, not sign, validate missing-part IDs"
+    assert "q.kind = id < 0 ? UNKNOWN : UNMUTATED;" in native
+    assert "p == 11 + ((part-11)^1)" in snapshot, "Capture an unchanged counterpart"
+    assert "if (!selected && !counterpart) continue;" in snapshot
+    assert "int next_id = selected ? id : slot->old;" in snapshot
+    assert "result == VANILLA_MUTATION && occupied && !effective_stats_improve(before, after, offer->count)" in snapshot
+    assert "if (!part->selected || part->old == (int)(active.pair >> 32)) continue;" in source
+    assert 'L"Missing part"' in source
+
+
 if __name__ == "__main__":
     check_set_piece_branch()
     check_birth_hooks()
@@ -116,4 +131,5 @@ if __name__ == "__main__":
     check_footer_layout_contract()
     check_selector_navigation()
     check_paired_comparisons()
+    check_effective_bonuses_and_missing_parts()
     print("Hook, sprite-construction, footer-layout, and selector source contracts match.")
