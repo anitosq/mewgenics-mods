@@ -136,6 +136,7 @@ static void return_room(void* ui,const char* name) {
     normalize_orders(after,count);
     if(transaction_apply()) {
         char message[180];snprintf(message,sizeof(message),"Returned %u item%s to inventory.",selected,selected==1?"":"s");report(message);
+        ui_return_count=selected;
     }
 }
 static void undo(void* ui) {

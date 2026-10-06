@@ -22,6 +22,7 @@ def main():
         "AutoFurniture/AutoFurniture.dll": (ROOT / "build/AutoFurniture.dll").read_bytes(),
         "AutoFurniture/swfs/auto_furniture.swf": (ROOT / "build/data-mod/swfs/auto_furniture.swf").read_bytes(),
         "AutoFurniture/swfs/swflist.gon.append": (ROOT / "build/data-mod/swfs/swflist.gon.append").read_bytes(),
+        "AutoFurniture/data/text/combined.csv.append": (ROOT / "build/data-mod/data/text/combined.csv.append").read_bytes(),
         "AutoFurniture/README.md": (ROOT / "README.md").read_bytes(),
         "AutoFurniture/LICENSE": (ROOT / "LICENSE").read_bytes(),
         "AutoFurniture/THIRD_PARTY_NOTICES.md": (ROOT / "THIRD_PARTY_NOTICES.md").read_bytes(),
@@ -61,10 +62,10 @@ def main():
         assert z.testzip() is None and set(z.namelist()) == set(files)
         assert all(z.read(name) == data for name, data in files.items())
     mapping = ET.fromstring(files["fomod/ModuleConfig.xml"]).find("requiredInstallFiles")
-    assert len(mapping) == 8
+    assert len(mapping) == 9
     assert {entry.attrib["source"].replace("\\", "/") for entry in mapping} == {
         name for name in files if name.startswith("AutoFurniture/")}
-    assert len({entry.attrib["destination"] for entry in mapping}) == 8
+    assert len({entry.attrib["destination"] for entry in mapping}) == 9
     digest = lambda data: hashlib.sha256(data).hexdigest()
     manifest = {"version": VERSION, "source_commit": commit, "sha256": digest(archive.read_bytes()),
                 "files": {name: digest(data) for name, data in sorted(files.items())}}

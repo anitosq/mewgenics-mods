@@ -4,6 +4,7 @@ SWF encoding adapted from Improved Inventory, MIT, copyright 2026 anitosq.
 """
 from pathlib import Path
 import struct
+import localization
 
 PANEL_HITS = [(558,0,42,48)] + [(18,90+i*44,215,36) for i in range(5)]
 PANEL_HITS += [(x,90+i*44,76,36) for i in range(5) for x in (238,320)]
@@ -111,30 +112,33 @@ def build():
     m.sprite('AFRoom',m.feedback(parts,[(0,0,32,32)]))
     parts = m.paper(0,0,600,604)
     parts += [(m.field(18,10,530,36,27,'Auto Furniture'),'title'),m.field(565,10,30,36,26,'X'),
-              m.field(18,56,210,30,19,'Stat'),m.field(238,56,76,30,19,'Min'),
-              m.field(320,56,76,30,19,'Max'),m.field(410,56,75,30,19,'Before',align=2),m.field(493,56,90,30,17,'Best found',align=2)]
+              (m.field(18,56,210,30,19,'Stat'),'stat'),(m.field(238,56,76,30,19,'Min'),'min'),
+              (m.field(320,56,76,30,19,'Max'),'max'),(m.field(410,56,75,30,19,'Before',align=2),'before'),
+              (m.field(493,56,90,30,17,'Best found',align=2),'best')]
     parts += [m.box(18,82,564,1,(54,50,42,90)),m.box(18,313,564,1,(54,50,42,90))]
     for i,label in enumerate(('Comfort','Stimulation','Health','Mutation','Appeal')):
         y=90+i*44
-        parts += m.paper(18,y+3,28,28)+[(m.field(21,y+2,25,30,23),'check'+str(i)),m.field(92,y+3,141,32,20,label)]
+        parts += m.paper(18,y+3,28,28)+[(m.field(21,y+2,25,30,23),'check'+str(i)),(m.field(92,y+3,141,32,20,label),'stat'+str(i))]
         for prefix,x in [('min',238),('max',320)]:
             parts += m.paper(x,y,76,36)+[(m.field(x+3,y+4,70,30,18,align=2),prefix+str(i))]
         parts += [(m.field(410,y+4,75,30,21,align=2),'old'+str(i)),(m.field(493,y+4,90,30,21,align=2),'new'+str(i))]
-    parts += m.paper(18,324,28,28)+[(m.field(21,322,25,30,23),'utility'),m.field(58,321,380,34,21,'Include utility furniture')]
-    parts += m.paper(450,320,132,38)+[m.field(454,325,124,30,22,'Clear',align=2)]
+    parts += m.paper(18,324,28,28)+[(m.field(21,322,25,30,23),'utility'),(m.field(58,321,380,34,21,'Include utility furniture'),'utility_label')]
+    parts += m.paper(450,320,132,38)+[(m.field(454,325,124,30,22,'Clear',align=2),'clear')]
     for label,x,fill in [('Calculate',18,CALCULATE_FILL),('Apply',162,APPLY_FILL),
                          ('Undo',306,(232,225,206,255)),('Pins',450,(232,225,206,255))]:
-        parts += m.paper(x,370,132,38,fill=fill)+[m.field(x+4,375,124,30,22,label,align=2)]
+        field = m.field(x+4,375,124,30,22,label,align=2)
+        parts += m.paper(x,370,132,38,fill=fill)+[(field,label.lower())]
     parts += [(m.field(18,426,564,44,17,wrap=True),'status'),(m.field(18,476,72,28,18),'change')]
     for i in range(5):
         parts += [(m.field(118+i*94,476,72,28,18,align=0),'delta'+str(i))]
     parts += [m.box(18,522,564,1,(54,50,42,90))]
-    for label,x in [('Return room',18),('Return all rooms',306)]:
-        parts += m.paper(x,546,276,38)+[m.field(x+4,551,268,30,22,label,align=2)]
+    for label,x,name in [('Return room',18,'return_room'),('Return all rooms',306,'return_all')]:
+        parts += m.paper(x,546,276,38)+[(m.field(x+4,551,268,30,22,label,align=2),name)]
     m.sprite('AFPanel',m.feedback(parts,PANEL_HITS))
-    parts=m.paper(0,0,600,490)+[m.field(18,10,530,36,27,'Pinned furniture'),m.field(565,10,30,36,26,'X')]
+    parts=m.paper(0,0,600,490)+[(m.field(18,10,530,36,27,'Pinned furniture'),'title'),m.field(565,10,30,36,26,'X')]
     for label,x,w in [('',18,55),('',85,55),('Done',450,132)]:
-        parts+=m.paper(x,436,w,36)+[m.field(x+4,439,w-8,31,23,label,align=2)]
+        field=m.field(x+4,439,w-8,31,23,label,align=2)
+        parts+=m.paper(x,436,w,36)+[(field,'done') if label else field]
     parts += [m.polygon([(51,445),(40,454),(51,463),(47,466),(32,454),(47,442)],ink),
               m.polygon([(107,445),(118,454),(107,463),(111,466),(126,454),(111,442)],ink)]
     parts+=[(m.field(160,440,280,30,20),'page')]
@@ -146,6 +150,7 @@ def build():
     root=Path(__file__).resolve().parent/'build/data-mod/swfs'
     m.write(root/'auto_furniture.swf')
     (root/'swflist.gon.append').write_text('game [ auto_furniture.swf ]\n',encoding='ascii')
+    localization.build(root.parents[1])
     # Rendering, hover, and input share the same bounds.
     layout='typedef struct {double x,y,w,h;} UIBox;\n'
     for name,boxes in [('panel_boxes',PANEL_HITS),('pin_boxes',PIN_HITS)]:

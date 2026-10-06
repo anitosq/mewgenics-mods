@@ -34,11 +34,13 @@ static void *saved_scene,*saved_inventory,*saved_ui;
 static uint64_t saved_generation;
 static int undo_ready,refresh_pending;
 static char ui_status[180];
+static unsigned ui_return_count;
 
 static void report(const char* message) {
     if(log_message) log_message("AutoFurniture","%s",message);
     if(!strncmp(message,"UNDO SETTLED:",13)||!strncmp(message,"APPLY PASS:",11))return;
     if(!strncmp(message,"UNDO PASS:",10))message="Previous layout restored.";
+    ui_return_count=0;
     snprintf(ui_status,sizeof(ui_status),"%s",message);
 }
 static int read_bytes(const void* p,void* out,size_t n) {
