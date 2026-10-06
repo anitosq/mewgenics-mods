@@ -1,9 +1,9 @@
 # Development
 
-Version 0.1.0 is a release candidate, not a published or gameplay-verified
-release. The approved selector presentation is carried over from local
-testing; the replacement breeding implementation and asset startup gate
-need fresh owner testing.
+Version 0.1.0 is published following owner approval. The exact artifact and
+verification scope are recorded in docs/releases/good-genes/0.1.0-publication.md.
+Detailed cases below remain useful for future changes; approval does not imply
+exhaustive gameplay or manager lifecycle coverage.
 
 ## Build
 
@@ -75,5 +75,5 @@ inspection are permitted.
 - Verify manager install and uninstall, DLL-only startup, disabled UI assets,
   mismatched UI assets, and duplicate enabled copies.
 
-Keep the Nexus page unpublished and do not tag/freeze the archive until
-the candidate's affected checks are confirmed.
+Preserve the published 0.1.0 archive and tag. Future payload changes require a
+new version and owner confirmation of the affected checks before publication.

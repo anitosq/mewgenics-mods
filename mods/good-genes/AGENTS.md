@@ -7,9 +7,13 @@
 
 - Owner release decision, 2026-10-06: replace the inherited third-party breeding
   patch table with our own implementation before distribution. No copied table
-  may enter the source repository or release archive. Keep Nexus unpublished
-  and avoid naming other mods in its description. Record fresh owner gameplay
+  may enter the source repository or release archive. Avoid naming other mods
+  in its description. Record fresh owner gameplay
   confirmation for the replacement implementation before freezing a release.
+- Owner release approval, 2026-10-07: approved the review-fix ZIP and requested
+  public publication, superseding the earlier hidden-listing restriction.
+  Version 0.1.0 is now frozen and public; never replace its archive or retag it.
+  Use docs/releases/good-genes/0.1.0-publication.md for release evidence.
 
 - Owner correction, 2026-10-06: mutation replacement must use the game's visual
   UI, with a native skill-replacement-like Keep/Replace flow. Do not substitute
