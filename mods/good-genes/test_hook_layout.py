@@ -66,7 +66,10 @@ def check_footer_layout_contract():
     for name in ("no_caption", "yes_caption", "effect_divider"):
         assert f'"{name}"' in source and f'"{name}"' in assets
     assert "float effects_bottom = 368 + effect_rows*26;" in source
-    assert "float button_y = effects_bottom + (navigation_needed ? 41 : 20);" in source
+    assert "float pager_y = effects_bottom + 16;" in source
+    assert "float button_y = navigation_needed ? pager_y + 28 + 16 : effects_bottom + 20;" in source
+    assert "if (navigation_needed) *(float *)(child+0x74) += pager_y-479;" in source
+    assert "else child[8] &= (byte)~0x20;" in source
     assert "float height = button_y + 30 + 20 - 170;" in source
     assert "if (rows > effect_rows) effect_rows = rows;" in source
     assert "skin_selector(effect_rows);" in source
@@ -88,10 +91,29 @@ def check_selector_navigation():
     assert "result == INVALID_MUTATION) return KEEP_MUTATION;" in source
 
 
+def check_paired_comparisons():
+    source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
+    # Group only counterparts, never arms with legs or different current IDs.
+    assert "if (part >= 11 && part <= 14) return 3 + (part-11)/2;" in source
+    assert "if (part >= 15 && part <= 20) return 6 + (part-15)/2;" in source
+    assert "return comparison_group(a->part) == comparison_group(b->part) && a->old == b->old;" in source
+    assert "!same_comparison(&active.parts[view_indices[j]], part)" in source
+    assert "view_labels[j] = part->part;" in source, "Single-sided rolls retain their side"
+    assert "view_labels[j] = comparison_group(part->part);" in source
+    assert 'panel_text("part", part_name(view_labels[view_part]));' in source
+    assert 'L"Both eyes"' not in source and 'L"Keep Both"' not in source
+    assert "if (scope >= 3 && scope <= 8 && view_count > 1) {" in source
+    assert 'scope == 5 ? L"Replace All" : L"Replace Both"' in source
+    assert "navigation_needed = view_count > 1;" in source
+    assert "if (pages > 1) navigation_needed = 1;" in source, "Long effects remain readable"
+    assert "original_set(active.cat, active.pair);" in source, "Keep the original roll atomic"
+
+
 if __name__ == "__main__":
     check_set_piece_branch()
     check_birth_hooks()
     check_sprite_construction()
     check_footer_layout_contract()
     check_selector_navigation()
+    check_paired_comparisons()
     print("Hook, sprite-construction, footer-layout, and selector source contracts match.")

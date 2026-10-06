@@ -40,7 +40,9 @@
 - Owner visual feedback, 2026-10-06: keep the selector 640px wide in the native
   1280x720 canvas; size its height to the maximum effect rows across the offer.
   Keep 20px below action buttons and 20px above them when navigation is absent;
-  reserve navigation space only when needed. Footer position must stay stable
+  reserve navigation space only when needed. Owner feedback, 2026-10-07:
+  when present, give the 28px pager 16px clearance above and below; otherwise
+  hide the entire row without reserving its space. Footer position must stay stable
   across pages. Center each effect line below its preview, including the combined
   stat value/icon width. Preserve 20px effects, black 22px native stat icons,
   mutation previews capped at 157.5x69 (25% smaller than the prior build),
@@ -48,6 +50,16 @@
   above and below. Use masked/visible preview bounds;
   unmasked coat textures previously made previews tiny. Preserve full effects
   through pagination and omit the redundant "Special mutation" label.
+- Owner paired-mutation feedback, 2026-10-07: identical left/right comparisons
+  should appear once as Eyes/Arms/etc. Owner clarification: do not label a
+  matching pair "Both"; it represents one mutation. Merge only within an affected pair
+  with matching current IDs; preserve different current mutations and genuinely
+  single-sided rolls. Keep Existing/Replace are the default actions. Use
+  Replace Both only for multiple distinct comparisons in a paired roll (All
+  for all limbs), since navigation never changes the original roll's write scope.
+  Matching pairs and single-sided changes have no comparison pager; retain
+  text paging only when an effect description overflows.
+  Check matching pairs, differing pairs, and single-sided offers before delivery.
 - Owner UI feedback, 2026-10-06: retain native panel artwork and UI audio, but
   restore the simple outlined action buttons; the native button skin was rejected.
   Check that hover/click uses the native Button sound prefix, panel-open audio

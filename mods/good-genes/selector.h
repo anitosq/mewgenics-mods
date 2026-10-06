@@ -25,6 +25,7 @@ static _Thread_local int creating_selector;
 static Offer offers[64], active;
 static unsigned queue_head, queue_count, view_part, view_page;
 static unsigned view_indices[15], view_pages[15], view_count;
+static int view_labels[15];
 static int navigation_needed;
 /* Attached clips are owned by the modal's display tree, never the live cat. */
 static byte *part_art[2][9];
@@ -125,6 +126,17 @@ static const wchar_t *part_name(int part) {
         L"Ears",L"Mouth",L"Fur",L"Left arm",L"Right arm",L"Left leg",L"Right leg",L"Left eye",L"Right eye",
         L"Left eyebrow",L"Right eyebrow",L"Left ear",L"Right ear"};
     return part >= 0 && part < (int)COUNT(names) ? names[part] : L"Mutation";
+}
+
+static int comparison_group(int part) {
+    if (part >= 11 && part <= 14) return 3 + (part-11)/2;
+    if (part >= 15 && part <= 20) return 6 + (part-15)/2;
+    return part;
+}
+
+static int same_comparison(const PartSnapshot *a, const PartSnapshot *b) {
+    /* One offer has one incoming ID. Merge only matching current IDs in a pair. */
+    return comparison_group(a->part) == comparison_group(b->part) && a->old == b->old;
 }
 
 static void append_text(wchar_t *out, size_t capacity, const wchar_t *format, ...) {
@@ -382,7 +394,8 @@ static byte *selector_button(const char *name) {
 static void skin_selector(unsigned effect_rows) {
     /* Reserve only the rows this offer needs; keep the footer stable while paging. */
     float effects_bottom = 368 + effect_rows*26;
-    float button_y = effects_bottom + (navigation_needed ? 41 : 20);
+    float pager_y = effects_bottom + 16;
+    float button_y = navigation_needed ? pager_y + 28 + 16 : effects_bottom + 20;
     float height = button_y + 30 + 20 - 170;
     panel_center_y = 170 + height/2;
     static const char *actions[] = {"no", "yes", "no_caption", "yes_caption"};
@@ -393,7 +406,10 @@ static void skin_selector(unsigned effect_rows) {
     static const char *navigation[] = {"previous", "next", "page"};
     for (unsigned i = 0; i < COUNT(navigation); ++i) {
         byte *child = panel_child(navigation[i]);
-        if (child) *(float *)(child+0x74) += effects_bottom+8-479;
+        if (child) {
+            if (navigation_needed) *(float *)(child+0x74) += pager_y-479;
+            else child[8] &= (byte)~0x20;
+        }
     }
     byte *divider = panel_child("effect_divider");
     if (divider) {
@@ -498,9 +514,12 @@ static void render_comparison(void) {
     panel_text("new_art_note", render_part_art(1, part, (int)(active.pair >> 32)) ? L"" : L"Preview unavailable");
     render_effects(0, a);
     render_effects(1, b);
-    swprintf(title, COUNT(title), L"%ls", part_name(part->part));
-    panel_text("part", title);
-    swprintf(title, COUNT(title), L"Comparison %u/%u  |  Page %u/%u", view_part+1, view_count, view_page+1, view_pages[view_part]);
+    panel_text("part", part_name(view_labels[view_part]));
+    if (view_count > 1 && view_pages[view_part] > 1)
+        swprintf(title, COUNT(title), L"Comparison %u/%u  |  Page %u/%u", view_part+1, view_count, view_page+1, view_pages[view_part]);
+    else if (view_count > 1)
+        swprintf(title, COUNT(title), L"Comparison %u/%u", view_part+1, view_count);
+    else swprintf(title, COUNT(title), L"Page %u/%u", view_page+1, view_pages[view_part]);
     panel_text("page", navigation_needed ? title : L"");
 }
 
@@ -589,9 +608,12 @@ static void show_next_offer(void) {
             PartSnapshot *part = &active.parts[i];
             if (part->old == (int)(active.pair >> 32)) continue;
             unsigned j = 0;
-            while (j < view_count && (active.parts[view_indices[j]].part != part->part ||
-                   active.parts[view_indices[j]].old != part->old)) ++j;
-            if (j == view_count) view_indices[view_count++] = i;
+            while (j < view_count && !same_comparison(&active.parts[view_indices[j]], part)) ++j;
+            if (j == view_count) {
+                view_indices[j] = i;
+                view_labels[j] = part->part;
+                ++view_count;
+            } else if (view_labels[j] != part->part) view_labels[j] = comparison_group(part->part);
         }
         int described = 1;
         unsigned effect_rows = 1;
@@ -637,6 +659,10 @@ static void show_next_offer(void) {
         destroy_function(&yes);
         destroy_function(&no);
         if (!active_prompt) { scene[0x4db] = 1; continue; }
+        int scope = (int)(uint32_t)active.pair;
+        if (scope >= 3 && scope <= 8 && view_count > 1) {
+            panel_text("yes_caption", scope == 5 ? L"Replace All" : L"Replace Both");
+        }
         byte *panel = *(byte **)(active_prompt + 0x40);
         for (int i = 0; i < 2; ++i) {
             if (!navigation_needed) {
