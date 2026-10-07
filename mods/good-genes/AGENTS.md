@@ -30,7 +30,9 @@
   outside scope. Preserve the original rolled candidate and compatible parts.
 - Owner decision, 2026-10-06: show the selector for valid occupied-slot changes
   involving a special on either side. Automatically apply only clear stat-only
-  improvements; silently keep equal/incomparable stat changes. Identical IDs
+  improvements; silently keep equal/downgrade stat changes. Owner extension,
+  2026-10-08: stat trade-offs (some gain, some loss) also require a choice, using
+  effective bonuses across the whole roll, not independent per-side decisions. Identical IDs
   never prompt. Check both special-to-stat and stat-to-special cases before delivery.
   Owner review, 2026-10-07: paired rolls must still offer that choice when another
   affected side rejects a stat-only change. Check both part orders; unknown
@@ -45,10 +47,11 @@
   valid missing parts, and undefined negatives in deferred regression checks.
 - Owner will test. Compilation and read-only inspection are allowed, but do not
   run tests, load the DLL, launch the game, install, or touch saves unless asked.
-- Owner correction, 2026-10-06: keep the current version fixed during local
-  testing. Before changing version strings or archive names, confirm that the
-  task is release preparation or the owner explicitly requested a version bump.
-  Use existing build hashes to distinguish local rebuilds.
+- Owner workflow correction, 2026-10-08: keep updated source, leave the game
+  installation unchanged, and deliver an installable next-version `.beta` ZIP
+  for owner testing. This supersedes the earlier fixed-version local-build
+  handoff. Keep VERSION, startup log, archive name and package metadata aligned;
+  check all four before handoff. Do not remove `.beta` before owner testing.
 - Owner visual feedback, 2026-10-06: keep the selector 640px wide in the native
   1280x720 canvas; size its height to the maximum effect rows across the offer.
   Keep 20px below action buttons and 20px above them when navigation is absent;
@@ -56,12 +59,19 @@
   when present, give the 28px pager 16px clearance above and below; otherwise
   hide the entire row without reserving its space. Footer position must stay stable
   across pages. Center each effect line below its preview, including the combined
-  stat value/icon width. Preserve 20px effects, black 22px native stat icons,
+  stat value/icon width. Owner extension, 2026-10-08: use 18px effects in up to
+  twelve 22px rows, black 20px effect stat icons, and a taller content-sized panel.
+  Show inherited base stats plus active mutation bonuses in both columns;
+  exclude class, levels, gear and temporary effects. Incoming increases are green,
+  decreases red, unchanged values default. Never mutate a cat to generate a preview.
+  Recheck the whole preview before applying and show unavailable totals honestly.
+  Preserve
   mutation previews capped at 157.5x69 (25% smaller than the prior build),
   and smaller buttons. Center previews between headings and effects with space
   above and below. Use masked/visible preview bounds;
   unmasked coat textures previously made previews tiny. Preserve full effects
-  through pagination and omit the redundant "Special mutation" label.
+  without text paging; keep an offer if its full description will not fit.
+  Omit the redundant "Special mutation" label.
 - Owner paired-mutation feedback, 2026-10-07: identical left/right comparisons
   should appear once as Eyes/Arms/etc. Owner clarification: do not label a
   matching pair "Both"; it represents one mutation. Merge only within an affected pair
@@ -70,7 +80,7 @@
   Replace Both only for multiple distinct comparisons in a paired roll (All
   for all limbs), since navigation never changes the original roll's write scope.
   Matching pairs and single-sided changes have no comparison pager; retain
-  text paging only when an effect description overflows.
+  arrows only between different parts (owner clarification, 2026-10-08).
   Check matching pairs, differing pairs, and single-sided offers before delivery.
 - Owner UI feedback, 2026-10-06: retain native panel artwork and UI audio, but
   restore the simple outlined action buttons; the native button skin was rejected.

@@ -5,8 +5,46 @@ verification scope are recorded in docs/releases/good-genes/0.1.0-publication.md
 Detailed cases below remain useful for future changes; approval does not imply
 exhaustive gameplay or manager lifecycle coverage.
 
-Version 0.1.1 prepares the paired-comparison and pager-spacing update for owner
-testing and later publication. It does not replace the public 0.1.0 archive.
+Version 0.1.1 is also published; see docs/releases/good-genes/0.1.1-publication.md.
+The current revision is 0.2.0.beta, prepared as an installable ZIP for owner
+testing. It is not installed, gameplay-tested, or published. The owner clarified
+that updated source stays in the checkout and the game installation stays
+unchanged. Do not replace either published archive or tag. Keep `.beta` until
+owner testing is confirmed; see the 0.2.0.beta candidate record for exact bytes.
+
+## Local Stat Trade-Off Revision (2026-10-08)
+
+Occupied stat-only rolls use effective before/after mutation totals: any gain
+with no losses applies automatically, any gain with a loss opens the selector,
+and equal totals or pure downgrades keep the current mutation. Special choices,
+empty parts, birth inheritance, overnight scope, and atomic SetPiece writes
+are preserved. Disabled shapes do not contribute or suppress active duplicates.
+
+Read-only executable inspection: birth constructor 0xa89a0 passes +0x6f0
+through +0x708 to the seven parental-stat calls. Combat initialization at
+0xfcc32 adds these inherited stats to the separate bonus result from 0xc0b80.
+Mutation collection at 0xcaa70 skips inactive shape flags (ID offset+0x14),
+always includes the overall coat at +0x78, and deduplicates canonical group/ID
+pairs before definition resolution at 0xcc300. SetPiece does not change flags.
+The preview reads these values without calling SetPiece, adds only mutation
+bonuses, and excludes class, levels, equipment, and temporary combat effects.
+Coat's embedded per-shape copies must not be counted separately. Unknown
+definitions make the totals unavailable. Acceptance rechecks the entire preview
+as well as the affected IDs, flags, and scene lifetime.
+
+UI: up to twelve 22px rows of 18px effects replace four text-paged rows.
+Descriptions must fit in full or the offer is kept. Arrows navigate different
+parts only. The seven-stat strip has native black icons and colored incoming
+values; its numbers cover the whole roll even when navigating parts. Maximum
+panel height is 658px on the native 720px canvas, centered vertically. The
+footer remains stable across comparisons, with no hidden-pager space.
+
+Deferred owner checks: reproduce three separate -1 CHA mutations on base 7,
+then replace +2 STR/-1 CHA with +1 STR. Expect CHA 4 -> 5 green, STR decreasing
+red, and other values unchanged. Check Keep/Replace, matching/split pairs,
+inactive counterparts, coat changes, missing parts, seven-stat icon order,
+mixed stat/special effects, long localized text, queued offers, and battle exit.
+Regression checks were updated but not executed; compilation only is allowed.
 
 ## Build
 
@@ -58,7 +96,7 @@ Do not compare exact kitten outcomes across builds as a reproducibility test.
 
 ## Deferred Checks
 
-### Local paired-comparison revision (2026-10-07)
+### Published paired-comparison revision (2026-10-07)
 
 The owner's duplicated eye comparison was a presentation problem: accepting
 an offer already invokes the original SetPiece once with its original part/ID.
@@ -81,7 +119,8 @@ Both (Replace All for all limbs), with Keep Existing unchanged. Matching pairs
 and single-side changes have no comparison pager; long effects can still have
 text pages. Effects are not doubled for the grouped preview. Pager-only
 clearance is 16px above and below its 28px row; absent navigation retains the
-existing 20px effects-to-button gap. This revision is local, not published.
+existing 20px effects-to-button gap. The local 2026-10-08 revision above
+supersedes text paging and adds the stat strip.
 
 ### Checks to run with owner authorization
 
@@ -116,10 +155,10 @@ inspection are permitted.
 - For paired mutations, combine a special on one side with a stat downgrade
   on the other: offer Keep/Replace for the whole roll in either part order.
   Unknown definitions must still block it; stat-only downgrades stay automatic Keep.
-- Navigate descriptions across pages and parts in both directions, including
-  wraparound. Page counts reset per offer; each click renders only once.
+- Navigate different parts in both directions, including wraparound; each
+  click renders only once. Descriptions no longer have text pages.
 - Matching eyes/arms/legs/eyebrows/ears show one grouped comparison with no pager
-  unless effects need another text page. Different current IDs keep both
+  regardless of description length. Different current IDs keep both
   comparisons and a shared Replace Both choice; a true single-side roll does
   not acquire a Both label. Matching pairs also use the plain group name and
   Keep Existing/Replace. Also check one side already matching the incoming
@@ -134,5 +173,5 @@ inspection are permitted.
 - Verify manager install and uninstall, DLL-only startup, disabled UI assets,
   mismatched UI assets, and duplicate enabled copies.
 
-Preserve the published 0.1.0 archive and tag. Future payload changes require a
+Preserve the published 0.1.0 and 0.1.1 archives and tags. Future payload changes require a
 new version and owner confirmation of the affected checks before publication.

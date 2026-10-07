@@ -71,8 +71,15 @@ def build(game, tools):
               (m.field(716, 515, 168, 25, 18, "Replace", align=2), "yes_caption")]
     # Separate lines give native stat icons a stable baseline beside each value.
     for side, x in (("cur",344), ("inc",664)):
-        for row in range(4):
-            parts.append((m.field(x, 368+row*26, 272, 26, 20), f"{side}{row}"))
+        for row in range(12):
+            parts.append((m.field(x, 368+row*22, 272, 22, 18), f"{side}{row}"))
+    for side, x in enumerate((344, 664)):
+        parts.append((m.field(x, 0, 272, 22, 16, align=2), f"base_title{side}"))
+        for stat in range(7):
+            left = x + round(stat*272/7)
+            width = round((stat+1)*272/7) - round(stat*272/7)
+            parts.append((m.field(left, 0, width, 24, 18, align=2), f"base{side}_{stat}"))
+            parts.append((m.field(left, 0, width, 22, 11, align=2), f"stat{side}_{stat}"))
     m.sprite("GoodGenesMutationSelector", parts)
     root = ROOT / "build/data-mod/swfs"
     m.write(root / "good_genes.swf")

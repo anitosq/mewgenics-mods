@@ -45,8 +45,9 @@ int main(void) {
     assert(mutation_decision(empty, defect) == VANILLA_MUTATION);
     assert(mutation_decision(empty, unknown) == INVALID_MUTATION);
     assert(mutation_decision(special, defect) == CHOOSE_MUTATION);
-    assert(mutation_decision(plain, tradeoff) == KEEP_MUTATION);
-    assert(mutation_decision(tradeoff, plain) == KEEP_MUTATION);
+    assert(mutation_decision(plain, tradeoff) == CHOOSE_MUTATION);
+    assert(mutation_decision(tradeoff, plain) == CHOOSE_MUTATION);
+    assert(mutation_decision(plain, different) == CHOOSE_MUTATION);
     assert(mutation_decision(plain, plain) == KEEP_MUTATION);
     assert(mutation_decision(plain, stronger) == VANILLA_MUTATION);
     assert(mutation_decision(stronger, plain) == KEEP_MUTATION);
@@ -78,30 +79,52 @@ int main(void) {
     MutationBonus before[] = {{6,750,int_eye}, {6,303,int_cha_eye}};
     MutationBonus after[] = {{6,303,int_cha_eye}, {6,303,int_cha_eye}};
     assert(mutation_decision(int_eye, int_cha_eye) == VANILLA_MUTATION);
-    assert(!effective_stats_improve(before, after, 2));
+    assert(effective_stats_decision(before, after, 2) == KEEP_MUTATION);
     MutationBonus reverse[] = {before[1], before[0]};
-    assert(!effective_stats_improve(reverse, after, 2));
+    assert(effective_stats_decision(reverse, after, 2) == KEEP_MUTATION);
     after[0] = after[1] = (MutationBonus){6,999,two_int_cha_eye};
-    assert(!effective_stats_improve(before, after, 2)); /* Equal effective totals. */
+    assert(effective_stats_decision(before, after, 2) == KEEP_MUTATION); /* Equal effective totals. */
     after[0].quality.stats[5] = after[1].quality.stats[5] = 2;
-    assert(effective_stats_improve(before, after, 2)); /* Genuine combined improvement. */
+    assert(effective_stats_decision(before, after, 2) == VANILLA_MUTATION); /* Genuine combined improvement. */
     before[0] = before[1] = (MutationBonus){6,750,int_eye};
     after[0] = (MutationBonus){6,303,int_cha_eye};
     after[1] = before[1];
-    assert(effective_stats_improve(before, after, 2)); /* Split a matching pair. */
+    assert(effective_stats_decision(before, after, 2) == VANILLA_MUTATION); /* Split a matching pair. */
     after[1] = after[0];
-    assert(effective_stats_improve(before, after, 2)); /* Matching pair counts once. */
+    assert(effective_stats_decision(before, after, 2) == VANILLA_MUTATION); /* Matching pair counts once. */
     before[1].quality = unknown;
-    assert(!effective_stats_improve(before, after, 2)); /* Unknown counterpart is protected. */
+    assert(effective_stats_decision(before, after, 2) == INVALID_MUTATION); /* Unknown counterpart is protected. */
     before[0] = (MutationBonus){3,300,plain};
     before[1] = (MutationBonus){4,300,plain};
     after[0] = before[0];
     after[1] = (MutationBonus){4,301,stronger};
-    assert(effective_stats_improve(before, after, 2)); /* Arms and legs count separately. */
+    assert(effective_stats_decision(before, after, 2) == VANILLA_MUTATION); /* Arms and legs count separately. */
     before[0] = (MutationBonus){8,-2,defect};
     before[1] = before[0];
     after[0] = after[1] = (MutationBonus){8,300,plain};
-    assert(effective_stats_improve(before, after, 2)); /* Defined negative IDs participate. */
+    assert(effective_stats_decision(before, after, 2) == VANILLA_MUTATION); /* Defined negative IDs participate. */
+    /* An inactive side must not suppress its active counterpart's bonus. */
+    before[0] = (MutationBonus){6,750,empty};
+    before[1] = (MutationBonus){6,750,int_eye};
+    MutationQuality total;
+    assert(effective_stats(before, 2, &total) && total.stats[3] == 1);
+    /* Restore one of three CHA penalties at the cost of a STR bonus. */
+    MutationBonus stacked[3] = {
+        {0,400,{STAT_MUTATION,{2,0,0,0,0,-1,0}}},
+        {1,401,{STAT_MUTATION,{0,2,0,0,0,-1,0}}},
+        {2,402,{STAT_MUTATION,{0,0,2,0,0,-1,0}}}
+    };
+    MutationBonus restored[3] = {stacked[0], stacked[1], stacked[2]};
+    restored[0] = (MutationBonus){0,300,plain};
+    assert(effective_stats(stacked, 3, &total) && 7+total.stats[5] == 4);
+    assert(effective_stats(restored, 3, &total) && 7+total.stats[5] == 5);
+    assert(effective_stats_decision(stacked, restored, 3) == CHOOSE_MUTATION);
+    /* Local trade-offs do not prompt when the combined result only loses stats. */
+    before[0] = (MutationBonus){6,300,plain};
+    before[1] = (MutationBonus){6,301,different};
+    after[0] = after[1] = before[1];
+    assert(mutation_decision(plain, different) == CHOOSE_MUTATION);
+    assert(effective_stats_decision(before, after, 2) == KEEP_MUTATION);
     for (int i = 0; i < MUTATION_STATS; ++i) {
         MutationQuality positive = {STAT_MUTATION, {0}};
         positive.stats[i] = 1;

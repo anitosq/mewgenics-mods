@@ -27,7 +27,7 @@ def main():
         "GoodGenes/THIRD_PARTY_NOTICES.md": (ROOT / "THIRD_PARTY_NOTICES.md").read_bytes(),
         "GoodGenes/description.json": json_bytes({
             "title": "Good Genes", "author": "anitosq", "version": VERSION,
-            "description": "Mutation inheritance and event/combat mutation protection with in-game special-effect choices. Requires Mewjector API 3.",
+            "description": "Mutation inheritance and event/combat mutation protection with special-effect and stat trade-off choices. Requires Mewjector API 3.",
         }),
         "GoodGenes/build-info.json": json_bytes({
             "version": VERSION, "source_commit": commit, "game_sha256": EXPECTED, "steam_build_id": 25143593,

@@ -18,13 +18,27 @@ that every distinct mutation on an asymmetric parent appears on its kitten.
 
 ## Event And Combat Mutations
 
-For an occupied part, a stat-only mutation replaces the current mutation only
-when no stat decreases and at least one increases. Equal changes and trade-offs
-keep the current mutation. A +2/-1 is not automatically better than a +1.
+For an occupied part, a stat-only mutation replaces the current mutation
+automatically when no stat decreases and at least one increases. Equal changes
+and pure downgrades keep the current mutation. A trade-off that increases some
+stats and decreases others opens the selector. A +2/-1 is not automatically
+better than a +1. Comparisons use combined mutation bonuses, counting matching
+paired mutations once.
 
 If either mutation has a special effect, an in-game comparison lets you keep
 the current mutation or accept the incoming one. Keeping it consumes the roll;
 it does not reroll. Unknown mutation definitions are protected.
+
+Each column shows inherited base stats plus active mutation bonuses before
+and after the entire roll. Incoming values are green for increases, red for
+decreases, and the normal color when unchanged. These previews exclude levels,
+class bonuses, equipment, and temporary effects. Unreadable totals show
+"Stats unavailable" rather than guessed values.
+
+Descriptions appear in full without text paging. Arrows appear only for
+different affected parts; matching paired mutations share one comparison.
+If a description exceeds the panel's twelve-line limit, the mod keeps the
+existing mutation rather than offering an incomplete comparison.
 
 Empty parts keep the game's normal behavior, with no comparison window.
 Ordinary overnight house mutations are unchanged.

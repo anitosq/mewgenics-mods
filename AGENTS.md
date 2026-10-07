@@ -36,6 +36,11 @@ for current status; dated research notes describe experiments at that time.
   resume releases; it indexes the existing tools and known Nexus UI pitfalls.
   Keep Nexus display names version-free; use version fields and versioned
   archive names. Build once and use the tested archive on both hosts.
+- Owner workflow correction, 2026-10-08: deliver untested changes as an
+  installable ZIP labelled with the next version and a `.beta` suffix. Keep
+  updated source, but leave the installed game/mods unchanged. Compilation and
+  package-integrity checks are allowed; do not automatically install, deploy,
+  launch, or touch saves. Remove the beta label only after owner testing.
 - Write player copy about features, installation and relevant known issues.
   Keep test evidence in release records and license terms in dedicated files.
   Use the humanizer skill when available for public copy. Keep required notices.

@@ -5,7 +5,12 @@ typedef struct { union { wchar_t local[8]; const wchar_t *pointer; }; size_t siz
 typedef struct { byte storage[56]; void *callable; } GameFunction;
 typedef struct { void **vtable; uint64_t ticket; int action; } Choice;
 _Static_assert(sizeof(wchar_t) == 2 && sizeof(GameFunction) == 64 && sizeof(Choice) <= 56, "Native ABI mismatch");
-typedef struct { int part, old, selected; unsigned offset; } PartSnapshot;
+typedef struct { int part, old, selected; unsigned offset; byte enabled; } PartSnapshot;
+static const struct { int part; unsigned offset; } mutation_slots[] = {
+    {0,0x90}, {1,0xe4}, {2,0x138}, {11,0x18c}, {12,0x1e0},
+    {13,0x234}, {14,0x288}, {15,0x2dc}, {16,0x330}, {17,0x384},
+    {18,0x3d8}, {19,0x42c}, {20,0x480}, {9,0x4d4}, {10,0x78}
+};
 typedef struct {
     void *cat;
     byte *origin, *manager;
@@ -23,13 +28,20 @@ static void (*original_button_update)(void *);
 static _Thread_local int creating_selector;
 /* ponytail: bounded FIFO keeps hooks allocation-free; raise only for proven larger effects. */
 static Offer offers[64], active;
-static unsigned queue_head, queue_count, view_part, view_page;
-static unsigned view_indices[15], view_pages[15], view_count;
+static unsigned queue_head, queue_count, view_part;
+static unsigned view_indices[15], view_count;
 static int view_labels[15];
 static int navigation_needed;
+enum { EFFECT_ROWS = 12 };
+static double base_stats[2][MUTATION_STATS];
+static int base_stats_valid;
 /* Attached clips are owned by the modal's display tree, never the live cat. */
 static byte *part_art[2][9];
 static byte *stat_art[2][MUTATION_STATS];
+static byte *base_art[2][MUTATION_STATS];
+static const char *stat_symbols[] = {"FontIcon_str", "FontIcon_dex", "FontIcon_con", "FontIcon_int",
+                                   "FontIcon_spd", "FontIcon_cha", "FontIcon_lck"};
+static const wchar_t *stat_labels[] = {L"STR", L"DEX", L"CON", L"INT", L"SPD", L"CHA", L"LCK"};
 static uint64_t next_ticket;
 static byte *active_prompt;
 static int pumping, closing;
@@ -87,19 +99,14 @@ static int comparison_group(int part) {
 
 /* Track SetPiece writes and unchanged counterparts that share their bonuses. */
 static MutationDecision snapshot_offer(Offer *offer) {
-    static const struct { int part; unsigned offset; } slots[] = {
-        {0,0x90}, {1,0xe4}, {2,0x138}, {11,0x18c}, {12,0x1e0},
-        {13,0x234}, {14,0x288}, {15,0x2dc}, {16,0x330}, {17,0x384},
-        {18,0x3d8}, {19,0x42c}, {20,0x480}, {9,0x4d4}, {10,0x78}
-    };
     int part = (int)(uint32_t)offer->pair, id = (int)(offer->pair >> 32);
     if (!offer->cat || part < 0 || part > 20) return KEEP_MUTATION;
-    int changed = 0, occupied = 0;
+    int changed = 0, occupied = 0, special = 0;
     MutationBonus before[15], after[15];
     offer->count = 0;
     MutationDecision result = VANILLA_MUTATION;
-    for (unsigned i = 0; i < COUNT(slots); ++i) {
-        int p = slots[i].part;
+    for (unsigned i = 0; i < COUNT(mutation_slots); ++i) {
+        int p = mutation_slots[i].part;
         int selected = part == 10 || part == p ||
             (part == 3 && (p == 11 || p == 12)) || (part == 4 && (p == 13 || p == 14)) ||
             (part == 5 && p >= 11 && p <= 14) || (part == 6 && (p == 15 || p == 16)) ||
@@ -109,23 +116,64 @@ static MutationDecision snapshot_offer(Offer *offer) {
         PartSnapshot *slot = &offer->parts[offer->count++];
         slot->part = part == 10 ? 10 : p;
         slot->selected = selected;
-        slot->offset = slots[i].offset + (part == 10 && p != 10 ? 4 : 0);
+        slot->offset = mutation_slots[i].offset + (part == 10 && p != 10 ? 4 : 0);
         if (!read_bytes((byte *)offer->cat + slot->offset, &slot->old, 4)) return KEEP_MUTATION;
+        slot->enabled = 1;
+        if (part != 10 && p != 10 &&
+            !read_bytes((byte *)offer->cat + slot->offset + 0x14, &slot->enabled, 1)) return KEEP_MUTATION;
         MutationQuality old = quality(slot->part, slot->old);
         int next_id = selected ? id : slot->old;
         MutationQuality next = next_id == slot->old ? old : quality(slot->part, next_id);
         before[offer->count-1] = (MutationBonus){comparison_group(slot->part), slot->old, old};
         after[offer->count-1] = (MutationBonus){comparison_group(slot->part), next_id, next};
+        /* Embedded coat IDs are SetPiece write targets, not extra bonuses. */
+        if (!slot->enabled || (part == 10 && p != 10)) {
+            before[offer->count-1].quality = after[offer->count-1].quality = (MutationQuality){UNMUTATED, {0}};
+        }
+        if (part == 10 && p != 10) continue;
         if (!selected || slot->old == id) continue;
         changed = 1;
         if (old.kind != UNMUTATED) occupied = 1;
         MutationDecision decision = mutation_decision(old, next);
         result = combine_mutation_decisions(result, decision);
+        if (old.kind != UNMUTATED && (old.kind == SPECIAL_MUTATION || next.kind == SPECIAL_MUTATION)) special = 1;
     }
     if (!changed || !offer->count || result == INVALID_MUTATION) return KEEP_MUTATION;
-    if (result == VANILLA_MUTATION && occupied && !effective_stats_improve(before, after, offer->count))
-        return KEEP_MUTATION;
-    return result;
+    if (!occupied) return VANILLA_MUTATION;
+    MutationDecision combined = effective_stats_decision(before, after, offer->count);
+    if (combined == INVALID_MUTATION) return KEEP_MUTATION;
+    return special ? CHOOSE_MUTATION : combined;
+}
+
+/* Hereditary stats at +0x6f0, plus the active, deduplicated mutation list used
+   by caa70/cc300. Excludes class, equipment, levels and temporary combat buffs. */
+static int preview_base_stats(const Offer *offer, double values[2][MUTATION_STATS]) {
+    int inherited[MUTATION_STATS];
+    if (!read_bytes((byte *)offer->cat + 0x6f0, inherited, sizeof(inherited))) return 0;
+    MutationBonus parts[2][COUNT(mutation_slots)];
+    for (unsigned i = 0; i < COUNT(mutation_slots); ++i) {
+        int p = mutation_slots[i].part, id;
+        unsigned offset = mutation_slots[i].offset;
+        byte enabled = 1;
+        if (!read_bytes((byte *)offer->cat + offset, &id, 4) ||
+            (p != 10 && !read_bytes((byte *)offer->cat + offset + 0x14, &enabled, 1))) return 0;
+        int next = id;
+        for (unsigned j = 0; j < offer->count; ++j)
+            if (offer->parts[j].selected && offer->parts[j].offset == offset) next = (int)(offer->pair >> 32);
+        MutationQuality old = enabled ? quality(p, id) : (MutationQuality){UNMUTATED, {0}};
+        parts[0][i] = (MutationBonus){comparison_group(p), id, old};
+        parts[1][i] = (MutationBonus){comparison_group(p), next, next == id ? old :
+            enabled ? quality(p, next) : (MutationQuality){UNMUTATED, {0}}};
+    }
+    for (unsigned side = 0; side < 2; ++side) {
+        MutationQuality total;
+        if (!effective_stats(parts[side], COUNT(mutation_slots), &total)) return 0;
+        for (unsigned i = 0; i < MUTATION_STATS; ++i) {
+            if (inherited[i] < -10000 || inherited[i] > 10000) return 0;
+            values[side][i] = inherited[i] + total.stats[i];
+        }
+    }
+    return 1;
 }
 
 static int snapshot_unchanged(void) {
@@ -133,7 +181,13 @@ static int snapshot_unchanged(void) {
     for (unsigned i = 0; i < active.count; ++i) {
         int old;
         if (!read_bytes((byte *)active.cat + active.parts[i].offset, &old, 4) || old != active.parts[i].old) return 0;
+        byte enabled;
+        if (active.parts[i].part != 10 &&
+            (!read_bytes((byte *)active.cat + active.parts[i].offset + 0x14, &enabled, 1) || enabled != active.parts[i].enabled)) return 0;
     }
+    double stats[2][MUTATION_STATS];
+    int valid = preview_base_stats(&active, stats);
+    if (valid != base_stats_valid || (valid && memcmp(stats, base_stats, sizeof(stats)))) return 0;
     return 1;
 }
 
@@ -214,35 +268,36 @@ static double glyph_width(wchar_t code) {
     return (lo < COUNT(glyphs) && glyphs[lo].code == (unsigned)code ? glyphs[lo].width : 1.0) * 20;
 }
 
-/* Four 26px rows at 20px text size; full effects remain available by paging. */
-static unsigned text_page(const wchar_t *text, unsigned wanted, wchar_t out[4096]) {
+static double effect_width(wchar_t code) {
+    return code >= 0xe000 && code < 0xe000+MUTATION_STATS ? 20 : glyph_width(code)*0.9;
+}
+
+/* Full descriptions, twelve 22px rows at 18px text size. Never truncate to fit. */
+static unsigned wrap_effects(const wchar_t *text, wchar_t out[4096]) {
     unsigned line = 0;
     size_t used = 0;
     out[0] = 0;
     while (*text) {
         const wchar_t *start = text, *space = NULL;
         double width = 0;
-        while (*text && *text != L'\n' && width + glyph_width(*text) <= 252) {
-            width += glyph_width(*text);
+        while (*text && *text != L'\n' && width + effect_width(*text) <= 252) {
+            width += effect_width(*text);
             if (*text == L' ') space = text;
             ++text;
         }
         if (*text && *text != L'\n' && space && space > start) text = space;
         if (text == start && *text && *text != L'\n') ++text;
-        if (line / 4 == wanted) {
-            size_t n = (size_t)(text - start);
-            if (used + n + 2 < 4096) {
-                memcpy(out + used, start, n * sizeof(wchar_t));
-                used += n;
-                out[used++] = L'\n';
-                out[used] = 0;
-            }
-        }
+        size_t n = (size_t)(text - start);
+        if (used + n + 2 >= 4096) return EFFECT_ROWS+1;
+        memcpy(out + used, start, n * sizeof(wchar_t));
+        used += n;
+        out[used++] = L'\n';
+        out[used] = 0;
         if (*text == L'\n') ++text;
         else while (*text == L' ') ++text;
         ++line;
     }
-    return line ? (line + 3)/4 : 1;
+    return line ? line : 1;
 }
 
 static void panel_text(const char *name, const wchar_t *text) {
@@ -303,12 +358,9 @@ static byte *attach_art(byte *holder, const char *symbol) {
 }
 
 static void render_effects(unsigned side, const wchar_t *text) {
-    static const char *symbols[] = {"FontIcon_str", "FontIcon_dex", "FontIcon_con", "FontIcon_int",
-                                    "FontIcon_spd", "FontIcon_cha", "FontIcon_lck"};
-    static const wchar_t *labels[] = {L"STR", L"DEX", L"CON", L"INT", L"SPD", L"CHA", L"LCK"};
     for (unsigned i = 0; i < MUTATION_STATS; ++i)
         if (stat_art[side][i]) stat_art[side][i][8] &= (byte)~0x20;
-    for (unsigned row = 0; row < 4; ++row) {
+    for (unsigned row = 0; row < EFFECT_ROWS; ++row) {
         wchar_t line[4096] = {0};
         unsigned length = 0;
         unsigned row_icons = 0;
@@ -318,22 +370,22 @@ static void render_effects(unsigned side, const wchar_t *text) {
             if (code >= 0xe000 && code < 0xe000+MUTATION_STATS) {
                 unsigned stat = (unsigned)(code-0xe000);
                 byte **icon = &stat_art[side][stat];
-                if (!*icon) *icon = attach_art(panel_child(side ? "new_art" : "old_art"), symbols[stat]);
+                if (!*icon) *icon = attach_art(panel_child(side ? "new_art" : "old_art"), stat_symbols[stat]);
                 if (*icon) FN(void (*)(void *, double, double, double, double), 0x9bf090)
                     (*icon+0x78, 0.0, 0.0, 0.0, 1.0);
-                if (!*icon || !fit_art(*icon, (side ? 664 : 344)+(float)advance+11,
-                                      381+row*26, 22, 22)) {
+                if (!*icon || !fit_art(*icon, (side ? 664 : 344)+(float)advance+10,
+                                      379+row*22, 20, 20)) {
                     /* Keep the effect readable if another mod removes an icon. */
-                    wcscpy(line+length, labels[stat]);
+                    wcscpy(line+length, stat_labels[stat]);
                     length += 3;
-                    for (const wchar_t *p = labels[stat]; *p; ++p) advance += glyph_width(*p);
+                    for (const wchar_t *p = stat_labels[stat]; *p; ++p) advance += effect_width(*p);
                 } else {
                     row_icons |= 1u << stat;
-                    advance += 22;
+                    advance += 20;
                 }
             } else {
                 line[length++] = code;
-                advance += glyph_width(code);
+                advance += effect_width(code);
             }
         }
         if (*text == L'\n') ++text;
@@ -401,11 +453,57 @@ static byte *selector_button(const char *name) {
     return entry ? *entry : NULL;
 }
 
+static void render_base_stats(float y) {
+    for (unsigned side = 0; side < 2; ++side) {
+        char name[16];
+        snprintf(name, sizeof(name), "base_title%u", side);
+        panel_text(name, base_stats_valid ? L"Base + mutations" : L"Stats unavailable");
+        byte *title = panel_child(name);
+        if (title) *(float *)(title+0x74) = y;
+        for (unsigned stat = 0; stat < MUTATION_STATS; ++stat) {
+            wchar_t value[32] = {0};
+            if (base_stats_valid) swprintf(value, COUNT(value), L"%.6g", base_stats[side][stat]);
+            snprintf(name, sizeof(name), "base%u_%u", side, stat);
+            panel_text(name, value);
+            byte *field = panel_child(name);
+            if (field) {
+                *(float *)(field+0x74) = y+48;
+                double width = 0;
+                for (const wchar_t *p = value; *p; ++p) width += effect_width(*p);
+                if (width > 35) {
+                    float scale = 35/(float)width;
+                    *(float *)(field+0x60) = *(float *)(field+0x64) = scale;
+                    *(float *)(field+0x70) = ((side ? 664 : 344)+(stat+0.5f)*272/7)*(1-scale);
+                }
+                if (base_stats_valid && side && base_stats[1][stat] != base_stats[0][stat]) {
+                    int gain = base_stats[1][stat] > base_stats[0][stat];
+                    /* Native tint multiplies the field's (54,50,42) text color. */
+                    FN(void (*)(void *, double, double, double, double), 0x9bf090)
+                        (field+0x78, (gain ? 41.0 : 179.0)/54, (gain ? 107.0 : 31.0)/50, 31.0/42, 1.0);
+                }
+            }
+            byte **icon = &base_art[side][stat];
+            if (base_stats_valid && !*icon)
+                *icon = attach_art(panel_child(side ? "new_art" : "old_art"), stat_symbols[stat]);
+            int visible = *icon && fit_art(*icon, (side ? 664 : 344)+(stat+0.5f)*272/7,
+                                          y+35, 20, 20);
+            if (visible) FN(void (*)(void *, double, double, double, double), 0x9bf090)
+                (*icon+0x78, 0.0, 0.0, 0.0, 1.0);
+            snprintf(name, sizeof(name), "stat%u_%u", side, stat);
+            panel_text(name, base_stats_valid && !visible ? stat_labels[stat] : L"");
+            field = panel_child(name);
+            if (field) *(float *)(field+0x74) = y+25;
+        }
+    }
+}
+
 static void skin_selector(unsigned effect_rows) {
     /* Reserve only the rows this offer needs; keep the footer stable while paging. */
-    float effects_bottom = 368 + effect_rows*26;
-    float pager_y = effects_bottom + 16;
-    float button_y = navigation_needed ? pager_y + 28 + 16 : effects_bottom + 20;
+    float effects_bottom = 368 + effect_rows*22;
+    render_base_stats(effects_bottom+14);
+    float stats_bottom = effects_bottom + 86;
+    float pager_y = stats_bottom + 16;
+    float button_y = navigation_needed ? pager_y + 28 + 16 : stats_bottom + 20;
     float height = button_y + 30 + 20 - 170;
     panel_center_y = 170 + height/2;
     static const char *actions[] = {"no", "yes", "no_caption", "yes_caption"};
@@ -423,7 +521,7 @@ static void skin_selector(unsigned effect_rows) {
     }
     byte *divider = panel_child("effect_divider");
     if (divider) {
-        float scale = (effects_bottom-248)/224;
+        float scale = (stats_bottom-248)/224;
         *(float *)(divider+0x64) = scale;
         *(float *)(divider+0x74) = 248*(1-scale);
     }
@@ -518,19 +616,15 @@ static void render_comparison(void) {
     wchar_t current[4096], incoming[4096], a[4096], b[4096], title[256];
     describe_mutation(part->part, part->old, current);
     describe_mutation(part->part, (int)(active.pair >> 32), incoming);
-    text_page(current, view_page, a);
-    text_page(incoming, view_page, b);
+    wrap_effects(current, a);
+    wrap_effects(incoming, b);
     int incoming_id = (int)(active.pair >> 32);
     panel_text("old_art_note", render_part_art(0, part, part->old) ? L"" : part->old == -2 ? L"Missing part" : L"Preview unavailable");
     panel_text("new_art_note", render_part_art(1, part, incoming_id) ? L"" : incoming_id == -2 ? L"Missing part" : L"Preview unavailable");
     render_effects(0, a);
     render_effects(1, b);
     panel_text("part", part_name(view_labels[view_part]));
-    if (view_count > 1 && view_pages[view_part] > 1)
-        swprintf(title, COUNT(title), L"Comparison %u/%u  |  Page %u/%u", view_part+1, view_count, view_page+1, view_pages[view_part]);
-    else if (view_count > 1)
-        swprintf(title, COUNT(title), L"Comparison %u/%u", view_part+1, view_count);
-    else swprintf(title, COUNT(title), L"Page %u/%u", view_page+1, view_pages[view_part]);
+    swprintf(title, COUNT(title), L"Comparison %u/%u", view_part+1, view_count);
     panel_text("page", navigation_needed ? title : L"");
 }
 
@@ -538,13 +632,7 @@ static void show_next_offer(void);
 static void choice_invoke(Choice *choice) {
     if (choice->ticket != active.ticket || !active_prompt) return;
     if (choice->action >= 2) {
-        if (choice->action == 3) {
-            if (++view_page >= view_pages[view_part]) { view_page = 0; view_part = (view_part+1) % view_count; }
-        } else if (view_page) --view_page;
-        else {
-            view_part = (view_part + view_count - 1) % view_count;
-            view_page = view_pages[view_part] - 1;
-        }
+        view_part = (view_part + (choice->action == 3 ? 1 : view_count-1)) % view_count;
         render_comparison();
         return;
     }
@@ -618,6 +706,7 @@ static void show_next_offer(void) {
         for (unsigned i = 0; i < active.count; ++i) {
             PartSnapshot *part = &active.parts[i];
             if (!part->selected || part->old == (int)(active.pair >> 32)) continue;
+            if (part->part == 10 && part->offset != 0x78) continue;
             unsigned j = 0;
             while (j < view_count && !same_comparison(&active.parts[view_indices[j]], part)) ++j;
             if (j == view_count) {
@@ -630,20 +719,17 @@ static void show_next_offer(void) {
         unsigned effect_rows = 1;
         navigation_needed = view_count > 1;
         for (unsigned i = 0; i < view_count; ++i) {
-            wchar_t text[4096], page[4096];
+            wchar_t text[4096], wrapped[4096];
             PartSnapshot *part = &active.parts[view_indices[i]];
-            view_pages[i] = 1;
             for (unsigned side = 0; side < 2; ++side) {
                 if (!describe_mutation(part->part, side ? (int)(active.pair >> 32) : part->old, text)) described = 0;
-                unsigned pages = text_page(text, 0, page);
-                if (pages > view_pages[i]) view_pages[i] = pages;
-                if (pages > 1) navigation_needed = 1;
-                unsigned rows = 0;
-                for (const wchar_t *p = page; *p; ++p) if (*p == L'\n') ++rows;
+                unsigned rows = wrap_effects(text, wrapped);
+                if (rows > EFFECT_ROWS) described = 0;
                 if (rows > effect_rows) effect_rows = rows;
             }
         }
         if (!described) { log_message(OWNER, "Kept mutation: full comparison unavailable."); continue; }
+        base_stats_valid = preview_base_stats(&active, base_stats);
         GameString name = small_string("GoodGenesMutationChoice");
         byte *scene = FN(byte *(*)(void *, GameString *), 0x9d4950)(active.manager, &name);
         if (!scene || scene[0x4b0]) continue;
@@ -663,6 +749,7 @@ static void show_next_offer(void) {
         creating_selector = 1;
         memset(part_art, 0, sizeof(part_art));
         memset(stat_art, 0, sizeof(stat_art));
+        memset(base_art, 0, sizeof(base_art));
         active_prompt = FN(byte *(*)(void *, void *, void **, WideString *, GameFunction *, GameFunction *), 0x77f140)
             (scene, entity, (void **)&active.origin, &prompt, &yes, &no);
         creating_selector = 0;
@@ -686,7 +773,7 @@ static void show_next_offer(void) {
             init_choice(&click, i ? 3 : 2);
             FN(void *(*)(void *, GameString *, GameString *, GameFunction *), 0x97c070)(panel, &child, &label, &click);
         }
-        view_part = view_page = 0;
+        view_part = 0;
         render_comparison();
         intro_button = NULL;
         skin_selector(effect_rows);

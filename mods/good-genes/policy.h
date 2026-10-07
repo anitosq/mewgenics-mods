@@ -31,14 +31,24 @@ static int improves(MutationQuality old, MutationQuality next) {
 
 typedef enum { KEEP_MUTATION, VANILLA_MUTATION, CHOOSE_MUTATION, INVALID_MUTATION } MutationDecision;
 
-/* Only specials need consent. Stat-only changes require a clear improvement. */
+static MutationDecision stat_decision(MutationQuality old, MutationQuality next) {
+    old.kind = next.kind = STAT_MUTATION;
+    if (improves(old, next)) return VANILLA_MUTATION;
+    int gain = 0, loss = 0;
+    for (unsigned i = 0; i < MUTATION_STATS; ++i) {
+        gain |= next.stats[i] > old.stats[i];
+        loss |= next.stats[i] < old.stats[i];
+    }
+    return gain && loss ? CHOOSE_MUTATION : KEEP_MUTATION;
+}
+
+/* Specials and stat trade-offs need consent; pure improvements remain automatic. */
 static MutationDecision mutation_decision(MutationQuality old, MutationQuality next) {
     if (next.kind == UNKNOWN) return INVALID_MUTATION;
     if (old.kind == UNMUTATED) return VANILLA_MUTATION;
     if (old.kind == UNKNOWN || next.kind == UNMUTATED) return INVALID_MUTATION;
     if (old.kind == SPECIAL_MUTATION || next.kind == SPECIAL_MUTATION) return CHOOSE_MUTATION;
-    old.kind = next.kind = STAT_MUTATION;
-    return improves(old, next) ? VANILLA_MUTATION : KEEP_MUTATION;
+    return stat_decision(old, next);
 }
 
 typedef struct {
@@ -47,22 +57,26 @@ typedef struct {
 } MutationBonus;
 
 /* The game counts each (part group, mutation ID) once, not once per side. */
-static int effective_stats_improve(const MutationBonus *before, const MutationBonus *after, unsigned count) {
-    MutationQuality totals[2] = {{STAT_MUTATION, {0}}, {STAT_MUTATION, {0}}};
-    const MutationBonus *states[] = {before, after};
-    for (unsigned side = 0; side < 2; ++side) {
-        for (unsigned i = 0; i < count; ++i) {
-            const MutationBonus *part = &states[side][i];
-            if (part->quality.kind == UNKNOWN) return 0;
-            if (part->quality.kind == UNMUTATED) continue;
-            unsigned j = 0;
-            while (j < i && (states[side][j].group != part->group || states[side][j].id != part->id)) ++j;
-            if (j < i) continue;
-            for (unsigned stat = 0; stat < MUTATION_STATS; ++stat)
-                totals[side].stats[stat] += part->quality.stats[stat];
-        }
+static int effective_stats(const MutationBonus *parts, unsigned count, MutationQuality *total) {
+    *total = (MutationQuality){STAT_MUTATION, {0}};
+    for (unsigned i = 0; i < count; ++i) {
+        const MutationBonus *part = &parts[i];
+        if (part->quality.kind == UNKNOWN) return 0;
+        if (part->quality.kind == UNMUTATED) continue;
+        unsigned j = 0;
+        while (j < i && (parts[j].quality.kind == UNMUTATED ||
+               parts[j].group != part->group || parts[j].id != part->id)) ++j;
+        if (j < i) continue;
+        for (unsigned stat = 0; stat < MUTATION_STATS; ++stat)
+            total->stats[stat] += part->quality.stats[stat];
     }
-    return improves(totals[0], totals[1]);
+    return 1;
+}
+
+static MutationDecision effective_stats_decision(const MutationBonus *before, const MutationBonus *after, unsigned count) {
+    MutationQuality old, next;
+    if (!effective_stats(before, count, &old) || !effective_stats(after, count, &next)) return INVALID_MUTATION;
+    return stat_decision(old, next);
 }
 
 /* One native roll changes all affected parts; a choice may accept stat trade-offs. */

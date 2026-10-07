@@ -65,15 +65,17 @@ def check_footer_layout_contract():
     # Runtime movement needs separately named captions and the divider in the SWF.
     for name in ("no_caption", "yes_caption", "effect_divider"):
         assert f'"{name}"' in source and f'"{name}"' in assets
-    assert "float effects_bottom = 368 + effect_rows*26;" in source
-    assert "float pager_y = effects_bottom + 16;" in source
-    assert "float button_y = navigation_needed ? pager_y + 28 + 16 : effects_bottom + 20;" in source
+    assert "float effects_bottom = 368 + effect_rows*22;" in source
+    assert "float pager_y = stats_bottom + 16;" in source
+    assert "float button_y = navigation_needed ? pager_y + 28 + 16 : stats_bottom + 20;" in source
     assert "if (navigation_needed) *(float *)(child+0x74) += pager_y-479;" in source
     assert "else child[8] &= (byte)~0x20;" in source
     assert "float height = button_y + 30 + 20 - 170;" in source
     assert "if (rows > effect_rows) effect_rows = rows;" in source
     assert "skin_selector(effect_rows);" in source
-    # Text and icons share the same measured-row offset; page redraws reset text X.
+    assert "range(12)" in assets and "EFFECT_ROWS = 12" in source
+    assert "if (rows > EFFECT_ROWS) described = 0;" in source, "Never offer truncated effects"
+    # Text and icons share the same measured-row offset; redraws reset text X.
     assert "float shift = (272-(float)advance)/2;" in source
     assert "*(float *)(text_clip+0x70) = shift;" in source
     assert "*(float *)(stat_art[side][stat]+0x70) += shift;" in source
@@ -83,10 +85,8 @@ def check_selector_navigation():
     source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
     navigation = source.split("if (choice->action >= 2) {", 1)[1].split("Offer verify = active;", 1)[0]
     assert navigation.count("render_comparison();") == 1, "Navigate first, then render once"
-    assert "++view_page >= view_pages[view_part]" in navigation
-    assert "view_page = view_pages[view_part] - 1;" in navigation
-    assert "view_pages[i] = 1;" in source, "Reset page counts for each offer"
-    assert "if (pages > view_pages[i]) view_pages[i] = pages;" in source
+    assert "view_count-1" in navigation and "% view_count" in navigation
+    assert "view_page" not in source and "text_page" not in source
     assert "result = combine_mutation_decisions(result, decision);" in source
     assert "result == INVALID_MUTATION) return KEEP_MUTATION;" in source
 
@@ -105,7 +105,7 @@ def check_paired_comparisons():
     assert "if (scope >= 3 && scope <= 8 && view_count > 1) {" in source
     assert 'scope == 5 ? L"Replace All" : L"Replace Both"' in source
     assert "navigation_needed = view_count > 1;" in source
-    assert "if (pages > 1) navigation_needed = 1;" in source, "Long effects remain readable"
+    assert source.count("navigation_needed =") == 1, "Only differing parts need navigation"
     assert "original_set(active.cat, active.pair);" in source, "Keep the original roll atomic"
 
 
@@ -119,9 +119,26 @@ def check_effective_bonuses_and_missing_parts():
     assert "p == 11 + ((part-11)^1)" in snapshot, "Capture an unchanged counterpart"
     assert "if (!selected && !counterpart) continue;" in snapshot
     assert "int next_id = selected ? id : slot->old;" in snapshot
-    assert "result == VANILLA_MUTATION && occupied && !effective_stats_improve(before, after, offer->count)" in snapshot
+    assert "effective_stats_decision(before, after, offer->count)" in snapshot
+    assert "return special ? CHOOSE_MUTATION : combined;" in snapshot
+    assert "if (part == 10 && p != 10) continue;" in snapshot
+    assert "if (part->part == 10 && part->offset != 0x78) continue;" in source
     assert "if (!part->selected || part->old == (int)(active.pair >> 32)) continue;" in source
     assert 'L"Missing part"' in source
+
+
+def check_base_stat_preview():
+    source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
+    preview = source.split("static int preview_base_stats(", 1)[1].split("static int snapshot_unchanged(", 1)[0]
+    assert "+ 0x6f0" in preview and "offset + 0x14" in preview
+    assert "effective_stats(parts[side], COUNT(mutation_slots), &total)" in preview
+    assert "offer->parts[j].selected && offer->parts[j].offset == offset" in preview
+    assert "inherited[i] + total.stats[i]" in preview
+    assert "original_set" not in preview, "Preview must not mutate the live cat"
+    assert "base_stats_valid = preview_base_stats(&active, base_stats);" in source
+    assert "memcmp(stats, base_stats, sizeof(stats))" in source, "Reject stale whole-cat previews"
+    assert 'L"Stats unavailable"' in source
+    assert "base_stats[1][stat] != base_stats[0][stat]" in source
 
 
 if __name__ == "__main__":
@@ -132,4 +149,5 @@ if __name__ == "__main__":
     check_selector_navigation()
     check_paired_comparisons()
     check_effective_bonuses_and_missing_parts()
+    check_base_stat_preview()
     print("Hook, sprite-construction, footer-layout, and selector source contracts match.")
