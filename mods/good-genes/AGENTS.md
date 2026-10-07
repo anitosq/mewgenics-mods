@@ -18,6 +18,10 @@
   public publication, superseding the earlier hidden-listing restriction.
   Version 0.1.0 is now frozen and public; never replace its archive or retag it.
   Use docs/releases/good-genes/0.1.0-publication.md for release evidence.
+- Owner release approval, 2026-10-07: revised 0.1.1 candidate approved for
+  publication without fresh gameplay confirmation. Version 0.1.1 is now frozen
+  and public; never replace its archive or retag it. Publication approval is
+  not testing evidence. See docs/releases/good-genes/0.1.1-publication.md.
 
 - Owner correction, 2026-10-06: mutation replacement must use the game's visual
   UI, with a native skill-replacement-like Keep/Replace flow. Do not substitute
