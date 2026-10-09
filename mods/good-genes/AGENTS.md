@@ -62,6 +62,8 @@
   implementation to official 0.2.0 and publishing it. This permits removing the
   beta label for this release, without implying gameplay-test confirmation.
   Keep overnight changes out, and preserve the installed game and saves.
+  Official 0.2.0 is now public and frozen; never replace its archive or retag it.
+  See docs/releases/good-genes/0.2.0-publication.md for evidence and limits.
 - Owner visual feedback, 2026-10-06: keep the selector 640px wide in the native
   1280x720 canvas; size its height to the maximum effect rows across the offer.
   Keep 20px below action buttons and 20px above them when navigation is absent;
