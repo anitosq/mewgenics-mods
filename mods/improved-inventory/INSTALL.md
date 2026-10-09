@@ -1,6 +1,7 @@
 # Improved Inventory installation
 
-Version 0.3.3 requires Windows x64, Mewgenics 1.1.21239 (Steam build
+Version 0.3.6-beta.1 is a test build for delayed mod loading. It requires
+Windows x64, Mewgenics 1.1.21239 (Steam build
 25143593), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3. The same ZIP works with Vortex and Mewtator.
 
@@ -59,6 +60,8 @@ and its asset launch argument.
 
 Look for ImprovedInventory and its version in `mod_logs/chainloader.log`.
 "Improved Inventory enabled; all UI hooks installed" confirms native startup.
+The loader's "OK" message only confirms that it loaded the DLL. If the
+inventory controls are missing, include the full log when reporting the problem.
 
 If the asset folder is not enabled, check the mod in your manager's mod list
 (Vortex's Load Order page). Launch through your manager so the game receives

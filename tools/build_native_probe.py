@@ -29,8 +29,6 @@ rva = 0x5A3D0  # ABI/address research from cat-table; validated against this ima
 signature = None
 grid_rva = 0x211700  # ref_grid + InventoryGridBGBox references in this exact build.
 grid_signature = None
-bootstrap_rva = 0x9B9970  # Actual validated bridge constant; its older comment is stale.
-bootstrap_signature = None
 extra = {'DRAWER_UPDATE':0x213ac0, 'MOUSE_EVENT':0xc36110, 'ITEM_CLICK':0x213dc0,
          'ITEM_BIND':0x2137e0, 'MOUSE_POSITION':0x9796d0, 'BUTTON_HIT':0x97f0e0,
          'EQUIPMENT_GRID':0x34be50, 'EQUIPMENT_UPDATE':0x34d130,
@@ -46,9 +44,7 @@ for index in range(struct.unpack_from('<H', binary, pe + 6)[0]):
         signature = binary[offset + rva - virtual:offset + rva - virtual + 64]
     if virtual <= grid_rva and grid_rva + 64 <= virtual + size:
         grid_signature = binary[offset + grid_rva - virtual:offset + grid_rva - virtual + 64]
-    if virtual <= bootstrap_rva and bootstrap_rva + 64 <= virtual + size:
-        bootstrap_signature = binary[offset + bootstrap_rva - virtual:offset + bootstrap_rva - virtual + 64]
-if signature is None or grid_signature is None or bootstrap_signature is None or len(extra_signatures)!=len(extra):
+if signature is None or grid_signature is None or len(extra_signatures)!=len(extra):
     raise RuntimeError('Renderer outside file-backed sections')
 build = root / ('work/release-build' if args.release else 'work/native-build')
 build.mkdir(parents=True, exist_ok=True)
@@ -57,13 +53,11 @@ literal = lambda data: ','.join(f'0x{v:02x}' for v in data)
     f'#define IQ_RELEASE_BUILD {int(args.release)}\n#define IQ_VERSION "{version}"\n'
     f'#define RENDERER_RVA 0x{rva:x}\n'
     f'#define GRID_RVA 0x{grid_rva:x}\n'
-    f'#define BOOTSTRAP_RVA 0x{bootstrap_rva:x}\n'
     f'#define EXPECTED_TIMESTAMP 0x{struct.unpack_from("<I", binary, pe+8)[0]:x}\n'
     f'#define EXPECTED_IMAGE_SIZE 0x{struct.unpack_from("<I", binary, pe+24+56)[0]:x}\n'
     f'static const unsigned char EXPECTED_SHA256[32] = {{{literal(bytes.fromhex(sha))}}};\n'
     f'static const unsigned char EXPECTED_RENDERER_BYTES[64] = {{{literal(signature)}}};\n'
-    f'static const unsigned char EXPECTED_GRID_BYTES[64] = {{{literal(grid_signature)}}};\n'
-    f'static const unsigned char EXPECTED_BOOTSTRAP_BYTES[64] = {{{literal(bootstrap_signature)}}};\n'+
+    f'static const unsigned char EXPECTED_GRID_BYTES[64] = {{{literal(grid_signature)}}};\n'+
     ''.join(f'#define {key}_RVA 0x{extra[key]:x}\nstatic const unsigned char EXPECTED_{key}_BYTES[64] = {{{literal(value)}}};\n' for key,value in extra_signatures.items()))
 if args.release:
     with (build / 'build_guard.h').open('a') as guard:

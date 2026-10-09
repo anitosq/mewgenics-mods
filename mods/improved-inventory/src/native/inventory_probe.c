@@ -23,8 +23,6 @@ typedef void (__cdecl *LayoutGrid)(void*);
 static LayoutGrid original_grid;
 static volatile LONG grid_event_count;
 static HINSTANCE own_module;
-typedef uintptr_t (__cdecl *Bootstrap)(uintptr_t, uintptr_t, uintptr_t);
-static Bootstrap original_bootstrap;
 static volatile LONG initialized;
 static int session_mode;
 
@@ -134,7 +132,11 @@ static void __cdecl observe_grid(void* instance) {
     report(message);
 }
 
+static DWORD WINAPI initialize(void* ignored);
+
 static void* __cdecl observe_renderer(void* scene, void* entity, const char* name) {
+    /* Delayed loaders can miss the one-time game bootstrap; UI creation recurs. */
+    if (InterlockedCompareExchange(&initialized, 1, 0)==0) initialize(NULL);
     /* Always preserve the original call and return value. No item pointers are
        retained or dereferenced; logged renderer addresses are transient hints. */
     void* result = original_renderer(scene, entity, name);
@@ -197,7 +199,6 @@ static DWORD WINAPI initialize(void* ignored) {
     unsigned char* base = (unsigned char*)GetModuleHandleW(NULL);
     game_base=base;
     IQHook hooks[]={
-        {RENDERER_RVA,EXPECTED_RENDERER_BYTES,(void*)observe_renderer,(void**)&original_renderer,"ImprovedInventory.Renderer"},
         {GRID_RVA,EXPECTED_GRID_BYTES,(void*)observe_grid,(void**)&original_grid,"ImprovedInventory.Grid"},
         {DRAWER_UPDATE_RVA,EXPECTED_DRAWER_UPDATE_BYTES,(void*)iq_update,(void**)&original_drawer_update,"ImprovedInventory.LayoutUpdate"},
         {MOUSE_EVENT_RVA,EXPECTED_MOUSE_EVENT_BYTES,(void*)iq_mouse,(void**)&original_mouse_event,"ImprovedInventory.Mouse"},
@@ -211,7 +212,7 @@ static DWORD WINAPI initialize(void* ignored) {
         {EQUIPMENT_BIND_RVA,EXPECTED_EQUIPMENT_BIND_BYTES,(void*)iq_equipment_bind,(void**)&original_equipment_bind,"ImprovedInventory.EquipmentMetadata"}
     };
     int active=0;
-    int status=iq_install_plan(base,hooks,session_mode==2?sizeof(hooks)/sizeof(hooks[0]):2,install,&active);
+    int status=iq_install_plan(base,hooks,session_mode==2?sizeof(hooks)/sizeof(hooks[0]):1,install,&active);
     if(status!=1) {
         report(status<0 ? "Incompatible hook entry; Improved Inventory inactive." :
                "Hook installation failed; installed callbacks remain pass-through.");
@@ -220,11 +221,6 @@ static DWORD WINAPI initialize(void* ignored) {
     layout_test=active && session_mode==2;
     report(layout_test ? "Improved Inventory enabled; all UI hooks installed." : "Observation enabled; no layout changes.");
     return 0;
-}
-
-static uintptr_t __cdecl observe_bootstrap(uintptr_t a, uintptr_t b, uintptr_t c) {
-    if (InterlockedCompareExchange(&initialized, 1, 0)==0) initialize(NULL);
-    return original_bootstrap(a,b,c);
 }
 
 static void register_bootstrap(void) {
@@ -241,8 +237,9 @@ static void register_bootstrap(void) {
     IMAGE_DOS_HEADER* dos=(IMAGE_DOS_HEADER*)base;
     IMAGE_NT_HEADERS64* pe=(IMAGE_NT_HEADERS64*)(base+dos->e_lfanew);
     if (pe->FileHeader.TimeDateStamp!=EXPECTED_TIMESTAMP || pe->OptionalHeader.SizeOfImage!=EXPECTED_IMAGE_SIZE) {report("Unsupported executable headers; no bootstrap hook installed.");return;}
-    if (memcmp(base+BOOTSTRAP_RVA,EXPECTED_BOOTSTRAP_BYTES,sizeof(EXPECTED_BOOTSTRAP_BYTES))!=0) {report("Bootstrap entry mismatch or another Improved Inventory copy already loaded; inactive.");return;}
-    if(!install(BOOTSTRAP_RVA,0,(void*)observe_bootstrap,(void**)&original_bootstrap,50,"ImprovedInventory.Bootstrap"))report("Bootstrap hook installation failed.");
+    if (memcmp(base+RENDERER_RVA,EXPECTED_RENDERER_BYTES,sizeof(EXPECTED_RENDERER_BYTES))!=0) {report("Renderer entry mismatch or another Improved Inventory copy already loaded; inactive.");return;}
+    if(!install(RENDERER_RVA,0,(void*)observe_renderer,(void**)&original_renderer,50,"ImprovedInventory.Renderer"))report("Renderer startup hook installation failed.");
+    else report("Improved Inventory " IQ_VERSION " loaded; waiting for UI creation.");
 }
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {

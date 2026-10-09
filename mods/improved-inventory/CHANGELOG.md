@@ -1,5 +1,9 @@
 # Improved Inventory changelog
 
+## 0.3.6-beta.1
+
+- Test fix for the mod loading without activating when Mewjector loads it after game startup.
+
 ## 0.3.5
 
 - Reduced repeated work for hidden inventory controls.

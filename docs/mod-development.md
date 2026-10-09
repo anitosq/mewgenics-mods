@@ -169,6 +169,9 @@ Check each manager's DLL discovery separately from its asset paths before
 claiming compatibility. Improved Inventory 0.3.0's sibling DLL worked with
 Mewjector's game-folder scan but was missed by Mewtator's per-mod discovery in
 an external directory. An asset-path fixture alone did not cover installation.
+Also verify activation after a real launch: the 9 October 2026 Mewtator test
+loaded 0.3.5 successfully but missed its one-time startup callback. A loader's
+"OK" line or hook registration is not evidence that the mod initialized.
 
 Use [the package verifier](../tools/verify_mod_archive.py) to compare a frozen
 manifest with a local or downloaded ZIP. Nexus may rename a download; the
