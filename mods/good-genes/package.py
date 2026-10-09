@@ -6,22 +6,39 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
-from build import EXPECTED, ROOT, VERSION
+from build import EXPECTED, OUTPUT_FILES, ROOT, SOURCE_FILES, VERSION
 
 
 def json_bytes(value):
     return (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
 
 
+def verified_outputs(root, version, commit):
+    try:
+        info = json.loads((root / "build/build-info.json").read_text(encoding="ascii"))
+        expected_sources = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in SOURCE_FILES}
+        if (info.get("version") != version or info.get("source_commit") != commit or
+                info.get("game_sha256") != EXPECTED or info.get("source_sha256") != expected_sources):
+            raise ValueError("Build does not match the committed source/version.")
+        outputs = {path: (root / "build" / path).read_bytes() for path in OUTPUT_FILES.values()}
+        for key, path in OUTPUT_FILES.items():
+            if info.get(key) != hashlib.sha256(outputs[path]).hexdigest():
+                raise ValueError(f"Build output changed: {path}")
+        return outputs
+    except (OSError, ValueError, AttributeError) as error:
+        raise SystemExit(f"Rebuild before packaging: {error}") from error
+
+
 def main():
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip():
         raise SystemExit("Commit release source before packaging.")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    outputs = verified_outputs(ROOT, VERSION, commit)
     # Explicit allowlist: never package work/, diagnostic DLLs, saves, or logs.
     files = {
-        "GoodGenes/GoodGenes.dll": (ROOT / "build/GoodGenes.dll").read_bytes(),
-        "GoodGenes/swfs/good_genes.swf": (ROOT / "build/data-mod/swfs/good_genes.swf").read_bytes(),
-        "GoodGenes/swfs/swflist.gon.append": (ROOT / "build/data-mod/swfs/swflist.gon.append").read_bytes(),
+        "GoodGenes/GoodGenes.dll": outputs["GoodGenes.dll"],
+        "GoodGenes/swfs/good_genes.swf": outputs["data-mod/swfs/good_genes.swf"],
+        "GoodGenes/swfs/swflist.gon.append": outputs["data-mod/swfs/swflist.gon.append"],
         "GoodGenes/README.md": (ROOT / "README.md").read_bytes(),
         "GoodGenes/LICENSE": (ROOT / "LICENSE").read_bytes(),
         "GoodGenes/THIRD_PARTY_NOTICES.md": (ROOT / "THIRD_PARTY_NOTICES.md").read_bytes(),

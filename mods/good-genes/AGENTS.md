@@ -47,6 +47,12 @@
   valid missing parts, and undefined negatives in deferred regression checks.
 - Owner will test. Compilation and read-only inspection are allowed, but do not
   run tests, load the DLL, launch the game, install, or touch saves unless asked.
+- Owner-requested audit fixes, 2026-10-09: derive effective IDs before comparing
+  or previewing (absent facial pairs use -2). Head changes can hide/restore facial
+  effects through CatHeadPlacements; include them in policy and visible choices.
+  Check a head gain that loses an eye bonus, missing-pair penalties, and sequential
+  rolls after a modal opens. Do not let later automatic writes stale an open offer.
+  Package only outputs matching a recorded build, including shared asset helpers.
 - Owner workflow correction, 2026-10-08: keep updated source, leave the game
   installation unchanged, and deliver an installable next-version `.beta` ZIP
   for owner testing. This supersedes the earlier fixed-version local-build

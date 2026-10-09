@@ -6,11 +6,38 @@ Detailed cases below remain useful for future changes; approval does not imply
 exhaustive gameplay or manager lifecycle coverage.
 
 Version 0.1.1 is also published; see docs/releases/good-genes/0.1.1-publication.md.
-The current revision is 0.2.0.beta, prepared as an installable ZIP for owner
+The current revision is 0.2.0.beta.2, prepared as an installable ZIP for owner
 testing. It is not installed, gameplay-tested, or published. The owner clarified
 that updated source stays in the checkout and the game installation stays
 unchanged. Do not replace either published archive or tag. Keep `.beta` until
-owner testing is confirmed; see the 0.2.0.beta candidate record for exact bytes.
+owner testing is confirmed; keep the earlier 0.2.0.beta candidate unchanged.
+
+## Audit Fixes (2026-10-09)
+
+- Head projection instantiates a detached `CatHeadPlacements` clip and uses
+  the same child names as native 0x7393e0. Eyebrows follow eye presence. The
+  native virtual destructor releases that clip; preview never calls SetPiece.
+  Policy, comparison pages and totals include hidden/restored facial effects.
+- Native 0xcaa70 emits ID -2 for both absent eyes, eyebrows or ears, then
+  deduplicates each pair. A single absent side and an inactive mouth emit 0.
+  Explicit active ID -2 remains a real mutation resolved through definitions.
+- All subsequent candidates queue while a choice is pending, including rolls
+  that initially appear automatic or rejected. Each is re-evaluated after the
+  previous choice; original candidates and atomic native write scope remain.
+- One bounded appearance read replaces per-part reads in the shared collector.
+  Head-placement work occurs for head rolls only, never on the idle-frame path.
+- Packaging validates build version, commit, source and shared generator
+  hashes, and all three compiled outputs before creating metadata. A new build
+  invalidates the previous build manifest first. Returned verified bytes are
+  the bytes packaged, not a second disk read.
+
+Deferred checks: head 700 -> 309 with a right-eye DEX mutation must offer a
+trade-off; a special on a disappearing facial part must be shown. Check head
+319 with no ears, 320 with no left eye, and restoration to a normal head.
+Missing ears/eyebrows should contribute -2 DEX/-2 CHA once per pair. Use a
+multi-roll combat effect that opens a choice followed by an automatic roll,
+and test both Keep and Replace before battle exit. All regression execution
+and gameplay remain with the owner; compilation and archive checks only.
 
 ## Local Stat Trade-Off Revision (2026-10-08)
 
@@ -18,14 +45,16 @@ Occupied stat-only rolls use effective before/after mutation totals: any gain
 with no losses applies automatically, any gain with a loss opens the selector,
 and equal totals or pure downgrades keep the current mutation. Special choices,
 empty parts, birth inheritance, overnight scope, and atomic SetPiece writes
-are preserved. Disabled shapes do not contribute or suppress active duplicates.
+are preserved, with the head/facial exception documented above.
 
 Read-only executable inspection: birth constructor 0xa89a0 passes +0x6f0
 through +0x708 to the seven parental-stat calls. Combat initialization at
 0xfcc32 adds these inherited stats to the separate bonus result from 0xc0b80.
-Mutation collection at 0xcaa70 skips inactive shape flags (ID offset+0x14),
-always includes the overall coat at +0x78, and deduplicates canonical group/ID
-pairs before definition resolution at 0xcc300. SetPiece does not change flags.
+Mutation collection at 0xcaa70 resolves inactive shape flags (ID offset+0x14)
+as 0 or missing-pair -2, always includes the overall coat at +0x78, and
+deduplicates canonical group/ID pairs before definition resolution at 0xcc300.
+SetPiece changes facial flags for head rolls through 0x7393e0; other parts
+retain their active flags.
 The preview reads these values without calling SetPiece, adds only mutation
 bonuses, and excludes class, levels, equipment, and temporary combat effects.
 Coat's embedded per-shape copies must not be counted separately. Unknown
@@ -56,7 +85,8 @@ python mods/good-genes/package.py
 ```
 
 The builder only reads game files and writes local build output. Packaging
-requires committed source and does not install or load the DLL.
+requires committed source and a matching successful build manifest, and does
+not install or load the DLL. Commit before building a release candidate.
 
 The current identity is GoodGenes (DLL and asset folder), with good_genes.swf
 and GoodGenesMutationSelector. When replacing a pre-rename local prototype,
@@ -143,6 +173,7 @@ game, or alter saves without explicit permission. Compilation and static
 inspection are permitted.
 
 - `test_policy.c`: mutation comparisons and parental occupancy policy.
+- `test_package.py`: stale/missing source, version, commit and output rejection.
   Includes deduplicated before/after totals, unchanged counterparts, side order,
   distinct arms/legs groups, and unknown/negative-ID policy cases.
 - `test_hook_layout.py`: copied instructions, birth branch destinations,

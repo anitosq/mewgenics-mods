@@ -228,6 +228,6 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved) {
         log_message(OWNER, "DISABLED: breeding patch transaction failed; hooks remain pass-through."); return TRUE;
     }
     ready = 1;
-    log_message(OWNER, "0.2.0.beta enabled: birth inheritance plus event/combat replacement selector. Empty slots and overnight unchanged.");
+    log_message(OWNER, "0.2.0.beta.2 enabled: birth inheritance plus event/combat replacement selector. Empty slots and overnight unchanged.");
     return TRUE;
 }

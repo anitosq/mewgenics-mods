@@ -25,6 +25,10 @@ stats and decreases others opens the selector. A +2/-1 is not automatically
 better than a +1. Comparisons use combined mutation bonuses, counting matching
 paired mutations once.
 
+Head changes also account for mutations on facial parts they hide or restore.
+Those affected parts appear in the same comparison; Replace Head accepts the
+whole head change, not just the part currently shown.
+
 If either mutation has a special effect, an in-game comparison lets you keep
 the current mutation or accept the incoming one. Keeping it consumes the roll;
 it does not reroll. Unknown mutation definitions are protected.
@@ -40,7 +44,8 @@ different affected parts; matching paired mutations share one comparison.
 If a description exceeds the panel's twelve-line limit, the mod keeps the
 existing mutation rather than offering an incomplete comparison.
 
-Empty parts keep the game's normal behavior, with no comparison window.
+Empty parts keep the game's normal behavior, unless a head change also affects
+an existing facial mutation.
 Ordinary overnight house mutations are unchanged.
 
 ## Installation

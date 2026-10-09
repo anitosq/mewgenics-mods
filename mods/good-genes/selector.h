@@ -1,16 +1,12 @@
 /* Current-executable native YesNoPrompt/MenuPanel integration. No OS dialogs. */
 #include "ui-font.h"
+#include "parts.h"
 
 typedef struct { union { wchar_t local[8]; const wchar_t *pointer; }; size_t size, capacity; } WideString;
 typedef struct { byte storage[56]; void *callable; } GameFunction;
 typedef struct { void **vtable; uint64_t ticket; int action; } Choice;
 _Static_assert(sizeof(wchar_t) == 2 && sizeof(GameFunction) == 64 && sizeof(Choice) <= 56, "Native ABI mismatch");
-typedef struct { int part, old, selected; unsigned offset; byte enabled; } PartSnapshot;
-static const struct { int part; unsigned offset; } mutation_slots[] = {
-    {0,0x90}, {1,0xe4}, {2,0x138}, {11,0x18c}, {12,0x1e0},
-    {13,0x234}, {14,0x288}, {15,0x2dc}, {16,0x330}, {17,0x384},
-    {18,0x3d8}, {19,0x42c}, {20,0x480}, {9,0x4d4}, {10,0x78}
-};
+typedef struct { int part, old, selected, before_id, after_id; unsigned offset; byte enabled; } PartSnapshot;
 typedef struct {
     void *cat;
     byte *origin, *manager;
@@ -91,10 +87,17 @@ static int offer_alive(const Offer *offer) {
         read_bytes(offer->cat, identity, sizeof(identity)) && !memcmp(identity, offer->identity, sizeof(identity));
 }
 
-static int comparison_group(int part) {
-    if (part >= 11 && part <= 14) return 3 + (part-11)/2;
-    if (part >= 15 && part <= 20) return 6 + (part-15)/2;
-    return part;
+static int project_head(int id, MutationPart parts[15]);
+
+static int read_parts(void *cat, MutationPart parts[15]) {
+    byte appearance[0x4e9-0x78];
+    if (!read_bytes((byte *)cat + 0x78, appearance, sizeof(appearance))) return 0;
+    for (unsigned i = 0; i < COUNT(mutation_slots); ++i) {
+        unsigned offset = mutation_slots[i].offset - 0x78;
+        memcpy(&parts[i].id, appearance + offset, 4);
+        parts[i].enabled = mutation_slots[i].part == 10 ? 1 : appearance[offset + 0x14];
+    }
+    return 1;
 }
 
 /* Track SetPiece writes and unchanged counterparts that share their bonuses. */
@@ -102,43 +105,52 @@ static MutationDecision snapshot_offer(Offer *offer) {
     int part = (int)(uint32_t)offer->pair, id = (int)(offer->pair >> 32);
     if (!offer->cat || part < 0 || part > 20) return KEEP_MUTATION;
     int changed = 0, occupied = 0, special = 0;
-    MutationBonus before[15], after[15];
+    MutationPart current[15], projected[15];
+    if (!read_parts(offer->cat, current)) return KEEP_MUTATION;
+    memcpy(projected, current, sizeof(projected));
+    for (unsigned i = 0; i < COUNT(mutation_slots); ++i)
+        if (selects_part(part, mutation_slots[i].part)) projected[i].id = id;
+    if (part == 1 && !project_head(id, projected)) return KEEP_MUTATION;
+    MutationBonus before[15] = {0}, after[15] = {0};
     offer->count = 0;
     MutationDecision result = VANILLA_MUTATION;
     for (unsigned i = 0; i < COUNT(mutation_slots); ++i) {
         int p = mutation_slots[i].part;
-        int selected = part == 10 || part == p ||
-            (part == 3 && (p == 11 || p == 12)) || (part == 4 && (p == 13 || p == 14)) ||
-            (part == 5 && p >= 11 && p <= 14) || (part == 6 && (p == 15 || p == 16)) ||
-            (part == 7 && (p == 17 || p == 18)) || (part == 8 && (p == 19 || p == 20));
+        int selected = part == 10 || selects_part(part, p);
         int counterpart = part >= 11 && part <= 20 && p == 11 + ((part-11)^1);
-        if (!selected && !counterpart) continue;
+        int facial = part == 1 && i >= 7 && i <= 13;
+        if (!selected && !counterpart && !facial) continue;
         PartSnapshot *slot = &offer->parts[offer->count++];
         slot->part = part == 10 ? 10 : p;
-        slot->selected = selected;
         slot->offset = mutation_slots[i].offset + (part == 10 && p != 10 ? 4 : 0);
-        if (!read_bytes((byte *)offer->cat + slot->offset, &slot->old, 4)) return KEEP_MUTATION;
-        slot->enabled = 1;
-        if (part != 10 && p != 10 &&
-            !read_bytes((byte *)offer->cat + slot->offset + 0x14, &slot->enabled, 1)) return KEEP_MUTATION;
-        MutationQuality old = quality(slot->part, slot->old);
-        int next_id = selected ? id : slot->old;
-        MutationQuality next = next_id == slot->old ? old : quality(slot->part, next_id);
-        before[offer->count-1] = (MutationBonus){comparison_group(slot->part), slot->old, old};
-        after[offer->count-1] = (MutationBonus){comparison_group(slot->part), next_id, next};
+        slot->old = current[i].id;
+        if (part == 10 && p != 10 &&
+            !read_bytes((byte *)offer->cat + slot->offset, &slot->old, 4)) return KEEP_MUTATION;
+        slot->enabled = part == 10 ? 1 : current[i].enabled;
+        slot->before_id = part == 10 ? slot->old : effective_part_id(current, i);
+        slot->after_id = part == 10 ? id : effective_part_id(projected, i);
+        slot->selected = slot->before_id != slot->after_id;
         /* Embedded coat IDs are SetPiece write targets, not extra bonuses. */
-        if (!slot->enabled || (part == 10 && p != 10)) {
-            before[offer->count-1].quality = after[offer->count-1].quality = (MutationQuality){UNMUTATED, {0}};
+        if (part == 10 && p != 10) {
+            before[offer->count-1].quality.kind = after[offer->count-1].quality.kind = UNMUTATED;
+            continue;
         }
-        if (part == 10 && p != 10) continue;
-        if (!selected || slot->old == id) continue;
+        /* Validate the actual rolled definition even when its part is hidden. */
+        if (selected && quality(p, id).kind == UNKNOWN) return KEEP_MUTATION;
+        MutationQuality old = quality(slot->part, slot->before_id);
+        MutationQuality next = slot->after_id == slot->before_id ? old : quality(slot->part, slot->after_id);
+        if (old.kind == UNKNOWN || next.kind == UNKNOWN) return KEEP_MUTATION;
+        before[offer->count-1] = (MutationBonus){comparison_group(slot->part), slot->before_id, old};
+        after[offer->count-1] = (MutationBonus){comparison_group(slot->part), slot->after_id, next};
+        if (!slot->selected) continue;
         changed = 1;
         if (old.kind != UNMUTATED) occupied = 1;
-        MutationDecision decision = mutation_decision(old, next);
+        MutationDecision decision = facial && next.kind == UNMUTATED ? KEEP_MUTATION : mutation_decision(old, next);
         result = combine_mutation_decisions(result, decision);
-        if (old.kind != UNMUTATED && (old.kind == SPECIAL_MUTATION || next.kind == SPECIAL_MUTATION)) special = 1;
+        if (old.kind == SPECIAL_MUTATION || next.kind == SPECIAL_MUTATION) special = 1;
     }
-    if (!changed || !offer->count || result == INVALID_MUTATION) return KEEP_MUTATION;
+    if (!offer->count || result == INVALID_MUTATION) return KEEP_MUTATION;
+    if (!changed) return VANILLA_MUTATION;
     if (!occupied) return VANILLA_MUTATION;
     MutationDecision combined = effective_stats_decision(before, after, offer->count);
     if (combined == INVALID_MUTATION) return KEEP_MUTATION;
@@ -151,19 +163,17 @@ static int preview_base_stats(const Offer *offer, double values[2][MUTATION_STAT
     int inherited[MUTATION_STATS];
     if (!read_bytes((byte *)offer->cat + 0x6f0, inherited, sizeof(inherited))) return 0;
     MutationBonus parts[2][COUNT(mutation_slots)];
+    MutationPart current[15];
+    if (!read_parts(offer->cat, current)) return 0;
     for (unsigned i = 0; i < COUNT(mutation_slots); ++i) {
-        int p = mutation_slots[i].part, id;
+        int p = mutation_slots[i].part, id = effective_part_id(current, i);
         unsigned offset = mutation_slots[i].offset;
-        byte enabled = 1;
-        if (!read_bytes((byte *)offer->cat + offset, &id, 4) ||
-            (p != 10 && !read_bytes((byte *)offer->cat + offset + 0x14, &enabled, 1))) return 0;
         int next = id;
         for (unsigned j = 0; j < offer->count; ++j)
-            if (offer->parts[j].selected && offer->parts[j].offset == offset) next = (int)(offer->pair >> 32);
-        MutationQuality old = enabled ? quality(p, id) : (MutationQuality){UNMUTATED, {0}};
+            if (offer->parts[j].offset == offset) next = offer->parts[j].after_id;
+        MutationQuality old = quality(p, id);
         parts[0][i] = (MutationBonus){comparison_group(p), id, old};
-        parts[1][i] = (MutationBonus){comparison_group(p), next, next == id ? old :
-            enabled ? quality(p, next) : (MutationQuality){UNMUTATED, {0}}};
+        parts[1][i] = (MutationBonus){comparison_group(p), next, next == id ? old : quality(p, next)};
     }
     for (unsigned side = 0; side < 2; ++side) {
         MutationQuality total;
@@ -199,8 +209,8 @@ static const wchar_t *part_name(int part) {
 }
 
 static int same_comparison(const PartSnapshot *a, const PartSnapshot *b) {
-    /* One offer has one incoming ID. Merge only matching current IDs in a pair. */
-    return comparison_group(a->part) == comparison_group(b->part) && a->old == b->old;
+    return comparison_group(a->part) == comparison_group(b->part) &&
+        a->before_id == b->before_id && a->after_id == b->after_id;
 }
 
 static void append_text(wchar_t *out, size_t capacity, const wchar_t *format, ...) {
@@ -416,6 +426,22 @@ static int art_frame(byte *clip, int id) {
     return 1;
 }
 
+/* Match 7393e0's named head placements, including eyebrows following eyes.
+   This detached clip is destroyed here; no cat or scene is modified. */
+static int project_head(int id, MutationPart parts[15]) {
+    GameString name = small_string("CatHeadPlacements");
+    byte *clip = FN(byte *(*)(void *, GameString *), 0x9bb890)(NULL, &name);
+    if (!clip) return 0;
+    int valid = art_frame(clip, id);
+    if (valid) {
+        static const char *names[] = {"leye", "reye", "leye", "reye", "lear", "rear", "mouth"};
+        for (unsigned i = 0; i < COUNT(names); ++i) parts[7+i].enabled = display_child(clip, names[i]) != NULL;
+    }
+    void **vtable = *(void ***)clip;
+    ((void (*)(void *, unsigned))vtable[2])(clip, 1);
+    return valid;
+}
+
 static byte *first_clip(byte *clip) {
     if (!clip || !*(unsigned *)(clip+0xac)) return NULL;
     byte **children = *(unsigned *)(clip+0xa8) > 4 ? *(byte ***)(clip+0xb0) : (byte **)(clip+0xb0);
@@ -614,13 +640,12 @@ static int render_part_art(unsigned side, PartSnapshot *part, int id) {
 static void render_comparison(void) {
     PartSnapshot *part = &active.parts[view_indices[view_part]];
     wchar_t current[4096], incoming[4096], a[4096], b[4096], title[256];
-    describe_mutation(part->part, part->old, current);
-    describe_mutation(part->part, (int)(active.pair >> 32), incoming);
+    describe_mutation(part->part, part->before_id, current);
+    describe_mutation(part->part, part->after_id, incoming);
     wrap_effects(current, a);
     wrap_effects(incoming, b);
-    int incoming_id = (int)(active.pair >> 32);
-    panel_text("old_art_note", render_part_art(0, part, part->old) ? L"" : part->old == -2 ? L"Missing part" : L"Preview unavailable");
-    panel_text("new_art_note", render_part_art(1, part, incoming_id) ? L"" : incoming_id == -2 ? L"Missing part" : L"Preview unavailable");
+    panel_text("old_art_note", render_part_art(0, part, part->before_id) ? L"" : part->before_id <= 0 ? L"Missing part" : L"Preview unavailable");
+    panel_text("new_art_note", render_part_art(1, part, part->after_id) ? L"" : part->after_id <= 0 ? L"Missing part" : L"Preview unavailable");
     render_effects(0, a);
     render_effects(1, b);
     panel_text("part", part_name(view_labels[view_part]));
@@ -705,7 +730,7 @@ static void show_next_offer(void) {
         view_count = 0;
         for (unsigned i = 0; i < active.count; ++i) {
             PartSnapshot *part = &active.parts[i];
-            if (!part->selected || part->old == (int)(active.pair >> 32)) continue;
+            if (!part->selected) continue;
             if (part->part == 10 && part->offset != 0x78) continue;
             unsigned j = 0;
             while (j < view_count && !same_comparison(&active.parts[view_indices[j]], part)) ++j;
@@ -722,7 +747,7 @@ static void show_next_offer(void) {
             wchar_t text[4096], wrapped[4096];
             PartSnapshot *part = &active.parts[view_indices[i]];
             for (unsigned side = 0; side < 2; ++side) {
-                if (!describe_mutation(part->part, side ? (int)(active.pair >> 32) : part->old, text)) described = 0;
+                if (!describe_mutation(part->part, side ? part->after_id : part->before_id, text)) described = 0;
                 unsigned rows = wrap_effects(text, wrapped);
                 if (rows > EFFECT_ROWS) described = 0;
                 if (rows > effect_rows) effect_rows = rows;
@@ -761,6 +786,7 @@ static void show_next_offer(void) {
         if (scope >= 3 && scope <= 8 && view_count > 1) {
             panel_text("yes_caption", scope == 5 ? L"Replace All" : L"Replace Both");
         }
+        if (scope == 1 && view_count > 1) panel_text("yes_caption", L"Replace Head");
         byte *panel = *(byte **)(active_prompt + 0x40);
         for (int i = 0; i < 2; ++i) {
             if (!navigation_needed) {
@@ -794,12 +820,16 @@ static void show_next_offer(void) {
 
 static int offer_mutation(void *cat, uint64_t pair) {
     Offer offer = {.cat = cat, .pair = pair};
-    MutationDecision decision = snapshot_offer(&offer);
-    if (decision == VANILLA_MUTATION) return 0;
-    if (decision == KEEP_MUTATION) return 1;
     DWORD thread = GetCurrentThreadId();
     if (owner_thread && owner_thread != thread) return 1;
     owner_thread = thread;
+    /* A native multi-roll call continues after opening a modal. Queue every
+       subsequent candidate, then decide against the preceding choice's result. */
+    if (!active_prompt && !queue_count && !pumping) {
+        MutationDecision decision = snapshot_offer(&offer);
+        if (decision == VANILLA_MUTATION) return 0;
+        if (decision == KEEP_MUTATION) return 1;
+    }
     if (queue_count == COUNT(offers)) { log_message(OWNER, "Selector queue full; kept existing mutation."); return 1; }
     if (!read_bytes(base + 0x13c18f0, &offer.origin, 8) || !offer.origin ||
         !read_bytes(offer.origin, &offer.manager, 8) ||

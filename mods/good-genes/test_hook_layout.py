@@ -93,10 +93,11 @@ def check_selector_navigation():
 
 def check_paired_comparisons():
     source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
+    parts = (Path(__file__).resolve().parent / "parts.h").read_text(encoding="ascii")
     # Group only counterparts, never arms with legs or different current IDs.
-    assert "if (part >= 11 && part <= 14) return 3 + (part-11)/2;" in source
-    assert "if (part >= 15 && part <= 20) return 6 + (part-15)/2;" in source
-    assert "return comparison_group(a->part) == comparison_group(b->part) && a->old == b->old;" in source
+    assert "if (part >= 11 && part <= 14) return 3 + (part-11)/2;" in parts
+    assert "if (part >= 15 && part <= 20) return 6 + (part-15)/2;" in parts
+    assert "a->before_id == b->before_id && a->after_id == b->after_id;" in source
     assert "!same_comparison(&active.parts[view_indices[j]], part)" in source
     assert "view_labels[j] = part->part;" in source, "Single-sided rolls retain their side"
     assert "view_labels[j] = comparison_group(part->part);" in source
@@ -117,28 +118,47 @@ def check_effective_bonuses_and_missing_parts():
     assert "id < 0" not in snapshot, "Definitions, not sign, validate missing-part IDs"
     assert "q.kind = id < 0 ? UNKNOWN : UNMUTATED;" in native
     assert "p == 11 + ((part-11)^1)" in snapshot, "Capture an unchanged counterpart"
-    assert "if (!selected && !counterpart) continue;" in snapshot
-    assert "int next_id = selected ? id : slot->old;" in snapshot
+    assert "if (!selected && !counterpart && !facial) continue;" in snapshot
+    assert "effective_part_id(current, i)" in snapshot
+    assert "effective_part_id(projected, i)" in snapshot
     assert "effective_stats_decision(before, after, offer->count)" in snapshot
     assert "return special ? CHOOSE_MUTATION : combined;" in snapshot
-    assert "if (part == 10 && p != 10) continue;" in snapshot
+    assert "if (part == 10 && p != 10) {" in snapshot
     assert "if (part->part == 10 && part->offset != 0x78) continue;" in source
-    assert "if (!part->selected || part->old == (int)(active.pair >> 32)) continue;" in source
+    assert "if (!part->selected) continue;" in source
     assert 'L"Missing part"' in source
 
 
 def check_base_stat_preview():
     source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
     preview = source.split("static int preview_base_stats(", 1)[1].split("static int snapshot_unchanged(", 1)[0]
-    assert "+ 0x6f0" in preview and "offset + 0x14" in preview
+    assert "+ 0x6f0" in preview and "read_parts(offer->cat, current)" in preview
     assert "effective_stats(parts[side], COUNT(mutation_slots), &total)" in preview
-    assert "offer->parts[j].selected && offer->parts[j].offset == offset" in preview
+    assert "offer->parts[j].offset == offset) next = offer->parts[j].after_id" in preview
     assert "inherited[i] + total.stats[i]" in preview
     assert "original_set" not in preview, "Preview must not mutate the live cat"
     assert "base_stats_valid = preview_base_stats(&active, base_stats);" in source
     assert "memcmp(stats, base_stats, sizeof(stats))" in source, "Reject stale whole-cat previews"
     assert 'L"Stats unavailable"' in source
     assert "base_stats[1][stat] != base_stats[0][stat]" in source
+
+
+def check_head_projection_and_roll_order():
+    source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
+    head = source.split("static int project_head(int id, MutationPart parts[15]) {", 1)[1].split("static byte *first_clip", 1)[0]
+    assert 'small_string("CatHeadPlacements")' in head
+    assert '"leye", "reye", "leye", "reye", "lear", "rear", "mouth"' in head
+    assert "vtable[2])(clip, 1)" in head and "original_set" not in head
+    snapshot = source.split("static MutationDecision snapshot_offer(", 1)[1].split("static int preview_base_stats(", 1)[0]
+    assert "part == 1 && !project_head(id, projected)" in snapshot
+    assert "int facial = part == 1 && i >= 7 && i <= 13;" in snapshot
+    assert "facial && next.kind == UNMUTATED ? KEEP_MUTATION" in snapshot
+    assert 'panel_text("yes_caption", L"Replace Head")' in source
+    offer = source.split("static int offer_mutation(", 1)[1].split("static void selector_panel", 1)[0]
+    gate = offer.index("if (!active_prompt && !queue_count && !pumping) {")
+    assert gate < offer.index("snapshot_offer(&offer)") < offer.index("if (decision == VANILLA_MUTATION) return 0;")
+    assert "offers[(queue_head + queue_count++) % COUNT(offers)] = offer;" in offer
+    assert "snapshot_offer(&active)" in source, "Every deferred candidate must be re-evaluated in order"
 
 
 if __name__ == "__main__":
@@ -150,4 +170,5 @@ if __name__ == "__main__":
     check_paired_comparisons()
     check_effective_bonuses_and_missing_parts()
     check_base_stat_preview()
+    check_head_projection_and_roll_order()
     print("Hook, sprite-construction, footer-layout, and selector source contracts match.")

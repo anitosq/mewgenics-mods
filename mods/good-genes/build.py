@@ -10,6 +10,12 @@ import assets
 ROOT = Path(__file__).resolve().parent
 VERSION = (ROOT / "VERSION").read_text(encoding="ascii").strip()
 EXPECTED = "4127cd6a792ae528bca6f65a8873dd61789591937d87656c2b586a5e30eb77ea"
+SOURCE_FILES = ("VERSION", "native.c", "selector.h", "parts.h", "policy.h", "breeding.h", "startup.h",
+                "assets.py", "build.py", "test_policy.c", "test_hook_layout.py",
+                "../auto-furniture/assets.py", "../auto-furniture/localization.py",
+                "../../tools/probe_inventory.py", "../../tools/validate_native_assets.py")
+OUTPUT_FILES = {"dll_sha256": "GoodGenes.dll", "ui_asset_sha256": "data-mod/swfs/good_genes.swf",
+                "append_sha256": "data-mod/swfs/swflist.gon.append"}
 
 
 def rva_bytes(data, rva, size):
@@ -34,11 +40,16 @@ def main():
     parser.add_argument("--tools", type=Path,
                         default=ROOT.parents[1] / "tools")
     args = parser.parse_args()
+    if args.tools.resolve() != (ROOT.parents[1] / "tools").resolve():
+        raise SystemExit("Release builds require the repository's recorded asset tools.")
+    source_hashes = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in SOURCE_FILES}
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     data = args.exe.read_bytes()
     if hashlib.sha256(data).hexdigest() != EXPECTED:
         raise SystemExit("Unsupported executable. Nothing built.")
     out = ROOT / "build"
     out.mkdir(exist_ok=True)
+    (out / "build-info.json").unlink(missing_ok=True)
     arrays = {"EXPECTED_SHA256": bytes.fromhex(EXPECTED)}
     for name, rva in {"RANDOM_BYTES": 0xcc3f0, "MUTATE_BYTES": 0xcc970, "SET_BYTES": 0xcd080,
                       "PANEL_BYTES": 0x97bdf0, "CLOSE_BYTES": 0x77dc70,
@@ -78,17 +89,17 @@ def main():
                     "-o", str(dll), "-lbcrypt", "-lshell32"], check=True)
     info = {
         "version": VERSION,
+        "source_commit": commit,
         "game_sha256": EXPECTED,
         "mewjector_api_minimum": 3,
         "tests_run": False,
         "game_launched": False,
         "installed": False,
-        "dll_sha256": hashlib.sha256(dll.read_bytes()).hexdigest(),
-        "source_sha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-                          for name in ("native.c", "selector.h", "policy.h", "breeding.h", "startup.h",
-                                       "assets.py", "build.py", "test_policy.c", "test_hook_layout.py")},
-        "ui_asset_sha256": hashlib.sha256((out / "data-mod/swfs/good_genes.swf").read_bytes()).hexdigest(),
+        "source_sha256": source_hashes,
+        **{key: hashlib.sha256((out / path).read_bytes()).hexdigest() for key, path in OUTPUT_FILES.items()},
     }
+    if source_hashes != {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in SOURCE_FILES}:
+        raise SystemExit("Source changed during compilation. Rebuild before packaging.")
     manifest = out / "build-info.json"
     manifest.write_text(json.dumps(info, indent=2) + "\n", encoding="ascii")
     print(f"Compiled: {dll}\nNo tests, DLL loading, installation, or game launch performed.")

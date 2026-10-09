@@ -1,8 +1,31 @@
 /* Deferred policy checks. Not executed for the baseline build. */
 #include <assert.h>
 #include "policy.h"
+#include "parts.h"
 
 int main(void) {
+    MutationPart shapes[15] = {0};
+    for (unsigned i = 0; i < 15; ++i) {
+        shapes[i] = (MutationPart){300, 1};
+        assert(selects_part(mutation_slots[i].part, mutation_slots[i].part));
+    }
+    assert(selects_part(5, 11) && selects_part(5, 14) && !selects_part(5, 15));
+    assert(selects_part(6, 15) && selects_part(6, 16) && !selects_part(6, 17));
+    assert(!selects_part(10, 11)); /* Embedded coats are not separate bonuses. */
+    for (unsigned i = 7; i <= 11; i += 2) {
+        shapes[i].enabled = 0;
+        assert(effective_part_id(shapes, i) == 0);
+        assert(effective_part_id(shapes, i+1) == 300);
+        shapes[i+1].enabled = 0;
+        assert(effective_part_id(shapes, i) == -2 && effective_part_id(shapes, i+1) == -2);
+        shapes[i].enabled = 1;
+        assert(effective_part_id(shapes, i) == 300 && effective_part_id(shapes, i+1) == 0);
+        shapes[i+1].enabled = 1;
+    }
+    shapes[13].enabled = 0;
+    assert(effective_part_id(shapes, 13) == 0); /* caa70 does not synthesize missing mouth -2. */
+    shapes[13] = (MutationPart){-2, 1};
+    assert(effective_part_id(shapes, 13) == -2); /* Explicit event missing-part IDs remain valid. */
     assert(inherited_parent(1, 0) == 0);
     assert(inherited_parent(0, 1) == 1);
     assert(inherited_parent(1, 1) == -1);
@@ -108,6 +131,18 @@ int main(void) {
     before[1] = (MutationBonus){6,750,int_eye};
     MutationQuality total;
     assert(effective_stats(before, 2, &total) && total.stats[3] == 1);
+    MutationBonus missing[] = {
+        {8,-2,{BIRTH_DEFECT,{0,-2,0,0,0,0,0}}},
+        {8,-2,{BIRTH_DEFECT,{0,-2,0,0,0,0,0}}},
+        {7,-2,{BIRTH_DEFECT,{0,0,0,0,0,-2,0}}},
+        {7,-2,{BIRTH_DEFECT,{0,0,0,0,0,-2,0}}}
+    };
+    assert(effective_stats(missing, 4, &total) && total.stats[1] == -2 && total.stats[5] == -2);
+    /* Head 700 -> 309 restores INT and gains LCK, but hides a DEX eye. */
+    MutationBonus old_head[] = {{1,700,{BIRTH_DEFECT,{0,0,0,-2,0,0,0}}},
+                                {6,300,{STAT_MUTATION,{0,1,0,0,0,0,0}}}};
+    MutationBonus new_head[] = {{1,309,{STAT_MUTATION,{0,0,0,0,0,0,2}}}, {6,0,empty}};
+    assert(effective_stats_decision(old_head, new_head, 2) == CHOOSE_MUTATION);
     /* Restore one of three CHA penalties at the cost of a STR bonus. */
     MutationBonus stacked[3] = {
         {0,400,{STAT_MUTATION,{2,0,0,0,0,-1,0}}},
