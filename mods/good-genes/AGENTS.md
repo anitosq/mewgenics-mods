@@ -58,6 +58,10 @@
   for owner testing. This supersedes the earlier fixed-version local-build
   handoff. Keep VERSION, startup log, archive name and package metadata aligned;
   check all four before handoff. Do not remove `.beta` before owner testing.
+- Owner release override, 2026-10-09: explicitly approved promoting the beta.2
+  implementation to official 0.2.0 and publishing it. This permits removing the
+  beta label for this release, without implying gameplay-test confirmation.
+  Keep overnight changes out, and preserve the installed game and saves.
 - Owner visual feedback, 2026-10-06: keep the selector 640px wide in the native
   1280x720 canvas; size its height to the maximum effect rows across the offer.
   Keep 20px below action buttons and 20px above them when navigation is absent;

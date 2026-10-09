@@ -6,11 +6,11 @@ Detailed cases below remain useful for future changes; approval does not imply
 exhaustive gameplay or manager lifecycle coverage.
 
 Version 0.1.1 is also published; see docs/releases/good-genes/0.1.1-publication.md.
-The current revision is 0.2.0.beta.2, prepared as an installable ZIP for owner
-testing. It is not installed, gameplay-tested, or published. The owner clarified
-that updated source stays in the checkout and the game installation stays
-unchanged. Do not replace either published archive or tag. Keep `.beta` until
-owner testing is confirmed; keep the earlier 0.2.0.beta candidate unchanged.
+The owner approved promotion of 0.2.0.beta.2 to official 0.2.0 on 2026-10-09.
+Only version labels and release documentation change for promotion; gameplay
+code remains the beta.2 implementation. Publication approval is not gameplay
+test confirmation. The game installation and saves stay unchanged. Preserve
+all previous archives; see the 0.2.0 publication record for release status.
 
 ## Audit Fixes (2026-10-09)
 

@@ -13,11 +13,15 @@ Pass mutations to kittens and protect occupied mutation slots during events and 
 The game's paired-part mirroring remains in place. Every distinct mutation on an asymmetric parent is not guaranteed to appear on its kitten.
 
 [b]Event and combat mutations[/b]
-Stat-only replacements happen automatically when no stat decreases and at least one increases. Equal changes and trade-offs keep the current mutation.
+Stat-only replacements happen automatically when no stat decreases and at least one increases. Equal changes and pure downgrades keep the current mutation. Trade-offs that increase some stats and decrease others open a Keep Existing / Replace comparison. Matching paired mutations count once when comparing bonuses.
 
 If either the current or incoming mutation has a special effect, an in-game comparison lets you choose Keep Existing or Replace. Keeping the current mutation consumes the roll; it does not reroll.
 
-Empty parts behave normally and do not open the comparison. Ordinary overnight house mutations are unchanged.
+Both columns show inherited base stats plus active mutation bonuses for the whole change. Incoming increases are green, decreases red, and unchanged values use the normal color. Class bonuses, levels, equipment, and temporary effects are excluded.
+
+Head changes account for facial mutations they hide or restore. Arrows appear only between different affected parts, with full descriptions instead of text paging. Unknown definitions or descriptions too long to show in full keep the existing mutation.
+
+Empty parts behave normally unless a head change also affects an existing facial mutation. Ordinary overnight house mutations are unchanged.
 
 [b]Installation and compatibility[/b]
 Requires the native loader listed under Requirements (API 3 or later) and Windows Steam build 1.1.21239 / 25143593.
