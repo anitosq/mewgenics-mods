@@ -1,7 +1,6 @@
 # Improved Inventory installation
 
-Version 0.3.6-beta.1 is a test build for delayed mod loading. It requires
-Windows x64, Mewgenics 1.1.21239 (Steam build
+Version 0.3.6 requires Windows x64, Mewgenics 1.1.21239 (Steam build
 25143593), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3. The same ZIP works with Vortex and Mewtator.
 
@@ -74,7 +73,7 @@ relevant log lines.
 
 ## Compatibility
 
-Mewjector is the only mod dependency; runtime v3.0 was used for testing.
+Mewjector is the only mod dependency; the Mewjector v3.4 GitHub release was used for Mewtator testing.
 Controller, IME input and broader resolution/UI-scale coverage haven't been
 tested. Item transfers are still manual, and End Day deletes items left in Trash.
 

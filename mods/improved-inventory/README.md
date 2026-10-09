@@ -11,23 +11,23 @@ and while choosing your cats' equipment before an adventure.
 
 ## Download and install
 
-Version 0.3.5: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.5)
+Version 0.3.6: [GitHub download](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.6)
 and [Nexus Mods / Vortex](https://www.nexusmods.com/mewgenics/mods/526).
 Requires Windows x64, Mewgenics Steam build 25143593 (1.1.21239), and
-Mewjector API v3 (tested with runtime v3.0). Mewjector is the only mod
+Mewjector API v3 (tested with the v3.4 GitHub release). Mewjector is the only mod
 dependency. The same ZIP supports Vortex and Mewtator. Follow the
 [installation guide](INSTALL.md), including the update step for older Vortex installs.
 The mod stays inactive on unsupported game builds.
 
-See the [release notes](releases/0.3.5.md) for this update and the
+See the [release notes](releases/0.3.6.md) for this update and the
 [changelog](CHANGELOG.md) for earlier versions.
 
 ## Release records
 
-The [candidate record](../../docs/releases/improved-inventory/0.3.5-candidate.md)
+The [candidate record](../../docs/releases/improved-inventory/0.3.6-beta.1-candidate.md)
 contains the package test results and runtime test scope. The
 [release checklist](RELEASE_CHECKLIST.md) tracks remaining tests, and the
-[publication record](../../docs/releases/improved-inventory/0.3.5-publication.md)
+[publication record](../../docs/releases/improved-inventory/0.3.6-publication.md)
 records download verification. Use the [publishing workflow](../../docs/releases/README.md)
 for updates to Nexus Mods and GitHub.
 
