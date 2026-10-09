@@ -57,7 +57,14 @@ def main():
                 check(['-modpaths', str(assets)], 3)
                 path.write_bytes(original)
             check(['-modpaths', str(assets)], 1)
-    print('Release identity, executable guard, both layouts, disabled/ambiguous paths and missing/mismatched assets passed.')
+    fixture = ROOT / 'work/release-build/native_startup.exe'
+    subprocess.run([str(ROOT / 'work/toolchains/zig-x86_64-windows-0.15.2/zig.exe'),
+                    'cc', '-O2', '-UNDEBUG', '-Wall', '-Wextra', '-Werror',
+                    '-I', str(ROOT / 'work/release-build'),
+                    str(ROOT / 'mods/improved-inventory/tests/native_startup.c'),
+                    '-o', str(fixture), '-lbcrypt', '-luser32', '-lshell32'], check=True)
+    subprocess.run([str(fixture)], check=True)
+    print('Release identity, executable guard, both layouts, disabled/ambiguous paths, missing/mismatched assets and late startup passed.')
 
 
 if __name__ == '__main__':
