@@ -18,7 +18,9 @@ static HMODULE own_module;
 static byte* base;
 static LONG initialized;
 static wchar_t command_path[MAX_PATH];
+#ifndef FN
 #define FN(type,rva) ((type)(base+(rva)))
+#endif
 #define MAX_ITEMS 2048
 #define MARKER_ID UINT64_C(0x4155464e)
 

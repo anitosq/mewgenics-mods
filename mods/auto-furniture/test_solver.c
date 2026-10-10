@@ -2,8 +2,50 @@
 #undef NDEBUG
 #include <assert.h>
 #include <stdio.h>
+static int stop_calls,stop_after;
+static int stop_search(void* unused) {(void)unused;return ++stop_calls>=stop_after;}
+static void performance_regressions(AFProblem* p,AFSearch* s) {
+    int expected[AF_ITEMS];
+    for(int mode=0;mode<3;mode++) {
+        for(int i=0;i<AF_ITEMS;i++) {
+            expected[i]=s->order[i]=i;s->priority[i]=mode==0?i:mode==1?-i:(i*37)%17;
+        }
+        for(int i=1;i<AF_ITEMS;i++)for(int j=i;j>0&&s->priority[expected[j]]>s->priority[expected[j-1]];j--) {
+            int t=expected[j];expected[j]=expected[j-1];expected[j-1]=t;
+        }
+        assert(af_order(s,AF_ITEMS)&&!memcmp(expected,s->order,sizeof(expected)));
+    }
+    assert(af_order(s,0)&&af_order(s,1));
+    memset(p,0,sizeof(*p));p->width=p->height=64;p->count=1;p->selected=1;
+    memset(p->grid,6,sizeof(p->grid));
+    p->shape[0].count=p->shape[0].solid=1;p->shape[0].cells[0]=(AFCell){0,0,1};
+    p->shape[0].stats[0]=1;p->shape[0].utility=1;
+    assert(af_start(p,s,NULL));
+    for(int phase=0;phase<5;phase++)assert(s->area_divisor[phase][0]==pow(1,0.3+phase*0.2));
+    AFLayout best=s->best;
+    s->stop=stop_search;s->stop_context=NULL;
+    stop_calls=0;stop_after=1;af_step(p,s);assert(stop_calls==1&&s->iterations==0);
+    stop_calls=0;stop_after=4;af_step(p,s);
+    assert(stop_calls==4&&!memcmp(&best,&s->best,sizeof(best)));
+    /* Stop inside a utility placement scan, rather than waiting for its 100,000-evaluation cap. */
+    stop_calls=0;stop_after=3;af_fill_utilities(p,s);
+    assert(stop_calls==3&&!memcmp(&best,&s->best,sizeof(best)));
+    /* An interrupted dependency rebuild must not publish its partially accumulated stats. */
+    s->trial=best;s->trial.placement[0]=(AFPlacement){0,0,1,1,1};
+    stop_calls=0;stop_after=1;assert(!af_rebuild_checked(p,&s->trial,s->grid,1,s));
+    assert(!memcmp(&best,&s->best,sizeof(best)));
+    s->stop=NULL;p->grid[0]=0;af_fill_utilities(p,s);
+    assert(s->best.used==1&&af_rebuild(p,&s->best,s->grid,0));
+    memset(p,0,sizeof(*p));p->width=p->height=1;p->count=1;p->selected=1;
+    p->shape[0].count=1;p->shape[0].solid=7;p->shape[0].cells[0]=(AFCell){0,0,1};
+    assert(af_start(p,s,NULL));
+    for(int phase=0;phase<5;phase++)assert(s->area_divisor[phase][0]==pow(7,0.3+phase*0.2));
+    memset(p,0,sizeof(*p));memset(s,0,sizeof(*s));
+    puts("PASS: stable sort matches old ordering for 2048 items; cancellation preserves valid best; area cache refreshes");
+}
 int main(void) {
     AFProblem* p=calloc(1,sizeof(*p));AFSearch* s=calloc(1,sizeof(*s));assert(p&&s);
+    performance_regressions(p,s);
     p->selected=7;
     double a[AF_STATS]={90,45,30,0},b[AF_STATS]={60,45,30,999},c[AF_STATS]={60,50,40,0};
     assert(af_compare(p,a,b)>0&&af_compare(p,c,a)>0);

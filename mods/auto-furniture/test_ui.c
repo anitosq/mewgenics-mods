@@ -12,7 +12,90 @@ static BOOL counted_read(HANDLE process,LPCVOID source,LPVOID target,SIZE_T size
     return ReadProcessMemory(process,source,target,size,got);
 }
 #define ReadProcessMemory counted_read
+static void* test_function(unsigned rva);
+#define FN(type,rva) ((type)test_function(rva))
 #include "native.c"
+
+static unsigned text_writes,child_lookups;
+static int missing_child;
+typedef struct {char name[32];wchar_t text[AF_TEXT_BYTES];} TestField;
+static TestField fields[64];static unsigned field_count;
+static void* test_child(void* clip,GameString* name) {
+    (void)clip;child_lookups++;
+    if(missing_child)return NULL;
+    for(unsigned i=0;i<field_count;i++)if(!strcmp(fields[i].name,name->data))return &fields[i];
+    assert(field_count<64);TestField* field=&fields[field_count++];
+    strcpy(field->name,name->data);return field;
+}
+static void* test_wide(GameString* string,const wchar_t* value,size_t n) {
+    string->size=n;string->capacity=n>7?n:7;
+    if(n<=7)memcpy(string->data,value,(n+1)*sizeof(wchar_t));else memcpy(string->data,&value,sizeof(value));
+    return string;
+}
+static void test_set_text(TestField* field,GameString* value,byte a,byte b) {
+    (void)a;(void)b;const wchar_t* text=(const wchar_t*)value->data;
+    if(value->capacity>7)memcpy(&text,value->data,sizeof(text));
+    assert(value->size<AF_TEXT_BYTES);memcpy(field->text,text,value->size*sizeof(wchar_t));
+    field->text[value->size]=0;text_writes++;
+}
+static void* test_function(unsigned rva) {
+    if(rva==0x99a0e0)return (void*)test_child;
+    if(rva==0x5b150)return (void*)test_wide;
+    if(rva==0x98e8a0)return (void*)test_set_text;
+    assert(!"Unexpected native rendering call");return NULL;
+}
+static void attach_control(Control* c,byte* memory,byte* transform) {
+    memset(c,0,sizeof(*c));memset(memory,0,0x100);
+    uint64_t gen=7;memcpy(memory,&gen,8);c->renderer=memory+8;c->generation=gen;
+    memcpy(c->renderer+0x40,&transform,8);memcpy(c->renderer+0x80,&transform,8);
+}
+static void content_cache(void) {
+    byte memory[0x100],row_memory[0x100],transform[0xb0]={0};
+    memset(&ui_state,0,sizeof(ui_state));ui_state.focus=-1;ui_state.selected=AF_ALL_STATS;
+    strcpy(ui_state.room,"Attic");strcpy(ui_status,"Ready.");plan_ready=0;
+    attach_control(&ui_state.panel,memory,transform);
+    missing_child=1;ui_panel_content();assert(!ui_state.panel.content_ready);
+    missing_child=0;ui_panel_content();assert(ui_state.panel.content_ready&&text_writes==52);
+    unsigned writes=text_writes;reads=child_lookups=0;
+    for(int i=0;i<600;i++)ui_panel_content();
+    assert(reads==0&&child_lookups==0&&text_writes==writes);
+    puts("600 unchanged panel content updates: 0 native reads, lookups or text writes");
+    strcpy(ui_state.minimum[0],"12");ui_state.focus=0;ui_panel_content();
+    assert(!strcmp(ui_state.panel.text[2],"12|")&&text_writes>writes);
+    ui_state.focus=-1;ui_state.selected=0;include_utilities=1;ui_panel_content();
+    assert(!strcmp(ui_state.panel.text[2],"12")&&!strcmp(ui_state.panel.text[1],"")&&!strcmp(ui_state.panel.text[26],"X"));
+    plan_ready=1;plan_original_stats[0]=2;search.best.stats[0]=5;ui_panel_content();
+    assert(!strcmp(ui_state.panel.text[4],"2.0")&&!strcmp(ui_state.panel.text[5],"5.0")&&!strcmp(ui_state.panel.text[29],"+3.0"));
+    plan_ready=0;ui_panel_content();assert(!strcmp(ui_state.panel.text[5],"-"));
+    af_copy(af_strings[AF_CALCULATE],AF_TEXT_BYTES,"Calculate translated");af_text_revision++;
+    ui_panel_content();
+    unsigned at=0;while(at<field_count&&strcmp(fields[at].name,"calculate"))at++;
+    assert(at<field_count&&!wcscmp(fields[at].text,L"Calculate translated"));
+    memset(af_strings,0,sizeof(af_strings));af_text_revision++;
+    writes=text_writes;attach_control(&ui_state.panel,memory,transform);ui_panel_content();assert(text_writes==writes+52);
+    ui_state.panel.visible=1;control_hide(&ui_state.panel);assert(!ui_state.panel.content_ready);
+    ui_panel_content();assert(ui_state.panel.content_ready);
+    writes=child_lookups;text_writes=0;
+    control_show(&ui_state.panel,"AFShade",1,2,0.5,41);
+    control_show(&ui_state.panel,"AFHint",3,4,0.5,30);
+    assert(child_lookups==writes&&*(double*)(transform+0x80)==3&&*(double*)(transform+0x88)==4);
+    field_count=0;attach_control(&ui_state.pins,memory,transform);attach_control(&ui_state.pin_rows[0],row_memory,transform);
+    ui_state.pin_total=1;ui_state.pin_list[0]=123;strcpy(ui_state.pin_labels[0],"Chair");
+    pinned_count=0;ui_pins_content();assert(ui_state.pins.content_ready&&!strcmp(ui_state.pin_rows[0].text[1],""));
+    writes=text_writes;reads=child_lookups=0;
+    for(int i=0;i<600;i++)ui_pins_content();
+    assert(!reads&&!child_lookups&&text_writes==writes);
+    puts("600 unchanged Pins content updates: 0 native reads, lookups or text writes");
+    pinned_ids[0]=123;pinned_count=1;ui_state.pin_revision++;ui_pins_content();
+    assert(!strcmp(ui_state.pin_rows[0].text[1],"X"));
+    ui_state.pin_total=0;ui_state.pin_revision++;ui_pins_content();assert(ui_state.pins.text[19][0]);
+    ui_state.pin_total=10;ui_state.pin_page=1;ui_state.pin_list[9]=456;strcpy(ui_state.pin_labels[9],"Table");
+    ui_pins_content();assert(!strcmp(ui_state.pin_rows[0].text[0],"Table")&&!strcmp(ui_state.pin_rows[0].text[1],""));
+    attach_control(&ui_state.pin_rows[0],row_memory,transform);missing_child=1;ui_pins_content();
+    assert(!ui_state.pins.content_ready);missing_child=0;ui_pins_content();assert(ui_state.pins.content_ready);
+    memset(&ui_state,0,sizeof(ui_state));ui_state.focus=-1;ui_state.selected=AF_ALL_STATS;
+    pinned_count=0;include_utilities=0;plan_ready=0;
+}
 
 static unsigned char native_hit(void* button) {(void)button;hits++;return 42;}
 
@@ -84,6 +167,11 @@ static void translation_catalog(const char* path) {
 }
 
 int main(int argc,char** argv) {
+    ULONGLONG deadline=GetTickCount64()+10000;
+    plan_cancel=0;assert(!search_stopped(&deadline));
+    plan_cancel=1;assert(search_stopped(&deadline));
+    plan_cancel=0;deadline=GetTickCount64();assert(search_stopped(&deadline));
+    content_cache();
     piece_entry_snapshot();
     if(argc==2)translation_catalog(argv[1]);
     else assert(argc==1);

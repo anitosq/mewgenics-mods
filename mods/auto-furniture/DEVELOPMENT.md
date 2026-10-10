@@ -116,3 +116,18 @@ all save-file hashes matched the pre-test backup. No release was packaged or
 published. The remaining UI text was English in that prototype. It used the
 older example's `zh` header; the full catalog now matches the current game's
 `zh-cn` header in the same column position.
+
+## 0.2.2 performance candidate
+
+Panel/Pins content refreshes only when display inputs change or controls need
+initialization. Native lifetime, position and hover checks continue each frame.
+The UI fixture stubs only the native rendering calls and executes the production
+content functions, including failed-child retries and language changes.
+
+Solver sorting is stable and area divisors are computed once per search. Stop
+callbacks run between merge passes, every 64 rebuild/item checks and every 256
+placement evaluations. The worker reserves up to 100 ms of its 1.2-second budget
+for utility filling when utility candidates exist. This is a cooperative budget,
+not a hard wall-clock guarantee; capture/preparation and Apply/Undo are separate.
+Tests retain cancellation-free helpers for deterministic fixed-iteration checks.
+See the [candidate record](../../docs/releases/auto-furniture/0.2.2-beta.1-candidate.md).

@@ -33,9 +33,13 @@ typedef struct {
     unsigned char grid[AF_CELLS];
     int order[AF_ITEMS];
     double priority[AF_ITEMS];
+    double area_divisor[5][AF_ITEMS];
+    int (*stop)(void*);
+    void* stop_context;
     uint32_t random;
     unsigned iterations;
 } AFSearch;
+static int af_stopped(const AFSearch* s) {return s&&s->stop&&s->stop(s->stop_context);}
 /* Preserve every support and occupied-cell overlap beneath fixed objects. */
 static void af_fix_dependencies(const AFProblem* p,const AFLayout* layout,unsigned char fixed[AF_ITEMS]) {
     int changed=1;
@@ -142,15 +146,18 @@ static void af_stamp(const AFProblem* p,unsigned char* grid,const AFShape* s,AFP
     }
 }
 /* Dependency order is discovered by repeated placement; unsupported cycles fail. */
-static int af_rebuild(const AFProblem* p,AFLayout* layout,unsigned char* grid,int prune) {
+static int af_rebuild_checked(const AFProblem* p,AFLayout* layout,unsigned char* grid,int prune,const AFSearch* search) {
     unsigned char done[AF_ITEMS]={0};int remaining=0;
     memcpy(grid,p->grid,(size_t)p->width*p->height);memcpy(layout->stats,p->base,sizeof(p->base));layout->used=0;
     for(int i=0;i<p->count;i++)remaining+=!!layout->placement[i].used;
     while(remaining) {
         int progress=0;
-        for(int i=0;i<p->count;i++)if(layout->placement[i].used&&!done[i]&&af_fits(p,grid,&p->shape[i],layout->placement[i])) {
-            af_stamp(p,grid,&p->shape[i],layout->placement[i]);done[i]=1;remaining--;progress++;layout->used++;
-            for(int j=0;j<AF_STATS;j++)layout->stats[j]+=p->shape[i].stats[j];
+        for(int i=0;i<p->count;i++) {
+            if(!(i%64)&&af_stopped(search))return 0;
+            if(layout->placement[i].used&&!done[i]&&af_fits(p,grid,&p->shape[i],layout->placement[i])) {
+                af_stamp(p,grid,&p->shape[i],layout->placement[i]);done[i]=1;remaining--;progress++;layout->used++;
+                for(int j=0;j<AF_STATS;j++)layout->stats[j]+=p->shape[i].stats[j];
+            }
         }
         if(!progress) {
             if(!prune)return 0;
@@ -160,12 +167,17 @@ static int af_rebuild(const AFProblem* p,AFLayout* layout,unsigned char* grid,in
     }
     return 1;
 }
+static int af_rebuild(const AFProblem* p,AFLayout* layout,unsigned char* grid,int prune) {
+    return af_rebuild_checked(p,layout,grid,prune,NULL);
+}
 static uint32_t af_random(AFSearch* s) {
     uint32_t x=s->random;x^=x<<13;x^=x>>17;x^=x<<5;return s->random=x;
 }
 static int af_start(const AFProblem* p,AFSearch* search,const AFLayout* initial) {
     if(!af_valid_problem(p))return 0;
     memset(search,0,sizeof(*search));search->random=0x9145ab13;
+    for(int phase=0;phase<5;phase++)for(int i=0;i<p->count;i++)
+        search->area_divisor[phase][i]=pow(fmax(1,p->shape[i].solid),0.3+phase*0.2);
     if(initial)search->best=*initial;
     if(!af_rebuild(p,&search->best,search->grid,0))return 0;
     /* Old builds could invert furniture. Do not seed new layouts with those pieces. */
@@ -182,6 +194,7 @@ static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
     while(progress) {
         progress=0;
         for(int at=0;at<p->count;at++) {
+            if(!(at%64)&&af_stopped(s))return;
             int i=s->order[at];if(s->trial.placement[i].used)continue;
             const AFShape* shape=&p->shape[i];AFPlacement choice={0};unsigned options=0;
             if(fill_utilities) {
@@ -203,6 +216,7 @@ static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
                 for(int y=ymin;y<=ymax;y++)for(int xx=xmin;xx<=xmax;xx++) {
                     /* Keep a single trial bounded even with huge modded inventories. */
                     if(++evaluations>100000)return;
+                    if(!(evaluations%256)&&af_stopped(s))return;
                     int x=reverse?xmax-(xx-xmin):xx;AFPlacement v={x,y,sx,sy,1};
                     if(!af_fits(p,s->grid,shape,v))continue;
                     if(fill_utilities) {
@@ -225,35 +239,54 @@ found:
         }
     }
 }
+/* Stable order preserves the old search's tie breaking and random sequence. */
+static int af_order(AFSearch* s,int count) {
+    int scratch[AF_ITEMS];
+    for(int width=1;width<count;width*=2) {
+        if(af_stopped(s))return 0;
+        for(int lo=0;lo<count;lo+=2*width) {
+            int mid=lo+width<count?lo+width:count,hi=lo+2*width<count?lo+2*width:count;
+            int left=lo,right=mid;
+            for(int out=lo;out<hi;out++) {
+                if(left<mid&&(right==hi||s->priority[s->order[left]]>=s->priority[s->order[right]]))
+                    scratch[out]=s->order[left++];
+                else scratch[out]=s->order[right++];
+            }
+        }
+        memcpy(s->order,scratch,(size_t)count*sizeof(*scratch));
+    }
+    return !af_stopped(s);
+}
 /* ponytail: bounded multi-start/local repair finds good layouts, not a proof of optimality.
    Replace with branch-and-bound only if proven optima become a requirement. */
 static void af_step(const AFProblem* p,AFSearch* s) {
+    if(af_stopped(s))return;
     memset(&s->trial,0,sizeof(s->trial));
     if(s->iterations%4) {
         s->trial=s->best;
         unsigned remove=15+af_random(s)%70;
         for(int i=0;i<p->count;i++)if(af_random(s)%100<remove)s->trial.placement[i].used=0;
     }
-    af_rebuild(p,&s->trial,s->grid,1);af_keep(p,s);
+    if(!af_rebuild_checked(p,&s->trial,s->grid,1,s))return;
+    af_keep(p,s);
     double weights[AF_STATS];
     for(int j=0;j<AF_STATS;j++)weights[j]=(p->selected&(1u<<j))?(0.1+(af_random(s)%1000)/250.0):0;
     for(int i=0;i<p->count;i++) {
         s->order[i]=i;double value=0;
         for(int j=0;j<AF_STATS;j++)value+=p->shape[i].stats[j]*weights[j];
         /* Fresh starts also explore orders that raw stat value would always reject. */
-        s->priority[i]=s->iterations%4?value/pow(fmax(1,p->shape[i].solid),0.3+(s->iterations%5)*0.2):0;
+        s->priority[i]=s->iterations%4?value/s->area_divisor[s->iterations%5][i]:0;
         s->priority[i]+=(af_random(s)%1000)*0.003;
     }
-    for(int i=1;i<p->count;i++)for(int j=i;j>0&&s->priority[s->order[j]]>s->priority[s->order[j-1]];j--) {
-        int t=s->order[j];s->order[j]=s->order[j-1];s->order[j-1]=t;
-    }
+    if(!af_order(s,p->count))return;
     af_place(p,s,0);
     s->iterations++;
 }
 static void af_fill_utilities(const AFProblem* p,AFSearch* s) {
+    if(af_stopped(s))return;
     if(!af_within_caps(p,s->best.stats))return;
     s->trial=s->best;
-    if(!af_rebuild(p,&s->trial,s->grid,0))return;
+    if(!af_rebuild_checked(p,&s->trial,s->grid,0,s))return;
     for(int i=0;i<p->count;i++)s->order[i]=i;
     /* Add only: keep every optimized placement and use the same native shape rules. */
     af_place(p,s,1);

@@ -8,12 +8,12 @@ static HitTest original_hit;
 static Update original_furniture_hover;
 static int ui_enabled;
 typedef struct {
-    byte* renderer;uint64_t generation;char text[4+6*AF_STATS][AF_TEXT_BYTES];
-    byte* feedback[3][24];int feedback_count,visible;
+    byte* renderer;uint64_t generation;char text[4+6*AF_STATS][AF_TEXT_BYTES];uint64_t text_written;
+    byte* feedback[3][24];int feedback_count,visible,content_ready;
 } Control;
 static struct {
     void* owner;void* scene;uint64_t generation;int allowed,modal,action,focus,captured;
-    unsigned selected;char minimum[AF_STATS][8],maximum[AF_STATS][8];char room[128];unsigned pin_page,pin_total;
+    unsigned selected;char minimum[AF_STATS][8],maximum[AF_STATS][8];char room[128];unsigned pin_page,pin_total,pin_revision;
     uint64_t pin_list[MAX_ITEMS];char pin_labels[MAX_ITEMS][AF_TEXT_BYTES];
     char status_source[180],status_label[AF_TEXT_BYTES];unsigned status_count,text_revision;
     int text_ready;
@@ -28,7 +28,7 @@ static int control_valid(Control* c) {
 }
 static void control_hide(Control* c) {
     if(!c->visible)return;
-    c->visible=0;
+    c->visible=0;c->content_ready=0;
     if(control_valid(c))c->renderer[0x51]=0;
 }
 static void* layer_camera(int layer) {
@@ -53,7 +53,8 @@ static void control_show(Control* c,const char* symbol,double x,double y,double 
     byte* t=ptr(c->renderer,0x40);if(!t)return;
     memcpy(t+0x80,&x,8);memcpy(t+0x88,&y,8);scale*=32;
     memcpy(t+0x98,&scale,8);memcpy(t+0xa0,&scale,8);c->renderer[0x51]=1;c->visible=1;
-    if(!c->feedback_count&&!strncmp(symbol,"AF",2)) {
+    if(!c->feedback_count&&(!strcmp(symbol,"AFRoom")||!strcmp(symbol,"AFPanel")||
+       !strcmp(symbol,"AFPins")||!strcmp(symbol,"AFPinRow"))) {
         void* clip=ptr(c->renderer,0x80);
         for(int i=0;clip&&i<24;i++) {
             for(int state=0;state<3;state++) {
@@ -106,9 +107,12 @@ static int control_set_text(Control* c,const char* name,const char* value) {
     FN(void(*)(void*,void*,byte,byte),0x98e8a0)(child,&text,0,0);
     return 1;
 }
-static void control_text(Control* c,int slot,const char* name,const char* value) {
-    if(!control_valid(c)||!strcmp(c->text[slot],value))return;
-    if(control_set_text(c,name,value))af_copy(c->text[slot],AF_TEXT_BYTES,value);
+static int control_text(Control* c,int slot,const char* name,const char* value) {
+    if(!control_valid(c))return 0;
+    uint64_t bit=UINT64_C(1)<<slot;
+    if((c->text_written&bit)&&!strcmp(c->text[slot],value))return 1;
+    if(!control_set_text(c,name,value))return 0;
+    af_copy(c->text[slot],AF_TEXT_BYTES,value);c->text_written|=bit;return 1;
 }
 static int control_point(Control* c,double p[2]) {
     if(!control_valid(c)||!c->renderer[0x51])return 0;
@@ -219,7 +223,7 @@ static void ui_pins(void) {
         snprintf(ui_state.pin_labels[at],AF_TEXT_BYTES,"%s%s [%d,%d]",label,rare,
             current[i].placement[0],current[i].placement[1]);
     }
-    ui_state.modal=2;ui_state.focus=-1;
+    ui_state.pin_revision++;ui_state.modal=2;ui_state.focus=-1;
 }
 static void ui_action(void* ui) {
     int action=ui_state.action;ui_state.action=0;
@@ -233,6 +237,87 @@ static void ui_action(void* ui) {
     else if(action==3){ui_invalidate();undo(ui);}
     else if(action==4)ui_pins();
     else if(action==5||action==6){ui_invalidate();return_room(ui,action==6?"all":ui_state.room);}
+}
+typedef struct {
+    unsigned selected,language,returned;int focus,ready,utility;
+    char minimum[AF_STATS][8],maximum[AF_STATS][8],room[128],status[180];
+    double before[AF_STATS],best[AF_STATS];
+} PanelContent;
+static PanelContent panel_content;
+static void ui_panel_content(void) {
+    PanelContent next={0};next.selected=ui_state.selected;next.language=af_text_revision;
+    next.returned=ui_return_count;next.focus=ui_state.focus;next.ready=plan_ready;next.utility=include_utilities;
+    memcpy(next.minimum,ui_state.minimum,sizeof(next.minimum));memcpy(next.maximum,ui_state.maximum,sizeof(next.maximum));
+    memcpy(next.room,ui_state.room,sizeof(next.room));memcpy(next.status,ui_status,sizeof(next.status));
+    if(plan_ready) {
+        memcpy(next.before,plan_original_stats,sizeof(next.before));memcpy(next.best,search.best.stats,sizeof(next.best));
+    }
+    if(ui_state.panel.content_ready&&!memcmp(&next,&panel_content,sizeof(next)))return;
+    int ok=1;
+    {
+        static const struct {const char* field;int text;} labels[]={
+            {"stat",AF_STAT},{"min",AF_MIN},{"max",AF_MAX},{"before",AF_BEFORE},{"best",AF_BEST},
+            {"stat0",AF_COMFORT},{"stat1",AF_STIMULATION},{"stat2",AF_HEALTH},{"stat3",AF_MUTATION},{"stat4",AF_APPEAL},
+            {"utility_label",AF_UTILITY},{"clear",AF_CLEAR},{"calculate",AF_CALCULATE},{"apply",AF_APPLY},
+            {"undo",AF_UNDO},{"pins",AF_PINS},{"return_room",AF_RETURN_ROOM},{"return_all",AF_RETURN_ALL}};
+        if(!ui_state.panel.content_ready||panel_content.language!=next.language)
+            for(unsigned i=0;i<sizeof(labels)/sizeof(labels[0]);i++)
+                ok&=control_set_text(&ui_state.panel,labels[i].field,af_text(labels[i].text));
+        char room[AF_TEXT_BYTES],title[AF_TEXT_BYTES];af_room_label(ui_state.room,room);
+        af_format(title,sizeof(title),af_text(AF_TITLE),af_text(AF_NAME),room);
+        ok&=control_text(&ui_state.panel,0,"title",title);
+    }
+    for(int i=0;i<AF_STATS;i++) {
+        char key[16],value[40];snprintf(key,16,"check%d",i);
+        ok&=control_text(&ui_state.panel,1+i*5,key,ui_state.selected&(1u<<i)?"X":"");
+        snprintf(key,16,"min%d",i);snprintf(value,40,"%s%s",ui_state.minimum[i],ui_state.focus==i*2?"|":"");
+        ok&=control_text(&ui_state.panel,2+i*5,key,value);
+        snprintf(key,16,"max%d",i);snprintf(value,40,"%s%s",ui_state.maximum[i],ui_state.focus==i*2+1?"|":"");
+        ok&=control_text(&ui_state.panel,3+i*5,key,value);
+        snprintf(key,16,"old%d",i);snprintf(value,40,plan_ready?"%.1f":"-",plan_original_stats[i]);
+        ok&=control_text(&ui_state.panel,4+i*5,key,value);
+        snprintf(key,16,"new%d",i);snprintf(value,40,plan_ready?"%.1f":"-",plan_ready?search.best.stats[i]:0);
+        ok&=control_text(&ui_state.panel,5+i*5,key,value);
+        snprintf(key,16,"delta%d",i);value[0]=0;
+        if(plan_ready) {
+            double delta=search.best.stats[i]-plan_original_stats[i];
+            snprintf(value,40,fabs(delta)<0.05?"%.1f":"%+.1f",fabs(delta)<0.05?0.0:delta);
+        }
+        ok&=control_text(&ui_state.panel,4+5*AF_STATS+i,key,value);
+    }
+    ok&=control_text(&ui_state.panel,3+5*AF_STATS,"change",plan_ready?af_text(AF_CHANGE):"");
+    ok&=control_text(&ui_state.panel,1+5*AF_STATS,"utility",include_utilities?"X":"");
+    if(strcmp(ui_state.status_source,ui_status)||ui_state.status_count!=ui_return_count||ui_state.text_revision!=af_text_revision) {
+        af_status(ui_state.status_label);af_copy(ui_state.status_source,sizeof(ui_state.status_source),ui_status);
+        ui_state.status_count=ui_return_count;ui_state.text_revision=af_text_revision;
+    }
+    ok&=control_text(&ui_state.panel,2+5*AF_STATS,"status",ui_state.status_label);
+    panel_content=next;ui_state.panel.content_ready=ok;
+}
+static void ui_pins_content(void) {
+    static unsigned last_page,last_total,last_revision,last_language;
+    int refresh=!ui_state.pins.content_ready||last_page!=ui_state.pin_page||last_total!=ui_state.pin_total||
+        last_revision!=ui_state.pin_revision||last_language!=af_text_revision;
+    for(unsigned i=0;i<9&&ui_state.pin_page*9+i<ui_state.pin_total;i++)
+        refresh|=!ui_state.pin_rows[i].content_ready;
+    if(!refresh)return;
+    int ok=control_text(&ui_state.pins,20,"title",af_text(AF_PINNED));
+    ok&=control_text(&ui_state.pins,21,"done",af_text(AF_DONE));
+    for(unsigned i=0;i<9;i++) {
+        unsigned at=ui_state.pin_page*9+i;Control* row=&ui_state.pin_rows[i];
+        if(at>=ui_state.pin_total)continue;
+        int ready=control_text(row,0,"item",ui_state.pin_labels[at]);
+        ready&=control_text(row,1,"check",pinned(ui_state.pin_list[at])?"X":"");
+        row->content_ready=ready;ok&=ready;
+    }
+    char page[AF_TEXT_BYTES],at[24],total[24];
+    snprintf(at,sizeof(at),"%u",ui_state.pin_page+1);
+    snprintf(total,sizeof(total),"%u",ui_state.pin_total?(ui_state.pin_total+8)/9:1);
+    af_format(page,sizeof(page),af_text(AF_PAGE),at,total);
+    ok&=control_text(&ui_state.pins,18,"page",page);
+    ok&=control_text(&ui_state.pins,19,"empty",ui_state.pin_total?"":af_text(AF_EMPTY));
+    last_page=ui_state.pin_page;last_total=ui_state.pin_total;
+    last_revision=ui_state.pin_revision;last_language=af_text_revision;ui_state.pins.content_ready=ok;
 }
 static void ui_update(void* ui) {
     if(!ui_enabled)return;
@@ -276,70 +361,24 @@ static void ui_update(void* ui) {
     control_show(&ui_state.shade,"AFShade",number(t,0x80),number(t,0x88),s,41);
     if(ui_state.modal==2) {
         for(int i=0;i<AF_STATS;i++){control_hide(&ui_state.stats[i]);control_hide(&ui_state.result_stats[i]);}
-        int opening=!ui_state.pins.visible;
         control_hide(&ui_state.panel);control_show(&ui_state.pins,"AFPins",x,y,s,42);
-        if(opening||!ui_state.pins.text[20][0]) {
-            control_text(&ui_state.pins,20,"title",af_text(AF_PINNED));
-            control_set_text(&ui_state.pins,"done",af_text(AF_DONE));
-        }
         for(unsigned i=0;i<9;i++) {
             unsigned at=ui_state.pin_page*9+i;Control* row=&ui_state.pin_rows[i];
             if(at>=ui_state.pin_total){control_hide(row);continue;}
             control_show(row,"AFPinRow",x,y-(60+i*40)*s,s,42);
-            control_text(row,0,"item",ui_state.pin_labels[at]);
-            control_text(row,1,"check",pinned(ui_state.pin_list[at])?"X":"");
             double p[2];if(control_point(row,p)&&inside(p,18,0,564,32))control_feedback(row,0,ui_pressed()?1:0);
         }
-        char page[AF_TEXT_BYTES],at[24],total[24];
-        snprintf(at,sizeof(at),"%u",ui_state.pin_page+1);
-        snprintf(total,sizeof(total),"%u",ui_state.pin_total?(ui_state.pin_total+8)/9:1);
-        af_format(page,sizeof(page),af_text(AF_PAGE),at,total);
-        control_text(&ui_state.pins,18,"page",page);
-        control_text(&ui_state.pins,19,"empty",ui_state.pin_total?"":af_text(AF_EMPTY));
+        ui_pins_content();
         ui_feedback(&ui_state.pins,2);return;
     }
     control_hide(&ui_state.pins);
-    int opening=!ui_state.panel.visible;
     control_show(&ui_state.panel,"AFPanel",x,y,s,42);
-    if(opening||!ui_state.panel.text[0][0]) {
-        static const struct {const char* field;int text;} labels[]={
-            {"stat",AF_STAT},{"min",AF_MIN},{"max",AF_MAX},{"before",AF_BEFORE},{"best",AF_BEST},
-            {"stat0",AF_COMFORT},{"stat1",AF_STIMULATION},{"stat2",AF_HEALTH},{"stat3",AF_MUTATION},{"stat4",AF_APPEAL},
-            {"utility_label",AF_UTILITY},{"clear",AF_CLEAR},{"calculate",AF_CALCULATE},{"apply",AF_APPLY},
-            {"undo",AF_UNDO},{"pins",AF_PINS},{"return_room",AF_RETURN_ROOM},{"return_all",AF_RETURN_ALL}};
-        for(unsigned i=0;i<sizeof(labels)/sizeof(labels[0]);i++)
-            control_set_text(&ui_state.panel,labels[i].field,af_text(labels[i].text));
-        char room[AF_TEXT_BYTES],title[AF_TEXT_BYTES];af_room_label(ui_state.room,room);
-        af_format(title,sizeof(title),af_text(AF_TITLE),af_text(AF_NAME),room);
-        control_text(&ui_state.panel,0,"title",title);
-    }
     for(int i=0;i<AF_STATS;i++) {
         control_stat(&ui_state.stats[i],i,73,107+i*44,s*0.4);
-        char key[16],value[40];snprintf(key,16,"check%d",i);
-        control_text(&ui_state.panel,1+i*5,key,ui_state.selected&(1u<<i)?"X":"");
-        snprintf(key,16,"min%d",i);snprintf(value,40,"%s%s",ui_state.minimum[i],ui_state.focus==i*2?"|":"");
-        control_text(&ui_state.panel,2+i*5,key,value);
-        snprintf(key,16,"max%d",i);snprintf(value,40,"%s%s",ui_state.maximum[i],ui_state.focus==i*2+1?"|":"");
-        control_text(&ui_state.panel,3+i*5,key,value);
-        snprintf(key,16,"old%d",i);snprintf(value,40,plan_ready?"%.1f":"-",plan_original_stats[i]);
-        control_text(&ui_state.panel,4+i*5,key,value);
-        snprintf(key,16,"new%d",i);snprintf(value,40,plan_ready?"%.1f":"-",search.best.stats[i]);
-        control_text(&ui_state.panel,5+i*5,key,value);
-        snprintf(key,16,"delta%d",i);value[0]=0;
-        if(plan_ready) {
-            double delta=search.best.stats[i]-plan_original_stats[i];
-            snprintf(value,40,fabs(delta)<0.05?"%.1f":"%+.1f",fabs(delta)<0.05?0.0:delta);
-            control_stat(&ui_state.result_stats[i],i,104+i*94,490,s*0.26);
-        } else control_hide(&ui_state.result_stats[i]);
-        control_text(&ui_state.panel,4+5*AF_STATS+i,key,value);
+        if(plan_ready)control_stat(&ui_state.result_stats[i],i,104+i*94,490,s*0.26);
+        else control_hide(&ui_state.result_stats[i]);
     }
-    control_text(&ui_state.panel,3+5*AF_STATS,"change",plan_ready?af_text(AF_CHANGE):"");
-    control_text(&ui_state.panel,1+5*AF_STATS,"utility",include_utilities?"X":"");
-    if(strcmp(ui_state.status_source,ui_status)||ui_state.status_count!=ui_return_count||ui_state.text_revision!=af_text_revision) {
-        af_status(ui_state.status_label);af_copy(ui_state.status_source,sizeof(ui_state.status_source),ui_status);
-        ui_state.status_count=ui_return_count;ui_state.text_revision=af_text_revision;
-    }
-    control_text(&ui_state.panel,2+5*AF_STATS,"status",ui_state.status_label);
+    ui_panel_content();
     ui_feedback(&ui_state.panel,1);
 }
 static unsigned char ui_input(void* input,void* event) {
@@ -386,7 +425,7 @@ static unsigned char ui_input(void* input,void* event) {
                     if(at<ui_state.pin_total) {
                         uint64_t id=ui_state.pin_list[at];unsigned i=0;while(i<pinned_count&&pinned_ids[i]!=id)i++;
                         if(i<pinned_count)pinned_ids[i]=pinned_ids[--pinned_count];else if(pinned_count<MAX_ITEMS)pinned_ids[pinned_count++]=id;
-                        ui_sound(pinned(id)?UI_CHECK:UI_UNCHECK);
+                        ui_state.pin_revision++;ui_sound(pinned(id)?UI_CHECK:UI_UNCHECK);
                         ui_invalidate();
                     }
                 } else if(at>=1&&ui_available(2,at)) {

@@ -16,10 +16,19 @@ static unsigned pinned_count;
 static double plan_original_stats[AF_STATS];
 static HANDLE plan_worker;
 static volatile LONG plan_cancel;
+static int search_stopped(void* deadline) {
+    return InterlockedCompareExchange(&plan_cancel,0,0)||GetTickCount64()>=*(ULONGLONG*)deadline;
+}
 static DWORD WINAPI search_worker(void* ignored) {
     (void)ignored;ULONGLONG until=GetTickCount64()+1200;
-    while(search.iterations<3000&&GetTickCount64()<until&&!InterlockedCompareExchange(&plan_cancel,0,0))af_step(&problem,&search);
-    if(!InterlockedCompareExchange(&plan_cancel,0,0))af_fill_utilities(&problem,&search);
+    /* Reserve part of the same budget for utility fill; closing cancels both phases. */
+    int utilities=0;for(int i=0;i<problem.count;i++)utilities|=problem.shape[i].utility;
+    ULONGLONG deadline=until-(utilities?100:0);
+    search.stop=search_stopped;search.stop_context=&deadline;
+    while(search.iterations<3000&&!af_stopped(&search))af_step(&problem,&search);
+    deadline=until;
+    if(!af_stopped(&search))af_fill_utilities(&problem,&search);
+    search.stop=NULL;search.stop_context=NULL;
     return 0;
 }
 static void poll_search(void) {
