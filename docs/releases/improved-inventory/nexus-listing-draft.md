@@ -1,6 +1,6 @@
 # Improved Inventory Nexus listing copy
 
-Release 0.3.4. Mirrors the live description on 1 October 2026.
+Release 0.3.7. Mirrors the live description on 11 October 2026.
 
 ## Summary
 
@@ -37,17 +37,18 @@ For manual installation, follow the installation guide.
 
 ## Links
 
-[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.4) | [Source and issue tracker](https://github.com/anitosq/mewgenics-mods)
+[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/improved-inventory/v0.3.7) | [Source and issue tracker](https://github.com/anitosq/mewgenics-mods)
 
 ## File description
 
-Display name: Improved Inventory. File version: 0.3.4.
+Display name: Improved Inventory. File version: 0.3.7.
 
 One download for Vortex and Mewtator. Adds scrolling grids, search and filters to Storage, Trash and adventure equipment selection. Requires Mewjector API v3 and Mewgenics 1.1.21239.
 
-## Version 0.3.4 changelog
+## Version 0.3.7 changelog
 
-- Reduced inventory update overhead, especially with large inventories.
+- Fixed house-screen lag after closing Storage.
+- Reduced repeated work while scrolling and using inventory search, filters and set lists.
 
 ## Author notes
 
