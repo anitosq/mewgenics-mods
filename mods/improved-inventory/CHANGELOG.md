@@ -1,5 +1,11 @@
 # Improved Inventory changelog
 
+## 0.3.7-beta.3
+
+- Reduces repeated work while inventory is open and removes per-scroll diagnostics.
+- Retains the closed-inventory performance fix from beta 2.
+- Beta build; in-game performance and interaction checks are pending.
+
 ## 0.3.7-beta.2
 
 - Stops repeated item layout work while Storage and Trash are closed.

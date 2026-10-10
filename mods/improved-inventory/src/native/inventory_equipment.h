@@ -82,7 +82,7 @@ static void __cdecl iq_equipment_bind(void* drawer,void* item) {
 static void __cdecl iq_equipment_drawer_update(void* drawer) {
     original_equipment_drawer_update(drawer);
     if(!layout_test || !iq.equipment)return;
-    IQDrawer* d=iq_find(drawer);if(d)iq_present(d);
+    IQDrawer* d=iq_find_in_view(drawer);if(d)iq_present(d);
 }
 static void __cdecl iq_equipment_update(void* owner) {
     original_equipment_update(owner);

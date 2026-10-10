@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-static unsigned reads,presentations,native_updates,ui_updates;
+static unsigned reads,presentations,native_updates,ui_updates,clicks,reports;
 static const void* unreadable;
 static BOOL counted_read(HANDLE process,LPCVOID from,LPVOID to,SIZE_T n,SIZE_T* got) {
     reads++;
@@ -13,7 +13,7 @@ static BOOL counted_read(HANDLE process,LPCVOID from,LPVOID to,SIZE_T n,SIZE_T* 
     return ReadProcessMemory(process,from,to,n,got);
 }
 #define ReadProcessMemory counted_read
-static void report(const char* message) {(void)message;}
+static void report(const char* message) {(void)message;reports++;}
 #include "../src/native/inventory_layout.h"
 static int iq_extended_match(void* drawer,uint64_t id,int sets) {(void)drawer;(void)id;(void)sets;return 1;}
 static void iq_filter_view(void) {}
@@ -23,6 +23,7 @@ static int iq_wheel_side(void) {return -1;}
 static void iq_ui_capture(void) {}
 static IQItemTraits iq_traits(void* drawer,uint64_t id) {(void)drawer;(void)id;return (IQItemTraits){0};}
 static unsigned char original_button_hit(void* p) {(void)p;return 1;}
+static void __cdecl click_stub(void* p) {(void)p;clicks++;}
 #include "../src/native/inventory_hit.h"
 static struct {uint64_t generation;unsigned char data[0x600];} objects[1034];
 static unsigned char renderers[1024][0x60],transforms[1024][0xb0];
@@ -50,10 +51,13 @@ static void __cdecl update_stub(void* drawer) {
     if(iq.equipment)*((unsigned char*)renderer+0x51)=1;
     native_updates++;
 }
+static int present_in_view(void* drawer) {
+    IQDrawer* d=iq_find_in_view(drawer);return d && iq_present(d);
+}
 static void update_all(void) {
     for(int i=0;i<iq.count;i++) {
         if(!iq.equipment)iq_update(iq.drawers[i].drawer);
-        else {update_stub(iq.drawers[i].drawer);IQDrawer* d=iq_find(iq.drawers[i].drawer);if(d)iq_present(d);}
+        else {update_stub(iq.drawers[i].drawer);IQDrawer* d=iq_find_in_view(iq.drawers[i].drawer);if(d)iq_present(d);}
     }
 }
 static void setup(int count,int equipment,int open) {
@@ -62,6 +66,7 @@ static void setup(int count,int equipment,int open) {
     panel_origin[0]=panel_origin[1]=0;native_alpha=0.2;
     for(int i=0;i<1034;i++)objects[i].generation=1;
     original_drawer_update=update_stub;
+    original_item_click=click_stub;
     layout_test=1;filter_popup=0;unreadable=NULL;
     iq.owner=objects[0].data;iq.panels[0]=objects[1].data;iq.panels[1]=objects[2].data;
     iq.owner_ref=iq_reference(iq.owner);iq.panel_refs[0]=iq_reference(iq.panels[0]);
@@ -86,6 +91,40 @@ static void setup(int count,int equipment,int open) {
     iq_index_view();
 }
 int main(void) {
+    setup(400,0,1);update_all();reads=0;update_all();assert(reads==3564);
+    /* Scrolling keeps layout behavior without emitting a message per event. */
+    reports=0;
+    for(int i=0;i<100;i++)iq_scroll(0,i%2?-1:1);
+    assert(!reports && iq.row[0]==0);
+    for(int equipment=0;equipment<2;equipment++) {
+        setup(37,equipment,1);update_all();clicks=0;
+        iq_click(iq.drawers[0].drawer);assert(clicks==1);
+        iq_click(iq.drawers[36].drawer);assert(clicks==1);
+        filter_popup=1;iq_click(iq.drawers[0].drawer);assert(clicks==1);
+        for(int fault=0;fault<6;fault++) {
+            setup(37,equipment,1);update_all();
+            IQDrawer* d=&iq.drawers[36];
+            /* Identity may change after the view lookup; presentation must recheck. */
+            assert(iq_find_in_view(d->drawer)==d);
+            if(fault==0)objects[42].generation++;
+            if(fault==1)pointer_at(d->drawer,0,(void*)(uintptr_t)123);
+            if(fault==2)pointer_at(d->drawer,0x38,NULL);
+            if(fault==3){uint64_t wrong=999;memcpy((unsigned char*)d->drawer+(equipment?0x58:0x68),&wrong,8);}
+            if(fault==4)unreadable=(unsigned char*)d->drawer+(equipment?0x58:0x68)+7;
+            if(fault==5)d->reference.pointer=NULL;
+            presentations=0;assert(!iq_present(d));assert(!presentations);
+            clicks=0;iq_click(d->drawer);assert(clicks==1);
+            presentations=native_updates=ui_updates=0;
+            if(equipment){update_stub(d->drawer);assert(!present_in_view(d->drawer));}
+            else iq_update(d->drawer);
+            assert(!presentations && !ui_updates && native_updates==1);
+        }
+        setup(1,equipment,1);update_all();objects[6].generation++;
+        presentations=ui_updates=0;
+        if(equipment)assert(!present_in_view(iq.drawers[0].drawer));
+        else iq_update(iq.drawers[0].drawer);
+        assert(!presentations && !ui_updates);
+    }
     /* Closing without a rebuild must stop mod layout, but keep native cleanup. */
     setup(400,0,1);update_all();
     pointer_at(objects[5].data,0x58,NULL);
@@ -135,7 +174,7 @@ int main(void) {
     for(int equipment=0;equipment<2;equipment++)for(int open=0;open<2;open++) {
         setup(400,equipment,open);reads=presentations=0;
         for(int i=0;i<iq.count;i++) {
-            IQDrawer* d=iq_find(iq.drawers[i].drawer);assert(d==&iq.drawers[i]);iq_present(d);
+            IQDrawer* d=iq_find_in_view(iq.drawers[i].drawer);assert(d==&iq.drawers[i]);iq_present(d);
             int visible=i<(equipment?30:36);
             assert(renderers[i][0x51]==visible);
             double x=0,y=0,scale=0;memcpy(&x,(unsigned char*)d->drawer+(equipment?0xb8:0x78),8);
@@ -145,14 +184,15 @@ int main(void) {
             double expected_y=visible?90*(5-i/6)+45-600*0.072:-100000;
             assert(y==(equipment&&visible?600-expected_y:expected_y));assert(scale==0.9);
         }
-        assert(presentations==400);assert(reads==(unsigned)((equipment?6:8)*400+400-(equipment?30:36)));
+        assert(presentations==400);assert(reads==(unsigned)((equipment?5:7)*400+400-(equipment?30:36)));
         reads=presentations=native_updates=ui_updates=0;update_all();
         assert(presentations==(unsigned)(equipment?30:open?36:0));assert(native_updates==400);
         assert(ui_updates==(unsigned)!equipment);
-        assert(reads==(unsigned)(equipment?6*400+400-30:open?9*400+400-36:400));
+        assert(reads==(unsigned)(equipment?5*400+400-30:open?8*400+400-36:400));
         for(int i=0;i<400;i++)assert(renderers[i][0x51]==(i<(equipment?30:36)));
-        printf("400 %s items, %s: %u guarded reads (0.3.6: %u), %u instant layouts (0.3.6: 400); 400 native updates retained.\n",
-            equipment?"equipment":"house",open?"open":equipment?"covered":"closed",reads,(equipment?9:11)*400,presentations);
+        printf("400 %s items, %s: %u guarded reads (beta 2: %u), %u instant layouts; 400 native updates retained.\n",
+            equipment?"equipment":"house",open?"open":equipment?"covered":"closed",reads,
+            (unsigned)(equipment?2770:open?3964:400),presentations);
         reads=0;
         for(int i=0;i<iq.count;i++)assert(iq_button_hit(iq.drawers[i].button)==(unsigned char)(!open||i<(equipment?30:36)));
         assert(reads==(unsigned)(400-(equipment?30:36))*(open?(equipment?11:15):(equipment?5:1)));
@@ -163,16 +203,16 @@ int main(void) {
             presentations=0;iq_present(d);assert(!presentations);pointer_at(drawer,offset,saved);
         }
         unreadable=drawer+(equipment?0x50:0x60)+7;presentations=0;iq_present(d);assert(!presentations);unreadable=NULL;
-        uint64_t wrong=999;memcpy(drawer+(equipment?0x58:0x68),&wrong,8);assert(!iq_find(drawer));
+        uint64_t wrong=999;memcpy(drawer+(equipment?0x58:0x68),&wrong,8);assert(!present_in_view(drawer));
         memcpy(drawer+(equipment?0x58:0x68),&d->item_id,8);
-        objects[6].generation++;presentations=0;iq_present(d);assert(!presentations);assert(!iq_find(drawer));
-        objects[6].generation--;objects[0].generation++;assert(!iq_find(drawer));
+        objects[6].generation++;presentations=0;iq_present(d);assert(!presentations);assert(!present_in_view(drawer));
+        objects[6].generation--;objects[0].generation++;assert(!present_in_view(drawer));
     }
     for(int equipment=0;equipment<2;equipment++) {
         setup(1024,equipment,1);update_all();
         reads=presentations=native_updates=0;update_all();
         assert(presentations==(unsigned)(equipment?30:36));assert(native_updates==1024);
-        assert(reads==(unsigned)((equipment?6:9)*1024+1024-(equipment?30:36)));
+        assert(reads==(unsigned)((equipment?5:8)*1024+1024-(equipment?30:36)));
         double rates[]={0.1,0.15,1.0/6,0.2,0.25,1.0/3,0.5,0.9};
         for(int rate=0;rate<8;rate++) {
             native_alpha=rates[rate];
@@ -218,14 +258,14 @@ int main(void) {
         unreadable=NULL;presentations=0;iq_present(hidden);assert(presentations==1);
         presentations=0;iq_present(hidden);assert(!presentations);
         uint64_t wrong=9999;memcpy((unsigned char*)hidden->drawer+(equipment?0x58:0x68),&wrong,8);
-        presentations=0;iq_present(hidden);assert(!presentations);assert(!iq_find(hidden->drawer));
+        presentations=0;iq_present(hidden);assert(!presentations);assert(!present_in_view(hidden->drawer));
         memcpy((unsigned char*)hidden->drawer+(equipment?0x58:0x68),&hidden->item_id,8);
-        pointer_at(hidden->drawer,0x38,NULL);assert(!iq_find(hidden->drawer));
+        pointer_at(hidden->drawer,0x38,NULL);assert(!present_in_view(hidden->drawer));
         presentations=0;iq_present(hidden);assert(!presentations);pointer_at(hidden->drawer,0x38,iq.owner);
-        pointer_at(hidden->drawer,0,(void*)(uintptr_t)123);assert(!iq_find(hidden->drawer));
+        pointer_at(hidden->drawer,0,(void*)(uintptr_t)123);assert(!present_in_view(hidden->drawer));
         presentations=0;iq_present(hidden);assert(!presentations);pointer_at(hidden->drawer,0,hidden->reference.vtable);
         unreadable=(unsigned char*)hidden->drawer+(equipment?0x58:0x68)+7;
-        presentations=0;iq_present(hidden);assert(!presentations);assert(!iq_find(hidden->drawer));unreadable=NULL;
+        presentations=0;iq_present(hidden);assert(!presentations);assert(!present_in_view(hidden->drawer));unreadable=NULL;
 
         /* Scrolling touches the old/new windows, including leaving cells. */
         setup(1024,equipment,1);update_all();reads=presentations=0;

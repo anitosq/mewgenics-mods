@@ -57,7 +57,7 @@ typedef struct {
     IQBackground backgrounds[800];
     int background_count;
     double left[2], bottom[2], span[2], scale[2];
-    ULONGLONG last_update;
+    int update_seen;
     int house_activity;
 } IQView;
 static IQView iq;
@@ -162,10 +162,10 @@ static int iq_drawer_state(const IQDrawer* d,void** components) {
     return 1;
 }
 
-static void iq_present(IQDrawer* d) {
+static int iq_present(IQDrawer* d) {
     void* components[3];
     if(!iq_drawer_state(d,components) ||
-       !components[0] || !components[1] || !components[2])return;
+       !components[0] || !components[1] || !components[2])return 0;
     unsigned char* drawer=d->drawer;
     void* renderer=components[0];
     const int side=d->side;
@@ -201,6 +201,7 @@ static void iq_present(IQDrawer* d) {
     *((unsigned char*)renderer+0x51)=(unsigned char)visible;
     /* Keep the native button update enabled: it owns mouse-leave/tooltip
        cleanup. Hidden buttons move offscreen and the click hook rejects them. */
+    return 1;
 }
 
 static void iq_before_grid(void* owner) {
@@ -339,12 +340,13 @@ static void iq_capture(void* owner) {
     report(message);
 }
 
-static IQDrawer* iq_find(void* instance) {
+static IQDrawer* iq_find_in_view(void* instance) {
     if(!layout_test)return NULL;
     int at=iq_index_get(&iq_drawer_index,instance);
     if(at<0 || at>=iq.count)return NULL;
     IQDrawer* d=&iq.drawers[at];
-    return d->drawer==instance && iq_view_live() && iq_drawer_state(d,NULL)?d:NULL;
+    /* Callers validate drawer identity at presentation or click suppression. */
+    return d->drawer==instance && iq_view_live()?d:NULL;
 }
 
 static void __cdecl iq_update(void* instance) {
@@ -364,16 +366,18 @@ static void __cdecl iq_update(void* instance) {
             return;
         }
     }
-    IQDrawer* d=iq_find(instance);
-    if(d) {
-        if(!iq.last_update) report("Native drawer update callback observed.");
-        iq.last_update=GetTickCount64(); iq_present(d);
+    IQDrawer* d=iq_find_in_view(instance);
+    if(d && iq_present(d)) {
+        if(!iq.update_seen) {
+            iq.update_seen=1;
+            report("Native drawer update callback observed.");
+        }
         if(d==&iq.drawers[0]) iq_ui_update();
     }
 }
 static void __cdecl iq_click(void* instance) {
-    IQDrawer* d=iq_find(instance);
-    if(d && (filter_popup || !iq_visible(d))) return;
+    IQDrawer* d=iq_find_in_view(instance);
+    if(d && (filter_popup || !iq_visible(d)) && iq_drawer_state(d,NULL)) return;
     original_item_click(instance);
 }
 static int iq_is_open(void) {
@@ -399,20 +403,13 @@ static void iq_scroll(int side,int delta) {
         IQDrawer* d=&iq.drawers[i];
         if(d->side==side && (iq_visible(d) || (d->ordinal>=first && d->ordinal<end)))iq_present(d);
     }
-    char message[100];snprintf(message,sizeof(message),"Scroll side=%d row=%d/%d",side,next,maxrow);report(message);
 }
 static unsigned char __cdecl iq_mouse(void* input,void* event) {
     if(layout_test && iq_ui_event(event)) return 0;
-    static int wheel_reports;
-    if(layout_test && iq_int(event,0)==1027 && wheel_reports++<20) {
-        char message[220];
-        snprintf(message,sizeof(message),"Wheel diagnostic: count=%d age=%llu fields=%x,%x,%x,%x,%x",iq.count,(unsigned long long)(GetTickCount64()-iq.last_update),iq_int(event,0x10),iq_int(event,0x14),iq_int(event,0x18),iq_int(event,0x1c),iq_int(event,0x20));
-        report(message);
-    }
     /* SDL_MOUSEWHEEL. Ignore dragging and events outside the focused game. */
     if(layout_test && iq.count &&
        iq_int(event,0)==1027 && !(GetAsyncKeyState(VK_LBUTTON)&0x8000)) {
-        if(!iq_is_open()) { report("Wheel ignored: native inventory not active or covered."); return original_mouse_event(input,event); }
+        if(!iq_is_open())return original_mouse_event(input,event);
         HWND window=GetForegroundWindow(); DWORD pid=0;
         GetWindowThreadProcessId(window,&pid);
         if(pid==GetCurrentProcessId()) {
