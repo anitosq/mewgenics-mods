@@ -58,6 +58,7 @@ typedef struct {
     int background_count;
     double left[2], bottom[2], span[2], scale[2];
     ULONGLONG last_update;
+    int house_activity;
 } IQView;
 static IQView iq;
 static IQView pending_view;
@@ -72,6 +73,19 @@ static int iq_view_live(void) {
 static int iq_read(const void* p, void* out, size_t n) {
     SIZE_T received=0;
     return p && ReadProcessMemory(GetCurrentProcess(),p,out,n,&received) && received==n;
+}
+static int iq_house_active(void) {
+    struct {
+        uint64_t generation;
+        void* vtable;
+        unsigned char before_active[0x50];
+        void* active;
+    } state;
+    /* A cheap negative check; active panels still require full view validation. */
+    return iq.manager_ref.pointer &&
+        iq_read((unsigned char*)iq.manager_ref.pointer-8,&state,sizeof(state)) &&
+        state.generation==iq.manager_ref.generation && state.vtable==iq.manager_ref.vtable &&
+        state.active && (state.active==iq.panels[0] || state.active==iq.panels[1]);
 }
 static void* iq_ptr(const void* p, size_t off) {
     void* value=NULL;
@@ -335,6 +349,21 @@ static IQDrawer* iq_find(void* instance) {
 
 static void __cdecl iq_update(void* instance) {
     original_drawer_update(instance);
+    if(!layout_test)return;
+    if(!iq.equipment) {
+        int at=iq_index_get(&iq_drawer_index,instance);
+        if(at<0 || at>=iq.count || iq.drawers[at].drawer!=instance)return;
+        int active=iq_house_active();
+        if(at==0 && iq.house_activity!=(active?1:2)) {
+            iq.house_activity=active?1:2;
+            report(active?"House inventory active: mod layout resumed.":
+                          "House inventory inactive: mod layout suspended; native updates retained.");
+        }
+        if(!active) {
+            if(at==0)iq_ui_update();
+            return;
+        }
+    }
     IQDrawer* d=iq_find(instance);
     if(d) {
         if(!iq.last_update) report("Native drawer update callback observed.");

@@ -86,6 +86,52 @@ static void setup(int count,int equipment,int open) {
     iq_index_view();
 }
 int main(void) {
+    /* Closing without a rebuild must stop mod layout, but keep native cleanup. */
+    setup(400,0,1);update_all();
+    pointer_at(objects[5].data,0x58,NULL);
+    reads=presentations=native_updates=ui_updates=0;update_all();
+    assert(!presentations && native_updates==400 && ui_updates==1);
+    assert(reads==400);
+    reads=0;assert(iq_button_hit(iq.drawers[100].button));assert(reads==1);
+    pointer_at(objects[5].data,0x58,iq.panels[1]);
+    presentations=0;iq_update(iq.drawers[35].drawer);assert(presentations==1);
+    /* Fresh manager checks handle reuse, unreadable state and another panel. */
+    for(int fault=0;fault<5;fault++) {
+        setup(37,0,1);update_all();
+        if(fault==0)objects[5].generation++;
+        if(fault==1)pointer_at(objects[5].data,0,(void*)(uintptr_t)123);
+        if(fault==2)unreadable=objects[5].data+0x58;
+        if(fault==3)pointer_at(objects[5].data,0x58,objects[4].data);
+        if(fault==4)iq.manager_ref.pointer=NULL;
+        reads=presentations=native_updates=0;iq_update(iq.drawers[36].drawer);
+        assert(!presentations && native_updates==1 && reads==(unsigned)(fault!=4));
+        reads=0;assert(iq_button_hit(iq.drawers[36].button));assert(reads==(unsigned)(fault!=4));
+    }
+    setup(37,0,1);update_all();
+    /* Covered, still-active inventory retains presentation; stale views cannot write. */
+    objects[3].data[0x4da]=1;presentations=0;update_all();assert(presentations==36);
+    objects[3].generation++;presentations=0;update_all();assert(!presentations);
+    objects[3].generation--;
+    iq_index_clear(&iq_drawer_index);iq_index_clear(&iq_button_index);
+    reads=presentations=native_updates=0;iq_update(iq.drawers[36].drawer);
+    assert(!reads && !presentations && native_updates==1);
+    assert(iq_button_hit(iq.drawers[36].button));assert(!reads);
+    const int sizes[]={0,1,16,35,36,37,513};
+    for(unsigned size=0;size<sizeof(sizes)/sizeof(sizes[0]);size++) {
+        int count=sizes[size];setup(count,0,1);update_all();
+        for(int cycle=0;cycle<3;cycle++) {
+            pointer_at(objects[5].data,0x58,NULL);
+            reads=presentations=native_updates=ui_updates=0;update_all();
+            assert(!presentations && native_updates==(unsigned)count && reads==(unsigned)count);
+            assert(ui_updates==(unsigned)(count!=0));
+            iq_scroll(0,-10000);
+            pointer_at(objects[5].data,0x58,iq.panels[cycle%2]);
+            presentations=0;update_all();
+            assert(presentations==(unsigned)(count<36?count:36));
+            for(int i=0;i<count;i++)assert(renderers[i][0x51]==(i<36));
+            int row=iq.row[0];iq_scroll(0,1);if(count<=36)assert(iq.row[0]==row);
+        }
+    }
     for(int equipment=0;equipment<2;equipment++)for(int open=0;open<2;open++) {
         setup(400,equipment,open);reads=presentations=0;
         for(int i=0;i<iq.count;i++) {
@@ -101,15 +147,15 @@ int main(void) {
         }
         assert(presentations==400);assert(reads==(unsigned)((equipment?6:8)*400+400-(equipment?30:36)));
         reads=presentations=native_updates=ui_updates=0;update_all();
-        assert(presentations==(unsigned)(equipment?30:36));assert(native_updates==400);
+        assert(presentations==(unsigned)(equipment?30:open?36:0));assert(native_updates==400);
         assert(ui_updates==(unsigned)!equipment);
-        assert(reads==(unsigned)((equipment?6:8)*400+400-(equipment?30:36)));
+        assert(reads==(unsigned)(equipment?6*400+400-30:open?9*400+400-36:400));
         for(int i=0;i<400;i++)assert(renderers[i][0x51]==(i<(equipment?30:36)));
         printf("400 %s items, %s: %u guarded reads (0.3.6: %u), %u instant layouts (0.3.6: 400); 400 native updates retained.\n",
-            equipment?"equipment":"house",open?"open":"covered",reads,(equipment?9:11)*400,presentations);
+            equipment?"equipment":"house",open?"open":equipment?"covered":"closed",reads,(equipment?9:11)*400,presentations);
         reads=0;
         for(int i=0;i<iq.count;i++)assert(iq_button_hit(iq.drawers[i].button)==(unsigned char)(!open||i<(equipment?30:36)));
-        assert(reads==(unsigned)(400-(equipment?30:36))*(open?(equipment?11:14):(equipment?5:7)));
+        assert(reads==(unsigned)(400-(equipment?30:36))*(open?(equipment?11:15):(equipment?5:1)));
         IQDrawer* d=&iq.drawers[0];unsigned char* drawer=d->drawer;
         for(int part=0;part<3;part++) {
             size_t offset=(equipment?0x40:0x50)+(size_t)part*8;
@@ -126,7 +172,7 @@ int main(void) {
         setup(1024,equipment,1);update_all();
         reads=presentations=native_updates=0;update_all();
         assert(presentations==(unsigned)(equipment?30:36));assert(native_updates==1024);
-        assert(reads==(unsigned)((equipment?6:8)*1024+1024-(equipment?30:36)));
+        assert(reads==(unsigned)((equipment?6:9)*1024+1024-(equipment?30:36)));
         double rates[]={0.1,0.15,1.0/6,0.2,0.25,1.0/3,0.5,0.9};
         for(int rate=0;rate<8;rate++) {
             native_alpha=rates[rate];

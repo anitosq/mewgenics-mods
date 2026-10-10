@@ -1,5 +1,10 @@
 # Improved Inventory changelog
 
+## 0.3.7-beta.2
+
+- Stops repeated item layout work while Storage and Trash are closed.
+- Beta build; the reported house lag still needs an in-game retest.
+
 ## 0.3.7-beta.1
 
 - Reduced inventory layout overhead, including when scrolling large inventories.

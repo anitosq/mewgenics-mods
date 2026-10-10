@@ -7,6 +7,7 @@ static unsigned char __cdecl iq_button_hit(void* button) {
              * (or even the scene) for those calls. Never trust cached pointers
              * alone when suppressing a matching native button. */
             if(d->button==button && (filter_popup || !iq_visible(d)) &&
+               (iq.equipment || iq_house_active()) &&
                iq_is_open() && iq_reference_valid(d->reference) &&
                iq_drawer_button(d->drawer)==button) {
                 uint64_t id=0;

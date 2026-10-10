@@ -152,6 +152,11 @@ every hit test. Index presentation objects at grid rebuilds, then validate only
 the matching reference. Keep lifetime checks at the point of use; performance
 work must not bring back the scene-transition crash. Separate component timings
 from measured frame times and user reports of responsiveness.
+The owner's 10 October 2026 isolated Improved Inventory test still lagged after
+opening and closing Storage in slot 3 on 0.3.7-beta.1. For this mod, include the
+closed-panel update and hit-test paths in performance fixtures, and compare
+before opening, while open and after closing in owner tests. Preserve native
+tooltip cleanup. A lower open-inventory operation count alone is insufficient.
 
 ## Package and publish
 

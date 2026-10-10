@@ -18,6 +18,7 @@ static struct {uint64_t generation;unsigned char data[128];} objects[1024];
 static int buttons[1152],layout_test=1,filter_popup,scene_open=1;
 static IQIndex iq_button_index;
 static int iq_is_open(void) {scene_checks++;return scene_open;}
+static int iq_house_active(void) {return scene_open;}
 static int iq_visible(const IQDrawer* d) {return d->ordinal>=0 && d->ordinal<30;}
 static void* iq_drawer_button(void* drawer) {
     void* value=NULL;iq_read((unsigned char*)drawer+(iq.equipment?0x48:0x58),&value,sizeof(value));return value;
@@ -65,7 +66,8 @@ int main(void) {
             assert(reads<=4*1024);assert(scene_checks<=1024);
         }
         reads=scene_checks=0;assert(iq_button_hit(&buttons[1100]));assert(!reads && !scene_checks);
-        scene_open=0;assert(iq_button_hit(&buttons[100]));scene_open=1;
+        scene_open=0;scene_checks=0;assert(iq_button_hit(&buttons[100]));
+        assert(scene_checks==(unsigned)equipment);scene_open=1;
         objects[100].generation++;assert(iq_button_hit(&buttons[100]));
         uint64_t different=9999;memcpy(objects[101].data+(equipment?0x58:0x68),&different,8);
         assert(iq_button_hit(&buttons[101]));
