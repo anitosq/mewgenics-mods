@@ -1,5 +1,11 @@
 # Improved Inventory changelog
 
+## 0.3.7-beta.4
+
+- Reduces repeated toolbar and set-list updates while inventory stays open.
+- Retains the earlier performance fixes; storage capacity and transfers are unchanged.
+- Beta build; in-game performance and interaction checks are pending.
+
 ## 0.3.7-beta.3
 
 - Reduces repeated work while inventory is open and removes per-scroll diagnostics.
