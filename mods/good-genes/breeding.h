@@ -5,6 +5,79 @@ typedef void (*InheritStat)(int *, const int *, const int *, double, double, dou
 static InheritPart original_inherit_part;
 static InheritStat original_inherit_stat;
 
+#include <intrin.h>
+#include "skills.h"
+
+typedef struct { GameString name; int upgrade; } NativeSkillName;
+_Static_assert(sizeof(NativeSkillName) == 0x28, "Native skill normalizer also writes an upgrade at +0x20");
+
+static int collect_inherited_skills(const byte *parent, int passive, InheritedSkills *pool) {
+    unsigned slots = passive ? 2 : 4;
+    for (unsigned i = 0; i < slots; ++i) {
+        const void *source = parent + (passive ? 0x910 + i*0x28 : 0x810 + i*0x20);
+        char name[INHERITED_SKILL_NAME];
+        if (!game_string(source, name)) return 0;
+        if (!passive && *name && strcmp(name, "None")) {
+            NativeSkillName normalized;
+            FN(NativeSkillName *(*)(NativeSkillName *, const void *, int), 0x94b320)(&normalized, source, 0);
+            int valid = game_string(&normalized.name, name);
+            FN(void (*)(GameString *), 0x52780)(&normalized.name);
+            if (!valid) return 0;
+        }
+        if (!add_inherited_skill(pool, name, passive)) return 0;
+    }
+    return 1;
+}
+
+static int roll_inherited_skill(unsigned count, int excluded, void *rng) {
+    if (!count || (count == 1 && excluded >= 0)) return -1;
+    double roll = FN(double (*)(double, void *), 0x1595a0)(1.0, rng);
+    return inherited_skill_index(count, excluded, roll);
+}
+
+static void inherit_skills(byte *child, const byte *first, const byte *second) {
+    InheritedSkills active = {0}, passive = {0};
+    byte *tls = NULL;
+    uint64_t rng_state[4];
+    if (!collect_inherited_skills(first, 0, &active) ||
+        !collect_inherited_skills(second, 0, &active) ||
+        !collect_inherited_skills(first, 1, &passive) ||
+        !collect_inherited_skills(second, 1, &passive) ||
+        !read_bytes((void *)__readgsqword(0x58), &tls, sizeof(tls)) || !tls ||
+        !read_bytes(tls+0x178, rng_state, sizeof(rng_state))) {
+        log_message(OWNER, "Skill inheritance unavailable; keeping initialized kitten skills.");
+        return;
+    }
+    int a = roll_inherited_skill(active.count, -1, tls+0x178);
+    int b = active.count > 1 ? roll_inherited_skill(active.count, a, tls+0x178) : -1;
+    int p = roll_inherited_skill(passive.count, -1, tls+0x178);
+    if ((active.count && a < 0) || (active.count > 1 && b < 0) || (passive.count && p < 0)) {
+        log_message(OWNER, "Invalid inheritance roll; keeping initialized kitten skills.");
+        return;
+    }
+    /* Native active selection removes upgrades. */
+    int selected[2] = {a, b};
+    for (unsigned i = 0; i < 2 && selected[i] >= 0; ++i) {
+        const char *name = active.names[selected[i]];
+        FN(void *(*)(void *, const char *, size_t), 0x520d0)(child+0x810+i*0x20, name, strlen(name));
+    }
+    if (p >= 0) {
+        const char *name = passive.names[p];
+        GameString reference = {.pointer = name, .size = strlen(name), .capacity = INHERITED_SKILL_NAME};
+        GameString owned;
+        FN(GameString *(*)(GameString *, const GameString *), 0x52460)(&owned, &reference);
+        /* Native setter consumes its string and applies passive-specific state. */
+        FN(void (*)(void *, GameString *, int, int), 0xc3a00)(child, &owned, 0, 1);
+    }
+    /* Passive setters can also grant actives. Refresh all birth copies after
+       that setter, matching the constructor's original ordering. */
+    for (unsigned i = 0; i < 4; ++i) {
+        GameString *source = (GameString *)(child+0x810+i*0x20);
+        const char *name = source->capacity <= 15 ? source->local : source->pointer;
+        FN(void *(*)(void *, const char *, size_t), 0x520d0)(child+0x890+i*0x20, name, source->size);
+    }
+}
+
 static int has_inherited_mutation(const byte *part) {
     int kind;
     byte *definition = definition_for(*(const int *)part,
@@ -36,6 +109,9 @@ static __attribute__((noinline)) void inherit_part(void *child, const void *firs
         return;
     }
     if (caller == 0xa993a) {
+        /* First head-part call is unconditional with the guarded loss gate.
+           Skill Share and parental disorders have run; final sprite refresh has not. */
+        inherit_skills((byte *)child-0x8c, (const byte *)first-0x8c, (const byte *)second-0x8c);
         /* Coat inheritance is inlined in the constructor. Correct it at the
            first part call, before all part coat fields are copied from +0x78. */
         _Alignas(int) byte coat[3][0x1c] = {{0}};

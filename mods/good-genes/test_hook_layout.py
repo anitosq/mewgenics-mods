@@ -48,14 +48,40 @@ def check_birth_hooks():
         assert match and bytes(map(int, match[1].split(","))) == bytes.fromhex(expected)
     gates = header.split("BIRTH_GATES[] = {", 1)[1].split("};", 1)[0]
     rows = re.findall(r"\{0x([0-9a-f]+), (\d+), \{([0-9,]+)\}, \{([0-9,]+)\}\}", gates)
-    assert len(rows) == 3
-    targets = {0xa9580: 0xa9636, 0xa9728: 0xa97c1, 0xa9e42: 0xa9fad}
+    assert len(rows) == 5
+    targets = {0xa927e: 0xa9380, 0xa9389: 0xa94e1,
+               0xa9580: 0xa9636, 0xa9728: 0xa97c1, 0xa9e42: 0xa9fad}
     for address, size, before, after in rows:
         address, size = int(address, 16), int(size)
         code = bytes(map(int, after.split(",")))
         assert len(bytes(map(int, before.split(",")))) == size == len(code)
         assert code[0] == 0xe9 and code[5:] == bytes([0x90]) * (size-5)
         assert address + 5 + int.from_bytes(code[1:5], "little", signed=True) == targets[address]
+        if address in (0xa927e, 0xa9389):
+            # Whole MOVSD instructions only. Keep TLS initialization before the
+            # first gate and xmm9=0.5 at 0xa9380 for later paired-part rolls.
+            expected = "f2 0f 10 55 f0" if address == 0xa927e else "f2 0f 10 55 f8"
+            assert bytes(map(int, before.split(","))) == bytes.fromhex(expected)
+
+
+def check_skill_inheritance():
+    root = Path(__file__).resolve().parent
+    source = (root / "breeding.h").read_text(encoding="ascii")
+    first_part = source.split("if (caller == 0xa993a) {", 1)[1].split("choose_part(child", 1)[0]
+    assert "inherit_skills((byte *)child-0x8c, (const byte *)first-0x8c, (const byte *)second-0x8c)" in first_part
+    skills = source.split("static void inherit_skills(", 1)[1].split("static int has_inherited_mutation(", 1)[0]
+    for parent in ("first", "second"):
+        assert f"collect_inherited_skills({parent}, 0, &active)" in skills
+        assert f"collect_inherited_skills({parent}, 1, &passive)" in skills
+    assert "roll_inherited_skill(active.count, a," in skills
+    assert "0x94b320)(&normalized, source, 0)" in source
+    assert "sizeof(NativeSkillName) == 0x28" in source, "Normalizer writes beyond its string field"
+    assert "0x52780)(&normalized.name)" in source
+    assert "0xc3a00)(child, &owned, 0, 1)" in skills
+    assert "0x52780)(&owned)" not in skills, "Native setter consumes the owned copy"
+    assert skills.index("0xc3a00)") < skills.index("child+0x890+i*0x20")
+    assert "__readgsqword(0x58)" in skills and "tls+0x178" in skills
+    assert "stimulation" not in skills.lower()
 
 
 def check_footer_layout_contract():
@@ -164,6 +190,7 @@ def check_head_projection_and_roll_order():
 if __name__ == "__main__":
     check_set_piece_branch()
     check_birth_hooks()
+    check_skill_inheritance()
     check_sprite_construction()
     check_footer_layout_contract()
     check_selector_navigation()

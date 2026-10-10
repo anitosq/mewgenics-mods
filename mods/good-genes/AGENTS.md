@@ -47,6 +47,13 @@
   valid missing parts, and undefined negatives in deferred regression checks.
 - Owner will test. Compilation and read-only inspection are allowed, but do not
   run tests, load the DLL, launch the game, install, or touch saves unless asked.
+- Owner extension, 2026-10-11: guarantee parental active/passive inheritance
+  where possible, without Stimulation odds or class preference. Preserve the
+  normal two-active/one-passive inheritance limits, deduplicate normalized
+  actives, and use both parents so an empty parent cannot waste a pick. Keep
+  native Skill Share exclusions, active upgrade removal, and passive setters.
+  Check the normalizer's full 0x28-byte output and synchronize all active birth
+  copies after passive-granted skills. Deliver 0.3.0.beta, not a live update.
 - Owner-requested audit fixes, 2026-10-09: derive effective IDs before comparing
   or previewing (absent facial pairs use -2). Head changes can hide/restore facial
   effects through CatHeadPlacements; include them in policy and visible choices.

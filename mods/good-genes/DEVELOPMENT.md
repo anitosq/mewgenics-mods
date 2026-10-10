@@ -12,6 +12,51 @@ code remains the beta.2 implementation. Publication approval is not gameplay
 test confirmation. The game installation and saves stay unchanged. Preserve
 all previous archives; see the 0.2.0 publication record for release status.
 
+## Guaranteed Skill Inheritance (2026-10-11)
+
+0.3.0.beta adds two distinct active picks and one passive pick from the parents'
+combined unique eligible skills. It has no Stimulation input or class bias.
+Fewer candidates produce fewer inherited skills; empty pools retain initialized
+kitten skills. No skill-slot expansion, skill selector, or overnight change.
+
+Static inspection of the supported executable:
+
+- Birth constructor 0xa89a0 is called from 0xd8627. Ordinary active inheritance
+  has two independent chance gates and uses 0xa8850, which selects a parent
+  before 0xa7ae0 selects a skill. Duplicate picks are rejected without reroll.
+- Active slots are +0x810 through +0x870, four 0x20-byte strings. Native
+  0x94b320 removes numeric upgrade suffixes and returns a 0x28-byte object:
+  a 0x20-byte string plus upgrade integer. Its output must not be a bare string.
+- Passive selector 0xa7e10 scans two +0x910/+0x938 entries and excludes None
+  and SkillShare. The separate SkillShare upgrade-2 block at 0xa8fa0-0xa926d
+  remains untouched. Ordinary passive installation uses 0xc3a00 with slot 0,
+  rank 1; that function consumes its owned argument and may grant active skills.
+- Two five-byte MOVSD instructions at 0xa927e and 0xa9389 become branch gates
+  to 0xa9380 and 0xa94e1. This skips ordinary skill chance/parent-selection
+  blocks while preserving native TLS RNG initialization, xmm9=0.5 needed for
+  later paired-part mirroring, Skill Share, and parental-disorder rolls.
+- The existing first head-part hook (return 0xa993a) receives child/parent
+  CatData+0x8c. The existing loss gate leaves ebx=-1, so this call is reached
+  once per birth. Apply skill selection there, after native special handling
+  but before final sprite refresh. No additional entry detour is required.
+- Reuse the thread's native RNG at GS:[0x58]->TLS[0]+0x178 via 0x1595a0.
+  Only the remaining unique candidates participate in the second active pick.
+  Copy all four active slots to their +0x890 birth copies after the passive
+  setter, preserving any active skills granted by that setter.
+
+Unreadable/oversized skill names or invalid RNG results keep initialized skills
+and emit a diagnostic. Normalizer strings are destroyed by the native destructor;
+passive strings are copied with the native allocator before passing ownership.
+Source tests cover pool deduplication, missing skills, Skill Share exclusion,
+index bounds, both-pick uniqueness, gate destinations, output layout and copy
+ordering. These tests are authored but not run under the owner's testing rule.
+
+Deferred owner checks: breed at low/negative and high Stimulation with distinct
+parental actives/passives, one empty parent, duplicate/upgraded actives, and no
+eligible skills. Expect up to two distinct base actives and one parental passive
+independent of Stimulation. Include Skill Share+, passives that grant active
+skills, save/reload, and the next generation. Existing kittens stay unchanged.
+
 ## Audit Fixes (2026-10-09)
 
 - Head projection instantiates a detached `CatHeadPlacements` clip and uses

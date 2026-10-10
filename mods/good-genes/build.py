@@ -10,7 +10,7 @@ import assets
 ROOT = Path(__file__).resolve().parent
 VERSION = (ROOT / "VERSION").read_text(encoding="ascii").strip()
 EXPECTED = "4127cd6a792ae528bca6f65a8873dd61789591937d87656c2b586a5e30eb77ea"
-SOURCE_FILES = ("VERSION", "native.c", "selector.h", "parts.h", "policy.h", "breeding.h", "startup.h",
+SOURCE_FILES = ("VERSION", "native.c", "selector.h", "parts.h", "policy.h", "breeding.h", "skills.h", "startup.h",
                 "assets.py", "build.py", "test_policy.c", "test_hook_layout.py",
                 "../auto-furniture/assets.py", "../auto-furniture/localization.py",
                 "../../tools/probe_inventory.py", "../../tools/validate_native_assets.py")
@@ -74,9 +74,11 @@ def main():
         header += f"    {{0x{start:x}, {end-start}, {{{byte_list(digest)}}}}},\n"
     header += "};\n"
     header += "static const struct { uintptr_t rva; unsigned size; unsigned char before[13], after[13]; } BIRTH_GATES[] = {\n"
-    # Skip only new disorder creation, part inheritance loss, and new defects.
-    # Parent disorder inheritance and all ordinary house mutation paths remain.
-    for start, end, size in ((0xa9580, 0xa9636, 9), (0xa9728, 0xa97c1, 6),
+    # Skills are selected once at the first part hook. Keep the TLS setup and
+    # xmm9=0.5 load between these gates: later birth rolls still need them.
+    # Skill Share, parental disorders, and ordinary house mutations remain native.
+    for start, end, size in ((0xa927e, 0xa9380, 5), (0xa9389, 0xa94e1, 5),
+                             (0xa9580, 0xa9636, 9), (0xa9728, 0xa97c1, 6),
                              (0xa9e42, 0xa9fad, 13)):
         before = rva_bytes(data, start, size)
         after = bytes([0xe9]) + struct.pack("<i", end-start-5) + bytes([0x90])*(size-5)

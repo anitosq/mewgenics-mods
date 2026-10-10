@@ -1,9 +1,44 @@
 /* Deferred policy checks. Not executed for the baseline build. */
 #include <assert.h>
+#include <math.h>
 #include "policy.h"
 #include "parts.h"
+#include "skills.h"
 
 int main(void) {
+    InheritedSkills skills = {0};
+    assert(add_inherited_skill(&skills, "None", 0) && skills.count == 0);
+    assert(add_inherited_skill(&skills, "", 0) && skills.count == 0);
+    assert(add_inherited_skill(&skills, "Strike", 0) && skills.count == 1);
+    assert(add_inherited_skill(&skills, "Strike", 0) && skills.count == 1);
+    assert(add_inherited_skill(&skills, "Heal", 0) && skills.count == 2);
+    assert(inherited_skill_index(0, -1, 0) == -1);
+    assert(inherited_skill_index(1, -1, 0.99) == 0);
+    assert(inherited_skill_index(1, 0, 0.5) == -1);
+    for (unsigned count = 2; count <= INHERITED_SKILL_CAPACITY; ++count)
+        for (unsigned first = 0; first < count; ++first)
+            for (unsigned rank = 0; rank < count-1; ++rank) {
+                int second = inherited_skill_index(count, (int)first, (rank+0.5)/(count-1));
+                assert(second >= 0 && (unsigned)second < count && second != (int)first);
+                assert(second == (int)(rank + (rank >= first)));
+            }
+    assert(inherited_skill_index(2, -1, -0.1) == -1);
+    assert(inherited_skill_index(2, -1, 1) == -1);
+    assert(inherited_skill_index(2, -1, NAN) == -1);
+    assert(inherited_skill_index(2, 2, 0) == -1);
+    assert(add_inherited_skill(&skills, "SkillShare", 1) && skills.count == 2);
+    assert(add_inherited_skill(&skills, "SuperLuck", 1) && skills.count == 3);
+    assert(add_inherited_skill(&skills, "SuperLuck", 1) && skills.count == 3);
+    for (unsigned i = skills.count; i < INHERITED_SKILL_CAPACITY; ++i) {
+        char name[] = {'A' + (char)i, 0};
+        assert(add_inherited_skill(&skills, name, 0));
+    }
+    assert(!add_inherited_skill(&skills, "Overflow", 0));
+    assert(add_inherited_skill(&skills, "Strike", 0));
+    char too_long[INHERITED_SKILL_NAME+1];
+    memset(too_long, 'X', sizeof(too_long)-1);
+    too_long[sizeof(too_long)-1] = 0;
+    assert(!add_inherited_skill(&skills, too_long, 0));
     MutationPart shapes[15] = {0};
     for (unsigned i = 0; i < 15; ++i) {
         shapes[i] = (MutationPart){300, 1};

@@ -1,10 +1,19 @@
 # Good Genes
 
-Pass mutations to kittens and protect occupied mutation slots during events
-and combat.
+Pass parental skills, mutations and higher base stats to kittens, and protect
+occupied mutation slots during events and combat.
 
 ## Breeding
 
+- Kittens inherit two distinct parental active skills when available, or one
+  when only one unique skill is available, plus one eligible parental passive.
+- Skills are chosen randomly from the parents' combined unique skills.
+  Stimulation does not affect their inheritance chance or favor class skills.
+  This does not copy every skill from both parents or increase skill-slot limits.
+- Active skills lose their upgrades as in the base game. Skill Share itself
+  is excluded from ordinary passive inheritance; its native upgraded-parent
+  exception remains. With no eligible parental skill, the normal starting
+  skill for that category is retained.
 - A mutated parent part takes priority over an unmutated parent part.
 - When both parents have a mutation in the same part, either can be inherited.
   Special mutations and birth defects are not ranked by strength.
