@@ -1,26 +1,9 @@
 # Improved Inventory changelog
 
-## 0.3.7-beta.4
+## 0.3.7
 
-- Reduces repeated toolbar and set-list updates while inventory stays open.
-- Retains the earlier performance fixes; storage capacity and transfers are unchanged.
-- Beta build; in-game performance and interaction checks are pending.
-
-## 0.3.7-beta.3
-
-- Reduces repeated work while inventory is open and removes per-scroll diagnostics.
-- Retains the closed-inventory performance fix from beta 2.
-- Beta build; in-game performance and interaction checks are pending.
-
-## 0.3.7-beta.2
-
-- Stops repeated item layout work while Storage and Trash are closed.
-- Beta build; the reported house lag still needs an in-game retest.
-
-## 0.3.7-beta.1
-
-- Reduced inventory layout overhead, including when scrolling large inventories.
-- Beta build; in-game performance and interaction checks are pending.
+- Fixed house-screen lag after closing Storage.
+- Reduced repeated work while scrolling and using inventory search, filters and set lists.
 
 ## 0.3.6
 

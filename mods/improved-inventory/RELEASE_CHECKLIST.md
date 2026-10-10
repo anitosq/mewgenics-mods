@@ -1,8 +1,8 @@
 # Improved Inventory release readiness
 
-Current release: [0.3.3 publication record](../../docs/releases/improved-inventory/0.3.3-publication.md).
-The [0.3.3 candidate record](../../docs/releases/improved-inventory/0.3.3-candidate.md)
-covers the packaging patch. The checklist below retains broader runtime
+Current release: [0.3.7 publication record](../../docs/releases/improved-inventory/0.3.7-publication.md).
+The [0.3.7-beta.4 candidate record](../../docs/releases/improved-inventory/0.3.7-beta.4-candidate.md)
+covers the performance changes. The checklist below retains broader runtime
 coverage and outstanding checks from earlier releases.
 
 ## Completed foundations
