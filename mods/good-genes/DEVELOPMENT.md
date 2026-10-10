@@ -12,6 +12,39 @@ code remains the beta.2 implementation. Publication approval is not gameplay
 test confirmation. The game installation and saves stay unchanged. Preserve
 all previous archives; see the 0.2.0 publication record for release status.
 
+## Mutation comparison performance (2026-10-11)
+
+0.3.0.beta.2 retains the 0.3.0.beta parental-skill implementation. Its installed
+DLL was verified against the original candidate SHA-256 before this revision;
+that candidate's build metadata names source commit 8f70667. The current loader
+log records 0.3.0.beta enabled. This establishes identity/startup, not gameplay
+correctness or a performance measurement.
+
+The selector keeps the wrapped descriptions it already prepares to determine
+panel height. Initial display and comparison navigation reuse those exact
+strings, avoiding repeated definition reads, localization and wrapping. Every
+queued offer prepares both sides of every displayed comparison before creating
+the prompt. Failed descriptions and more than twelve rows still reject the
+offer. The fixed text buffer is 240 KiB on Windows and stores no native pointers;
+it covers only the active offer, not every queued offer. It is overwritten before
+reuse, so it needs no allocation or teardown work. Text remains a snapshot for
+the lifetime of the open choice, like its stat totals and layout.
+
+Acceptance still rereads the cat, checks scene lifetime, recomputes whole-cat
+totals and re-evaluates the mutation policy. No mutation-definition cache crosses
+operations. Breeding code, RNG calls, Skill Share handling, hooks, assets and the
+short opening animation are unchanged. The button update hook does only a pointer
+comparison outside that animation; no inventory-wide or cat-wide idle scan was
+found. Parental skill pools remain bounded to eight active/four passive input
+slots and run once per birth, so further caching there is not justified.
+
+Deferred source contracts cover text preparation before prompt creation, failure
+rejection, reuse on navigation and fresh acceptance checks. They are authored but
+not executed under the owner-only testing rule. Owner checks: navigate different
+mutation comparisons in both directions, accept/keep, then trigger a different
+or queued offer and verify its text. Check matching pairs, head/facial changes,
+long descriptions and unchanged parental skill inheritance.
+
 ## Guaranteed Skill Inheritance (2026-10-11)
 
 0.3.0.beta adds two distinct active picks and one passive pick from the parents'

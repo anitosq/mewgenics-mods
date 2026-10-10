@@ -117,6 +117,27 @@ def check_selector_navigation():
     assert "result == INVALID_MUTATION) return KEEP_MUTATION;" in source
 
 
+def check_comparison_text_lifetime():
+    source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
+    render = source.split("static void render_comparison(void) {", 1)[1].split("static void show_next_offer(void);", 1)[0]
+    assert "describe_mutation(" not in render and "wrap_effects(" not in render
+    for side in (0, 1):
+        assert f"render_effects({side}, comparison_effects[view_part][{side}]);" in render
+    pump = source.split("static void show_next_offer(void) {", 1)[1].split("static int offer_mutation(", 1)[0]
+    # Every queued offer prepares all pages before creating a modal. A failed
+    # description or overflow must never display leftover text from another offer.
+    prepare = pump.index("wrap_effects(text, comparison_effects[i][side])")
+    reject = pump.index("if (!described)")
+    create = pump.index("active_prompt = FN")
+    assert pump.index("active = offers[queue_head]") < prepare < reject < create
+    assert "i < view_count" in pump and "side < 2" in pump
+    assert "if (rows > EFFECT_ROWS) described = 0;" in pump
+    acceptance = source.split("static int snapshot_unchanged(void) {", 1)[1].split("static const wchar_t *part_name", 1)[0]
+    assert "comparison_effects" not in acceptance
+    assert "preview_base_stats(&active, stats)" in acceptance
+    assert "snapshot_unchanged() && snapshot_offer(&verify)" in source
+
+
 def check_paired_comparisons():
     source = (Path(__file__).resolve().parent / "selector.h").read_text(encoding="ascii")
     parts = (Path(__file__).resolve().parent / "parts.h").read_text(encoding="ascii")
@@ -194,6 +215,7 @@ if __name__ == "__main__":
     check_sprite_construction()
     check_footer_layout_contract()
     check_selector_navigation()
+    check_comparison_text_lifetime()
     check_paired_comparisons()
     check_effective_bonuses_and_missing_parts()
     check_base_stat_preview()

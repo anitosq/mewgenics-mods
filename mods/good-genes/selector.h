@@ -29,6 +29,8 @@ static unsigned view_indices[15], view_count;
 static int view_labels[15];
 static int navigation_needed;
 enum { EFFECT_ROWS = 12 };
+/* Prepared afresh for each offer; never reused for mutation acceptance checks. */
+static wchar_t comparison_effects[COUNT(mutation_slots)][2][4096];
 static double base_stats[2][MUTATION_STATS];
 static int base_stats_valid;
 /* Attached clips are owned by the modal's display tree, never the live cat. */
@@ -639,15 +641,11 @@ static int render_part_art(unsigned side, PartSnapshot *part, int id) {
 
 static void render_comparison(void) {
     PartSnapshot *part = &active.parts[view_indices[view_part]];
-    wchar_t current[4096], incoming[4096], a[4096], b[4096], title[256];
-    describe_mutation(part->part, part->before_id, current);
-    describe_mutation(part->part, part->after_id, incoming);
-    wrap_effects(current, a);
-    wrap_effects(incoming, b);
+    wchar_t title[256];
     panel_text("old_art_note", render_part_art(0, part, part->before_id) ? L"" : part->before_id <= 0 ? L"Missing part" : L"Preview unavailable");
     panel_text("new_art_note", render_part_art(1, part, part->after_id) ? L"" : part->after_id <= 0 ? L"Missing part" : L"Preview unavailable");
-    render_effects(0, a);
-    render_effects(1, b);
+    render_effects(0, comparison_effects[view_part][0]);
+    render_effects(1, comparison_effects[view_part][1]);
     panel_text("part", part_name(view_labels[view_part]));
     swprintf(title, COUNT(title), L"Comparison %u/%u", view_part+1, view_count);
     panel_text("page", navigation_needed ? title : L"");
@@ -744,11 +742,11 @@ static void show_next_offer(void) {
         unsigned effect_rows = 1;
         navigation_needed = view_count > 1;
         for (unsigned i = 0; i < view_count; ++i) {
-            wchar_t text[4096], wrapped[4096];
+            wchar_t text[4096];
             PartSnapshot *part = &active.parts[view_indices[i]];
             for (unsigned side = 0; side < 2; ++side) {
                 if (!describe_mutation(part->part, side ? part->after_id : part->before_id, text)) described = 0;
-                unsigned rows = wrap_effects(text, wrapped);
+                unsigned rows = wrap_effects(text, comparison_effects[i][side]);
                 if (rows > EFFECT_ROWS) described = 0;
                 if (rows > effect_rows) effect_rows = rows;
             }
