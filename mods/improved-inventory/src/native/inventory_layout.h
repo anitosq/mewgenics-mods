@@ -44,6 +44,8 @@ typedef struct {
     int side, ordinal;
     IQItemTraits traits;
     int rarity;
+    void* hidden_transform;
+    double hidden_target[3], hidden_state[5];
 } IQDrawer;
 typedef struct {
     void* owner;
@@ -129,12 +131,28 @@ static int iq_visible(const IQDrawer* d) {
     return row>=0 && row<iq_rows(d->side);
 }
 
+static int iq_drawer_state(const IQDrawer* d,void** components) {
+    /* One guarded snapshot spans allocation identity, owner, components and ID. */
+    struct {
+        uint64_t generation;
+        void* vtable;
+        unsigned char before_owner[0x30];
+        void* owner;
+        uint64_t fields[6];
+    } state;
+    if(!d->drawer || d->drawer!=d->reference.pointer ||
+       !iq_read((unsigned char*)d->drawer-8,&state,sizeof(state)) ||
+       state.generation!=d->reference.generation || state.vtable!=d->reference.vtable ||
+       state.owner!=iq.owner || state.fields[iq.equipment?3:5]!=d->item_id)return 0;
+    if(components)memcpy(components,state.fields+(iq.equipment?0:2),3*sizeof(void*));
+    return 1;
+}
+
 static void iq_present(IQDrawer* d) {
-    if(!iq_reference_valid(d->reference))return;
-    unsigned char* drawer=d->drawer;
-    void* components[3]; /* Adjacent renderer, button and transform pointers. */
-    if(!iq_read(drawer+(iq.equipment?0x40:0x50),components,sizeof(components)) ||
+    void* components[3];
+    if(!iq_drawer_state(d,components) ||
        !components[0] || !components[1] || !components[2])return;
+    unsigned char* drawer=d->drawer;
     void* renderer=components[0];
     const int side=d->side;
     int cols=iq.columns[side];
@@ -144,12 +162,28 @@ static void iq_present(IQDrawer* d) {
     double x=visible ? pitch*(d->ordinal%cols)+pitch/2 : -100000.0;
     double y=visible ? pitch*(cols-1-row)+pitch/2-(side==0?iq.span[side]*0.072:0) : -100000.0;
     if(iq.equipment && visible)y=iq.span[0]-y;
-    iq_write_double(drawer,iq.equipment?0xb8:0x78,x+(iq.equipment?iq.left[side]:0));
-    iq_write_double(drawer,iq.equipment?0xc0:0x80,y+(iq.equipment?iq.bottom[side]:0));
-    iq_write_double(drawer,iq.equipment?0xc8:0x88,iq.scale[side]*(side==0?0.90:1.0));
+    double target[]={x+(iq.equipment?iq.left[side]:0),y+(iq.equipment?iq.bottom[side]:0),
+                     iq.scale[side]*(side==0?0.90:1.0)};
+    memcpy(drawer+(iq.equipment?0xb8:0x78),target,sizeof(target));
+    double current[5];
+    int settled=!visible && d->hidden_transform==components[2] &&
+        !memcmp(target,d->hidden_target,sizeof(target)) &&
+        iq_read((unsigned char*)components[2]+0x80,current,sizeof(current));
+    /* Native interpolation introduces roundoff even at an unchanged target. */
+    for(int field=0;settled && field<5;field++)
+        settled=fabs(current[field]-d->hidden_state[field])<=1e-9;
     /* The game's instant layout method updates the transform used by both its
        renderer and button. This avoids animating hidden items across hit areas. */
-    ((DrawerUpdate)(void*)(game_base+(iq.equipment?0x34e230:0x213a20)))(drawer);
+    if(!settled) {
+        d->hidden_transform=NULL;
+        ((DrawerUpdate)(void*)(game_base+(iq.equipment?0x34e230:0x213a20)))(drawer);
+        /* Native animation may move hidden items too; compare actual state,
+           not just visibility, before skipping the next instant layout. */
+        if(!visible && iq_read((unsigned char*)components[2]+0x80,d->hidden_state,sizeof(d->hidden_state))) {
+            memcpy(d->hidden_target,target,sizeof(target));
+            d->hidden_transform=components[2];
+        }
+    }
     *((unsigned char*)renderer+0x51)=(unsigned char)visible;
     /* Keep the native button update enabled: it owns mouse-leave/tooltip
        cleanup. Hidden buttons move offscreen and the click hook rejects them. */
@@ -296,11 +330,7 @@ static IQDrawer* iq_find(void* instance) {
     int at=iq_index_get(&iq_drawer_index,instance);
     if(at<0 || at>=iq.count)return NULL;
     IQDrawer* d=&iq.drawers[at];
-    if(d->drawer!=instance || !iq_view_live() || !iq_reference_valid(d->reference) ||
-       iq_ptr(instance,0x38)!=iq.owner)return NULL;
-    uint64_t id=0;
-    if(!iq_read((unsigned char*)instance+(iq.equipment?0x58:0x68),&id,8)) return NULL;
-    return d->item_id==id?d:NULL;
+    return d->drawer==instance && iq_view_live() && iq_drawer_state(d,NULL)?d:NULL;
 }
 
 static void __cdecl iq_update(void* instance) {
@@ -334,8 +364,12 @@ static void iq_scroll(int side,int delta) {
     if(next<0)next=0;
     if(next>maxrow)next=maxrow;
     if(next==iq.row[side])return;
+    int first=iq.row[side]*iq.columns[side],end=first+iq_rows(side)*iq.columns[side];
     iq.row[side]=next;
-    for(int i=0;i<iq.count;i++)if(iq.drawers[i].side==side)iq_present(&iq.drawers[i]);
+    for(int i=0;i<iq.count;i++) {
+        IQDrawer* d=&iq.drawers[i];
+        if(d->side==side && (iq_visible(d) || (d->ordinal>=first && d->ordinal<end)))iq_present(d);
+    }
     char message[100];snprintf(message,sizeof(message),"Scroll side=%d row=%d/%d",side,next,maxrow);report(message);
 }
 static unsigned char __cdecl iq_mouse(void* input,void* event) {

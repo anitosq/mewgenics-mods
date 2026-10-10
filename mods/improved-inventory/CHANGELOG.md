@@ -1,5 +1,10 @@
 # Improved Inventory changelog
 
+## 0.3.7-beta.1
+
+- Reduced inventory layout overhead, including when scrolling large inventories.
+- Beta build; in-game performance and interaction checks are pending.
+
 ## 0.3.6
 
 - Fixed the mod loading without activating when Mewjector loads it after game startup.
