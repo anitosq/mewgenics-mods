@@ -1,11 +1,12 @@
 # Good Genes listing media
 
-Media uploaded and verified 2026-10-07. Nexus mod 547 remains unpublished.
+Media updated and verified 2026-10-11. Nexus mod 547 is published.
 
 ## Saved Listing
 
 The owner authorized adding the selected artwork, selector screenshot and a
-stats-only inheritance comparison. The listing now has the v4 header and three
+stats-only inheritance comparison, then the skill-inheritance image on 2026-10-11.
+The listing now has the v4 header and four
 gallery images, in this order:
 
 1. `00-good-genes-cover-v3.png`: Good Genes - Better Breeding and Mutation Control.
@@ -15,6 +16,19 @@ gallery images, in this order:
    Nexus image `547-1791303208-1201799062.png`.
 3. `02-higher-parent-stats.png`: Best of both parents - Higher base stats inherited.
    Nexus image `547-1791303209-2139749842.png`.
+4. `03-parental-skill-inheritance.png`: Skills from both parents - Up to 2 active skills + 1 passive.
+   Nexus image `547-1791693486-536522000.png`, gallery image ID `1216`.
+
+The skill-inheritance image is a built-in image_gen reproduction based on the
+owner's three Downloads screenshots dated 2026-10-11: `122453` and `122317`
+(parents), and `122810` (child). The panels and lettering were redrawn, not
+embedded as untouched crops or native font glyphs. The owner approved this image
+for upload after that distinction was disclosed. It is 1672 x 941 pixels;
+SHA-256 `f8b3060c8e11f79999d606da16828a12faa7983032b23c61e612fb58f235e66a`.
+The public gallery shows the image fourth with the saved caption. Visual proof:
+`outputs/listing/good-genes/03-parental-skills-nexus-proof.jpg`. Prompt and source
+hashes remain in the adjacent prompt file and media manifest. This listing-only
+update did not change the release archive or installed mod.
 
 The stats comparison uses only the original stat panels from the owner's
 `Screenshot 2026-10-06 235718.png`, `Screenshot 2026-10-06 235724.png` and
