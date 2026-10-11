@@ -11,13 +11,23 @@ gallery images, in this order:
 
 1. `00-good-genes-cover-v3.png`: Good Genes - Better Breeding and Mutation Control.
    Selected as the thumbnail. Nexus image `547-1791303128-763136010.png`.
-2. `01-special-mutation-choice.png`: Special mutations - Keep Existing or Replace.
-   Byte-identical copy of `Screenshot 2026-10-06 233322.png`.
-   Nexus image `547-1791303208-1201799062.png`.
+2. `01-mutation-choice-v2.png`: Mutation comparison - Keep Existing or Replace.
+   Byte-identical copy of `Screenshot 2026-10-11 133046.png`.
+   Nexus image `547-1791696734-1303258575.png`, gallery image ID `1217`.
 3. `02-higher-parent-stats.png`: Best of both parents - Higher base stats inherited.
    Nexus image `547-1791303209-2139749842.png`.
 4. `03-parental-skill-inheritance.png`: Skills from both parents - Up to 2 active skills + 1 passive.
    Nexus image `547-1791693486-536522000.png`, gallery image ID `1216`.
+
+On 2026-10-11, the owner requested replacing the earlier choice screenshot with
+`Screenshot 2026-10-11 133046.png`. The new 776 x 499 screenshot shows a left-eye
+mutation stat trade-off and the Keep Existing / Replace controls. SHA-256:
+`4460de1f89bd78e2bca030a6101667010a4a78d6372ebfea11a50f573d4cf54f`.
+The earlier `01-special-mutation-choice.png` (Nexus image ID `1194`,
+`547-1791303208-1201799062.png`) is hidden from the gallery and retained for
+recovery. The replacement occupies the same second position; the public gallery
+still contains four images. Caption, order and appearance verified publicly.
+Proof: `outputs/listing/good-genes/01-mutation-choice-v2-nexus-proof.jpg`.
 
 The skill-inheritance image is a built-in image_gen reproduction based on the
 owner's three Downloads screenshots dated 2026-10-11: `122453` and `122317`
