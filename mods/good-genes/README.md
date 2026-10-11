@@ -3,6 +3,9 @@
 Pass parental skills, mutations and higher base stats to kittens, and protect
 occupied mutation slots during events and combat.
 
+Version 0.3.0. [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
+[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/good-genes/v0.3.0)
+
 ## Breeding
 
 - Kittens inherit two distinct parental active skills when available, or one
