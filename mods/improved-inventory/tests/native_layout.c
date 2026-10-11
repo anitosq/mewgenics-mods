@@ -82,6 +82,7 @@ static void setup(int count,int equipment,int open) {
     for(int i=0;i<count;i++) {
         void* drawer=objects[i+6].data;uint64_t id=(uint64_t)i+1;
         pointer_at(drawer,0x38,iq.owner);
+        if(!equipment){pointer_at(drawer,0x40,iq.panels[0]);pointer_at(drawer,0x48,iq.panels[0]);}
         pointer_at(drawer,equipment?0x40:0x50,renderers[i]);
         pointer_at(drawer,equipment?0x48:0x58,drawer);
         pointer_at(drawer,equipment?0x50:0x60,transforms[i]);
@@ -91,6 +92,40 @@ static void setup(int count,int equipment,int open) {
     iq_index_view();
 }
 int main(void) {
+    /* Only settled, idle hidden drawers may bypass their native callback. */
+    for(int fault=0;fault<15;fault++) {
+        setup(37,0,1);update_all();IQDrawer* d=&iq.drawers[36];
+        int state=fault==0?1:2;
+        unsigned char replacement[0x600]={0};
+        if(fault<2)memcpy((unsigned char*)d->drawer+0x2f0,&state,4);
+        if(fault==2)renderers[36][0x51]=1;
+        if(fault==3)pointer_at(d->drawer,0x40,iq.panels[1]);
+        if(fault==4)pointer_at(d->drawer,0x48,iq.panels[1]);
+        if(fault==5)iq_write_double(d->drawer,0x78,123);
+        if(fault==6)iq.scale[0]=2;
+        if(fault>=7 && fault<=9) {
+            void* source=fault==7?(void*)renderers[36]:fault==8?d->drawer:(void*)transforms[36];
+            memcpy(replacement,source,fault==7?0x60:fault==8?0x600:0xb0);
+            pointer_at(d->drawer,0x50+(size_t)(fault-7)*8,replacement);
+        }
+        if(fault==10)unreadable=renderers[36]+0x51;
+        if(fault==11)unreadable=(unsigned char*)d->drawer+0x2f0;
+        if(fault==12)unreadable=(unsigned char*)d->drawer+0x88;
+        if(fault==13)d->ordinal=0;
+        if(fault==14)layout_test=0;
+        native_updates=0;iq_update(d->drawer);assert(native_updates==1);
+    }
+    for(int ref=0;ref<6;ref++) {
+        setup(37,0,1);update_all();objects[ref].generation++;
+        native_updates=presentations=0;iq_update(iq.drawers[36].drawer);
+        assert(native_updates==1 && !presentations);
+    }
+    setup(37,0,1);update_all();
+    for(int i=0;i<37;i++){iq.drawers[i].ordinal=-1;iq_present(&iq.drawers[i]);}
+    native_updates=ui_updates=0;update_all();assert(!native_updates && ui_updates==1);
+    iq.drawers[36].ordinal=0;iq_update(iq.drawers[36].drawer);
+    assert(native_updates==1 && renderers[36][0x51]==1);
+    setup(513,0,1);update_all();native_updates=0;update_all();assert(native_updates==36);
     setup(400,0,1);update_all();reads=0;update_all();assert(reads==3564);
     /* Scrolling keeps layout behavior without emitting a message per event. */
     reports=0;
@@ -155,9 +190,10 @@ int main(void) {
     reads=presentations=native_updates=0;iq_update(iq.drawers[36].drawer);
     assert(!reads && !presentations && native_updates==1);
     assert(iq_button_hit(iq.drawers[36].button));assert(!reads);
-    const int sizes[]={0,1,16,35,36,37,513};
+    const int sizes[]={0,1,16,35,36,37,513,1024};
     for(unsigned size=0;size<sizeof(sizes)/sizeof(sizes[0]);size++) {
         int count=sizes[size];setup(count,0,1);update_all();
+        native_updates=0;update_all();assert(native_updates==(unsigned)(count<36?count:36));
         for(int cycle=0;cycle<3;cycle++) {
             pointer_at(objects[5].data,0x58,NULL);
             reads=presentations=native_updates=ui_updates=0;update_all();
@@ -186,13 +222,13 @@ int main(void) {
         }
         assert(presentations==400);assert(reads==(unsigned)((equipment?5:7)*400+400-(equipment?30:36)));
         reads=presentations=native_updates=ui_updates=0;update_all();
-        assert(presentations==(unsigned)(equipment?30:open?36:0));assert(native_updates==400);
+        assert(presentations==(unsigned)(equipment?30:open?36:0));assert(native_updates==(unsigned)(equipment||!open?400:36));
         assert(ui_updates==(unsigned)!equipment);
         assert(reads==(unsigned)(equipment?5*400+400-30:open?8*400+400-36:400));
         for(int i=0;i<400;i++)assert(renderers[i][0x51]==(i<(equipment?30:36)));
-        printf("400 %s items, %s: %u guarded reads (beta 2: %u), %u instant layouts; 400 native updates retained.\n",
+        printf("400 %s items, %s: %u guarded reads (beta 2: %u), %u instant layouts; %u native updates.\n",
             equipment?"equipment":"house",open?"open":equipment?"covered":"closed",reads,
-            (unsigned)(equipment?2770:open?3964:400),presentations);
+            (unsigned)(equipment?2770:open?3964:400),presentations,native_updates);
         reads=0;
         for(int i=0;i<iq.count;i++)assert(iq_button_hit(iq.drawers[i].button)==(unsigned char)(!open||i<(equipment?30:36)));
         assert(reads==(unsigned)(400-(equipment?30:36))*(open?(equipment?11:15):(equipment?5:1)));
@@ -211,7 +247,7 @@ int main(void) {
     for(int equipment=0;equipment<2;equipment++) {
         setup(1024,equipment,1);update_all();
         reads=presentations=native_updates=0;update_all();
-        assert(presentations==(unsigned)(equipment?30:36));assert(native_updates==1024);
+        assert(presentations==(unsigned)(equipment?30:36));assert(native_updates==(unsigned)(equipment?1024:36));
         assert(reads==(unsigned)((equipment?5:8)*1024+1024-(equipment?30:36)));
         double rates[]={0.1,0.15,1.0/6,0.2,0.25,1.0/3,0.5,0.9};
         for(int rate=0;rate<8;rate++) {
@@ -238,7 +274,7 @@ int main(void) {
         presentations=0;iq_present(hidden);assert(presentations==1);
         if(!equipment) {
             panel_origin[0]=123.45;panel_origin[1]=56.78;
-            presentations=0;update_all();assert(presentations==1024);
+            presentations=0;update_all();assert(presentations==36);
             presentations=0;update_all();assert(presentations==36);
             panel_origin[0]=panel_origin[1]=0;update_all();
         }
@@ -290,10 +326,21 @@ int main(void) {
     }
     /* Trash can have fewer columns; scrolling it must leave Storage alone. */
     setup(80,0,1);iq.items[0]=iq.items[1]=40;iq.columns[1]=4;iq.span[1]=400;iq.scale[1]=1;
-    for(int i=40;i<80;i++){iq.drawers[i].side=1;iq.drawers[i].ordinal=i-40;}
+    for(int i=40;i<80;i++){
+        iq.drawers[i].side=1;iq.drawers[i].ordinal=i-40;
+        pointer_at(iq.drawers[i].drawer,0x40,iq.panels[1]);pointer_at(iq.drawers[i].drawer,0x48,iq.panels[1]);
+    }
     update_all();unsigned char storage[40][0xb0];memcpy(storage,transforms,sizeof(storage));
     reads=presentations=0;iq_scroll(1,1);assert(presentations==20 && reads==24);
     assert(!memcmp(storage,transforms,sizeof(storage)));assert(!iq.row[0] && iq.row[1]==1);
     for(int i=40;i<80;i++)assert(renderers[i][0x51]==(i>=44 && i<60));
+    native_updates=0;update_all();assert(native_updates==52);
+#if IQ_PROFILE_BUILD
+    setup(513,0,1);update_all();memset(&iq_perf,0,sizeof(iq_perf));iq_hidden_skips=0;reports=0;
+    for(int pass=0;pass<300;pass++)update_all();
+    assert(reports==1 && iq_perf.frequency>0 && !iq_perf.depth);
+    assert(iq_hidden_skips==300*477 && iq_perf.start_skips>0);
+    assert(iq_perf.samples>0 && iq_perf.calls==512);
+#endif
     puts("Layout: settled hidden items, native updates, scroll windows, animation changes, rebinds and stale identities passed.");
 }

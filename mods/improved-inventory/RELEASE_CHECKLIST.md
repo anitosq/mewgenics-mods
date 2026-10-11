@@ -1,5 +1,8 @@
 # Improved Inventory release readiness
 
+Unpublished candidate: [0.3.8-beta.1](../../docs/releases/improved-inventory/0.3.8-beta.1-candidate.md).
+Offline regression checks passed; owner gameplay and responsiveness checks remain.
+
 Current release: [0.3.7 publication record](../../docs/releases/improved-inventory/0.3.7-publication.md).
 The [0.3.7-beta.4 candidate record](../../docs/releases/improved-inventory/0.3.7-beta.4-candidate.md)
 covers the performance changes. The checklist below retains broader runtime

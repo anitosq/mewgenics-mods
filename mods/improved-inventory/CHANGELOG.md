@@ -1,5 +1,10 @@
 # Improved Inventory changelog
 
+## 0.3.8-beta.1
+
+- Skip repeated animation updates for idle, hidden items while Storage or Trash is open.
+- Reduce item-metadata lookup work when using search, filters and set lists.
+
 ## 0.3.7
 
 - Fixed house-screen lag after closing Storage.

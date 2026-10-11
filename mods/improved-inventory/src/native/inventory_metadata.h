@@ -76,12 +76,6 @@ static void iq_search_metadata(IQMetadata* m,void* manager,void* item,void* defi
         iq_append(m->text,4096,iq_sets[set_index].name);
     }
 }
-static IQMetadata* iq_find_metadata(void* drawer,uint64_t id) {
-    uint64_t generation=iq_generation(drawer);
-    for(int i=0;i<IQ_MAX_DRAWERS;i++)
-        if(iq_metadata[i].drawer==drawer && iq_metadata[i].id==id && iq_metadata[i].generation==generation)return &iq_metadata[i];
-    return NULL;
-}
 #include "inventory_ownership.h"
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets) {
     IQMetadata* m=iq_find_metadata(drawer,id);

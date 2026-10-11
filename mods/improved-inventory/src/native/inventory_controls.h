@@ -7,13 +7,11 @@ typedef unsigned char (__cdecl *ButtonHit)(void*);
 static ButtonHit original_button_hit;
 static void* iq_camera;
 static uint64_t iq_camera_generation;
-typedef struct {void* drawer;uint64_t id,generation;IQItemTraits traits; wchar_t text[4096]; uint64_t sets[4]; int sets_known;} IQMetadata;
+#include "inventory_metadata_cache.h"
 static struct {char id[128]; wchar_t name[160];} iq_sets[IQ_SET_LIMIT];
 static int iq_set_count;
 static wchar_t iq_set_query[IQ_QUERY_LIMIT];
 static int iq_set_offset,iq_focus;
-static IQMetadata iq_metadata[IQ_MAX_DRAWERS];
-static int iq_metadata_next;
 #include "inventory_metadata.h"
 
 static IQItemTraits iq_traits(void* drawer,uint64_t id) {
@@ -61,13 +59,11 @@ static void iq_cache_item(void* drawer,void* item) {
     int type=iq_int(value,0xa8);
     int consumable=known?(flag!=0):(type==0?0:-1);
     uint64_t id=0;iq_read(item,&id,8);
-    int index=-1;
-    for(int i=0;i<IQ_MAX_DRAWERS;i++) if(iq_metadata[i].drawer==drawer){index=i;break;}
-    if(index<0) index=iq_metadata_next++%IQ_MAX_DRAWERS;
+    IQMetadata* metadata=iq_metadata_slot(drawer);
     IQItemTraits traits={consumable,iq_weapon(iq_property(definition,"kind")),
         iq_limited(iq_property(definition,"durability")),iq_int(item,0x5c)};
-    iq_metadata[index]=(IQMetadata){.drawer=drawer,.id=id,.generation=iq_generation(drawer),.traits=traits};
-    iq_search_metadata(&iq_metadata[index],manager,item,definition);
+    *metadata=(IQMetadata){.drawer=drawer,.id=id,.generation=iq_generation(drawer),.traits=traits};
+    iq_search_metadata(metadata,manager,item,definition);
     iq_metadata_revision++;
 }
 static void __cdecl iq_bind(void* drawer,void* item) {

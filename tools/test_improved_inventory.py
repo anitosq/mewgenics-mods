@@ -20,12 +20,13 @@ def main():
     subprocess.run([node, '--test', str(TESTS / 'model.test.mjs')], cwd=ROOT, check=True)
     build = ROOT / 'work/native-tests'
     build.mkdir(parents=True, exist_ok=True)
-    for name in ('native_filters', 'native_search', 'native_set_rows', 'native_hooks', 'native_lifetime', 'native_hit', 'native_layout', 'native_ui'):
+    for name in ('native_filters', 'native_search', 'native_set_rows', 'native_hooks', 'native_lifetime', 'native_hit', 'native_layout', 'native_ui', 'native_metadata', 'native_layout_profile'):
         output = build / f'{name}.exe'
         # Each fixture uses only part of the shared static helper headers.
         subprocess.run([str(compiler), 'cc', '-O2', '-UNDEBUG', '-Wall', '-Wextra',
                         '-Werror', '-Wno-unused-function',
-                        str(TESTS / f'{name}.c'), '-o', str(output)],
+                        *(['-DIQ_PROFILE_BUILD=1'] if name.endswith('_profile') else []),
+                        str(TESTS / f'{name.removesuffix("_profile")}.c'), '-o', str(output)],
                        cwd=ROOT, check=True)
         subprocess.run([str(output)], cwd=ROOT, check=True)
     print('Improved Inventory fixture checks passed.')

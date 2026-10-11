@@ -28,3 +28,22 @@ static int iq_index_get(const IQIndex* index,const void* key) {
     }
     return -1;
 }
+static void iq_index_remove(IQIndex* index,const void* key) {
+    if(!key)return;
+    size_t at=iq_index_slot(key);
+    for(size_t n=0;n<IQ_INDEX_CAPACITY;n++,at=(at+1)&(IQ_INDEX_CAPACITY-1)) {
+        IQIndexEntry* entry=&index->entries[at];
+        if(!entry->key)return;
+        if(entry->key!=key)continue;
+        memset(entry,0,sizeof(*entry));
+        /* Reinsert the collision tail so clearing a slot cannot hide a key. */
+        at=(at+1)&(IQ_INDEX_CAPACITY-1);
+        while(index->entries[at].key) {
+            IQIndexEntry next=index->entries[at];
+            memset(&index->entries[at],0,sizeof(next));
+            iq_index_put(index,next.key,next.value);
+            at=(at+1)&(IQ_INDEX_CAPACITY-1);
+        }
+        return;
+    }
+}

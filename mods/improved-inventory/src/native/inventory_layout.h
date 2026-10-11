@@ -1,5 +1,6 @@
 /* Experimental presentation only. Item containers and item IDs are never written. */
 #include <math.h>
+#include <stddef.h>
 #include "inventory_filter.h"
 #include "inventory_search.h"
 #define IQ_MAX_DRAWERS 1024
@@ -45,6 +46,8 @@ typedef struct {
     IQItemTraits traits;
     int rarity;
     void* hidden_transform;
+    void* hidden_renderer;
+    void* hidden_button;
     double hidden_target[3], hidden_state[5];
 } IQDrawer;
 typedef struct {
@@ -64,11 +67,12 @@ static IQView iq;
 static IQView pending_view;
 static IQIndex iq_drawer_index,iq_button_index;
 static uint64_t iq_view_revision,iq_metadata_revision;
-static int iq_view_live(void) {
+static int iq_view_live_with_manager(int manager_checked) {
     return iq_reference_valid(iq.owner_ref) && iq_reference_valid(iq.scene_ref) && iq_reference_valid(iq.entity_ref) &&
         iq_reference_valid(iq.panel_refs[0]) && (iq.equipment ||
-        (iq_reference_valid(iq.panel_refs[1]) && iq_reference_valid(iq.manager_ref)));
+        (iq_reference_valid(iq.panel_refs[1]) && (manager_checked || iq_reference_valid(iq.manager_ref))));
 }
+static int iq_view_live(void) {return iq_view_live_with_manager(0);}
 
 static int iq_read(const void* p, void* out, size_t n) {
     SIZE_T received=0;
@@ -145,21 +149,45 @@ static int iq_visible(const IQDrawer* d) {
     return row>=0 && row<iq_rows(d->side);
 }
 
-static int iq_drawer_state(const IQDrawer* d,void** components) {
+typedef struct {
+    uint64_t generation;
+    void* vtable;
+    unsigned char before_owner[0x30];
+    void* owner;
+    uint64_t fields[6];
+    uint64_t sort_fields;
+    double target[3];
+} IQDrawerState;
+static int iq_drawer_snapshot(const IQDrawer* d,IQDrawerState* state,int targets) {
     /* One guarded snapshot spans allocation identity, owner, components and ID. */
-    struct {
-        uint64_t generation;
-        void* vtable;
-        unsigned char before_owner[0x30];
-        void* owner;
-        uint64_t fields[6];
-    } state;
     if(!d->drawer || d->drawer!=d->reference.pointer ||
-       !iq_read((unsigned char*)d->drawer-8,&state,sizeof(state)) ||
-       state.generation!=d->reference.generation || state.vtable!=d->reference.vtable ||
-       state.owner!=iq.owner || state.fields[iq.equipment?3:5]!=d->item_id)return 0;
+       !iq_read((unsigned char*)d->drawer-8,state,targets?sizeof(*state):offsetof(IQDrawerState,sort_fields)) ||
+       state->generation!=d->reference.generation || state->vtable!=d->reference.vtable ||
+       state->owner!=iq.owner || state->fields[iq.equipment?3:5]!=d->item_id)return 0;
+    return 1;
+}
+static int iq_drawer_state(const IQDrawer* d,void** components) {
+    IQDrawerState state;
+    if(!iq_drawer_snapshot(d,&state,0))return 0;
     if(components)memcpy(components,state.fields+(iq.equipment?0:2),3*sizeof(void*));
     return 1;
+}
+
+static int iq_house_hidden_idle(const IQDrawer* d) {
+    if(iq.equipment || iq_visible(d) || !d->hidden_transform)return 0;
+    IQDrawerState state;unsigned char visible=1;int button_state=-1;
+    if(!iq_drawer_snapshot(d,&state,1) ||
+       (void*)(uintptr_t)state.fields[0]!=iq.panels[d->side] ||
+       state.fields[0]!=state.fields[1] ||
+       (void*)(uintptr_t)state.fields[2]!=d->hidden_renderer ||
+       (void*)(uintptr_t)state.fields[3]!=d->hidden_button ||
+       (void*)(uintptr_t)state.fields[4]!=d->hidden_transform ||
+       memcmp(state.target,d->hidden_target,sizeof(state.target)) ||
+       state.target[2]!=iq.scale[d->side]*(d->side==0?0.90:1.0))return 0;
+    /* Hidden transforms may follow panel motion. They are positioned afresh on
+       re-entry. Never suspend a visible renderer or an active/hovered button. */
+    return iq_read((unsigned char*)d->hidden_renderer+0x51,&visible,1) && !visible &&
+        iq_read((unsigned char*)d->hidden_button+0x2f0,&button_state,sizeof(button_state)) && button_state==0;
 }
 
 static int iq_present(IQDrawer* d) {
@@ -196,6 +224,8 @@ static int iq_present(IQDrawer* d) {
         if(!visible && iq_read((unsigned char*)components[2]+0x80,d->hidden_state,sizeof(d->hidden_state))) {
             memcpy(d->hidden_target,target,sizeof(target));
             d->hidden_transform=components[2];
+            d->hidden_renderer=components[0];
+            d->hidden_button=components[1];
         }
     }
     *((unsigned char*)renderer+0x51)=(unsigned char)visible;
@@ -349,12 +379,11 @@ static IQDrawer* iq_find_in_view(void* instance) {
     return d->drawer==instance && iq_view_live()?d:NULL;
 }
 
-static void __cdecl iq_update(void* instance) {
-    original_drawer_update(instance);
-    if(!layout_test)return;
-    if(!iq.equipment) {
+static uint64_t iq_hidden_skips;
+static void iq_update_body(void* instance) {
+    if(layout_test && !iq.equipment) {
         int at=iq_index_get(&iq_drawer_index,instance);
-        if(at<0 || at>=iq.count || iq.drawers[at].drawer!=instance)return;
+        if(at<0 || at>=iq.count || iq.drawers[at].drawer!=instance){original_drawer_update(instance);return;}
         int active=iq_house_active();
         if(at==0 && iq.house_activity!=(active?1:2)) {
             iq.house_activity=active?1:2;
@@ -362,10 +391,20 @@ static void __cdecl iq_update(void* instance) {
                           "House inventory inactive: mod layout suspended; native updates retained.");
         }
         if(!active) {
+            original_drawer_update(instance);
+            if(at==0)iq_ui_update();
+            return;
+        }
+        /* No native call between the manager snapshot and this validation.
+           Button updates remain enabled independently for mouse-leave cleanup. */
+        if(iq_house_hidden_idle(&iq.drawers[at]) && iq_view_live_with_manager(1)) {
+            iq_hidden_skips++;
             if(at==0)iq_ui_update();
             return;
         }
     }
+    original_drawer_update(instance);
+    if(!layout_test)return;
     IQDrawer* d=iq_find_in_view(instance);
     if(d && iq_present(d)) {
         if(!iq.update_seen) {
@@ -374,6 +413,14 @@ static void __cdecl iq_update(void* instance) {
         }
         if(d==&iq.drawers[0]) iq_ui_update();
     }
+}
+#include "inventory_performance.h"
+static void __cdecl iq_update(void* instance) {
+#if IQ_PROFILE_BUILD
+    iq_profile_update(instance);
+#else
+    iq_update_body(instance);
+#endif
 }
 static void __cdecl iq_click(void* instance) {
     IQDrawer* d=iq_find_in_view(instance);

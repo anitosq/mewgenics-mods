@@ -51,6 +51,7 @@ build.mkdir(parents=True, exist_ok=True)
 literal = lambda data: ','.join(f'0x{v:02x}' for v in data)
 (build / 'build_guard.h').write_text(
     f'#define IQ_RELEASE_BUILD {int(args.release)}\n#define IQ_VERSION "{version}"\n'
+    f'#define IQ_PROFILE_BUILD {int("-beta" in version)}\n'
     f'#define RENDERER_RVA 0x{rva:x}\n'
     f'#define GRID_RVA 0x{grid_rva:x}\n'
     f'#define EXPECTED_TIMESTAMP 0x{struct.unpack_from("<I", binary, pe+8)[0]:x}\n'

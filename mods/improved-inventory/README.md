@@ -33,6 +33,10 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
+The [0.3.8-beta.1 candidate](../../docs/releases/improved-inventory/0.3.8-beta.1-candidate.md)
+targets remaining large-inventory overhead while Storage or Trash is open.
+It awaits owner testing; 0.3.7 remains the public release.
+
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
 under "Available".
