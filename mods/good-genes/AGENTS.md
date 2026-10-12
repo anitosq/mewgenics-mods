@@ -47,6 +47,12 @@
   valid missing parts, and undefined negatives in deferred regression checks.
 - Owner will test. Compilation and read-only inspection are allowed, but do not
   run tests, load the DLL, launch the game, install, or touch saves unless asked.
+- Owner fix request, 2026-10-12: preserve asymmetric mutation inheritance and
+  add logs only, with no new in-game feedback. The 0.3.0 commenter report showed
+  that post-selection mirroring could replace split eyes or erase a single-sided
+  mutation. Before delivery, inspect all five birth pair-copy paths and retain
+  their RNG calls and native head visibility handling. Cover split mutations,
+  either single side, matching pairs, conflicting parents and hidden facial parts.
 - Owner extension, 2026-10-11: guarantee parental active/passive inheritance
   where possible, without Stimulation odds or class preference. Preserve the
   normal two-active/one-passive inheritance limits, deduplicate normalized

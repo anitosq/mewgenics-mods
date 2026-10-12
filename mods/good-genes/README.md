@@ -3,8 +3,8 @@
 Pass parental skills, mutations and higher base stats to kittens, and protect
 occupied mutation slots during events and combat.
 
-Version 0.3.0. [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
-[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/good-genes/v0.3.0)
+Version 0.3.1.beta (local test build). [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
+[Published 0.3.0 release](https://github.com/anitosq/mewgenics-mods/releases/tag/good-genes/v0.3.0)
 
 ## Breeding
 
@@ -25,8 +25,12 @@ Version 0.3.0. [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
 - New birth defects and newly generated birth disorders are prevented.
   Existing parental defects and disorders can still be inherited.
 
-The game's paired-part mirroring remains in place. This is not a guarantee
-that every distinct mutation on an asymmetric parent appears on its kitten.
+Left and right arms, legs, eyes, eyebrows and ears inherit separately. A
+mutation on one side is no longer overwritten by the opposite side at birth.
+Ordinary parts also keep their separate inherited appearances. If both parents
+have different mutations on the same side, the kitten inherits one of them.
+Matching paired mutations still count once, and the inherited head can hide
+facial parts and their effects. No extra mutation slots are added.
 
 ## Event And Combat Mutations
 
@@ -82,6 +86,15 @@ Avoid combining native mods that change the same breeding functions.
 
 The comparison labels are English. Mutation descriptions use the game's
 loaded text.
+
+## Checking activation
+
+In `mod_logs/chainloader.log`, look for `[GoodGenes] 0.3.1.beta enabled`.
+Each birth also logs the higher parental base stats, selected parental skills
+and inherited part IDs. Paired IDs are listed left/right before the game's
+head visibility update; they do not count active mutation effects. An unknown
+parental definition logs a fallback to native inheritance. A DLL-loading line
+alone does not confirm activation.
 
 ## Source
 

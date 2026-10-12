@@ -1,5 +1,47 @@
 # Development
 
+## Asymmetric birth inheritance (2026-10-12)
+
+0.3.1.beta fixes the 0.3.0 report of Bolt/Fire eyes becoming a matching pair,
+and a single-sided mutation disappearing. In the supported executable, part
+selection completes at 0xa9bec, then five fair rolls copy one inherited side
+over its counterpart. Good Genes previously retained those copies.
+
+Five additional guarded birth gates replace the five-byte COMISD immediately
+after each RNG call with a jump past both copy directions:
+
+| Pair | Gate | Resume |
+| --- | --- | --- |
+| Arms | 0xa9c00 | 0xa9c26 |
+| Legs | 0xa9c31 | 0xa9c57 |
+| Ears | 0xa9c62 | 0xa9c88 |
+| Eyes | 0xa9c93 | 0xa9cb9 |
+| Eyebrows | 0xa9cc4 | 0xa9cea |
+
+The five RNG calls still execute. Independent per-side choices, including
+ordinary appearances, survive. Both mutated parents still compete per side;
+this does not copy every parental mutation or add slots. The final head
+placement refresh at 0x7393e0 remains native and can hide facial effects.
+Existing matching group/ID deduplication remains native. These gates use the
+existing constructor hash guard and transactional patch/rollback machinery;
+no additional detour or trampoline is introduced.
+
+Four normal log lines per birth report base stats, parental skill picks,
+unpaired part IDs and paired left/right IDs. Part IDs are logged after the
+last selection and before final head visibility; they are not a count of
+effective mutations. Skill picks are logged separately from passive-granted
+skills. Unknown parental definitions log native fallback. No polling or new UI.
+
+Deferred static checks validate all ten birth gates, whole-instruction spans
+and both-copy bypass targets. Logging boundaries were inspected in source.
+Owner gameplay checks: split
+Bolt/Fire eyes with an ordinary second parent; either single mutated eye;
+matching pairs; competing mutations in both parents; equivalent limbs, ears
+and eyebrows; heads that hide facial parts; save/reload and next generation.
+Confirm logs appear only on births and normal event/combat choices still work.
+Compilation and package verification are permitted; regression execution and
+gameplay remain with the owner under the existing testing instruction.
+
 Version 0.1.0 is published following owner approval. The exact artifact and
 verification scope are recorded in docs/releases/good-genes/0.1.0-publication.md.
 Detailed cases below remain useful for future changes; approval does not imply
@@ -185,7 +227,8 @@ Static inspection of that executable establishes:
   parent, and uses the native unbiased roll for equal occupancy.
 - The first part call returns at 0xa993a. Coat selection is corrected there
   using the same policy, before the constructor copies coat IDs to each part.
-  The constructor's later paired-part mirroring is retained.
+  The initial implementation retained the constructor's later paired-part
+  mirroring; 0.3.1.beta disables those copies as described above.
 - New-disorder construction is skipped from 0xa9580 to 0xa9636. Parent
   disorder inheritance has already completed.
 - Part-inheritance loss is skipped from 0xa9728 to 0xa97c1. The existing

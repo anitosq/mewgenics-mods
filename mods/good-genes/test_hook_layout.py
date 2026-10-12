@@ -48,9 +48,12 @@ def check_birth_hooks():
         assert match and bytes(map(int, match[1].split(","))) == bytes.fromhex(expected)
     gates = header.split("BIRTH_GATES[] = {", 1)[1].split("};", 1)[0]
     rows = re.findall(r"\{0x([0-9a-f]+), (\d+), \{([0-9,]+)\}, \{([0-9,]+)\}\}", gates)
-    assert len(rows) == 5
+    assert len(rows) == 10
     targets = {0xa927e: 0xa9380, 0xa9389: 0xa94e1,
-               0xa9580: 0xa9636, 0xa9728: 0xa97c1, 0xa9e42: 0xa9fad}
+               0xa9580: 0xa9636, 0xa9728: 0xa97c1, 0xa9e42: 0xa9fad,
+               0xa9c00: 0xa9c26, 0xa9c31: 0xa9c57, 0xa9c62: 0xa9c88,
+               0xa9c93: 0xa9cb9, 0xa9cc4: 0xa9cea}
+    assert {int(row[0], 16) for row in rows} == set(targets)
     for address, size, before, after in rows:
         address, size = int(address, 16), int(size)
         code = bytes(map(int, after.split(",")))
@@ -62,6 +65,12 @@ def check_birth_hooks():
             # first gate and xmm9=0.5 at 0xa9380 for later paired-part rolls.
             expected = "f2 0f 10 55 f0" if address == 0xa927e else "f2 0f 10 55 f8"
             assert bytes(map(int, before.split(","))) == bytes.fromhex(expected)
+        if 0xa9c00 <= address <= 0xa9cc4:
+            # The RNG call ends at this COMISD. Both directions of each pair's
+            # copy lie before the target, so split and single-sided IDs survive.
+            assert size == 5
+            assert bytes(map(int, before.split(","))) == bytes.fromhex("66 41 0f 2f c1")
+            assert targets[address] - address == 0x26
 
 
 def check_skill_inheritance():
