@@ -13,7 +13,7 @@ Pass parental skills, mutations and higher base stats to kittens, and protect oc
 [*]Random loss of part inheritance at birth is disabled.
 [*]New birth defects and newly generated birth disorders are prevented. Existing parental defects and disorders can still be inherited.
 [/list]
-The game's paired-part mirroring remains in place. Every distinct mutation on an asymmetric parent is not guaranteed to appear on its kitten.
+Left and right arms, legs, eyes, eyebrows and ears inherit separately. A mutation on one side is no longer overwritten by the opposite side at birth. Ordinary parts also keep their separate inherited appearances. If both parents have different mutations on the same side, the kitten inherits one of them. Matching paired mutations still count once, and the inherited head can hide facial parts and their effects. No extra mutation slots are added.
 
 [b]Event and combat mutations[/b]
 Stat-only replacements happen automatically when no stat decreases and at least one increases. Equal changes and pure downgrades keep the current mutation. Trade-offs that increase some stats and decrease others open a Keep Existing / Replace comparison. Matching paired mutations count once when comparing bonuses.
@@ -34,6 +34,9 @@ Install and enable the archive through your mod manager. Enable both its native 
 The mod disables itself on unsupported game builds or when its matching UI assets are not enabled. Native mods that change the same breeding functions may conflict. Removing this mod does not undo changes already saved.
 
 Comparison labels are English. Mutation descriptions use the game's loaded text.
+
+[b]Checking activation[/b]
+In mod_logs/chainloader.log, look for [GoodGenes] 0.3.1 enabled. Each birth also logs inherited base stats, selected parental skills and part IDs, with paired IDs listed left/right before head visibility is applied. An unknown parental definition logs a fallback to native inheritance. A DLL-loading line alone does not confirm activation.
 
 Not every scenario has been tested. Bug reports and feedback are welcome in the Bugs and Posts tabs.
 

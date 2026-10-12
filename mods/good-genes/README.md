@@ -3,8 +3,8 @@
 Pass parental skills, mutations and higher base stats to kittens, and protect
 occupied mutation slots during events and combat.
 
-Version 0.3.1.beta (local test build). [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
-[Published 0.3.0 release](https://github.com/anitosq/mewgenics-mods/releases/tag/good-genes/v0.3.0)
+Version 0.3.1. [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
+[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/good-genes/v0.3.1)
 
 ## Breeding
 
@@ -89,7 +89,7 @@ loaded text.
 
 ## Checking activation
 
-In `mod_logs/chainloader.log`, look for `[GoodGenes] 0.3.1.beta enabled`.
+In `mod_logs/chainloader.log`, look for `[GoodGenes] 0.3.1 enabled`.
 Each birth also logs the higher parental base stats, selected parental skills
 and inherited part IDs. Paired IDs are listed left/right before the game's
 head visibility update; they do not count active mutation effects. An unknown
