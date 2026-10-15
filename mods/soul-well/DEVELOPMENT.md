@@ -1,6 +1,6 @@
 # Soul Well development
 
-Version: `0.1.0-beta.1`. Install identity: `SoulWell`. Tag prefix: `soul-well/v`.
+Version: `0.1.0-beta.2` (local candidate). Install identity: `SoulWell`. Tag prefix: `soul-well/v`.
 Windows x64, Mewgenics 1.1.21239 / Steam build 25143593, Mewjector API >= 3.
 Executable SHA-256:
 `4127cd6a792ae528bca6f65a8873dd61789591937d87656c2b586a5e30eb77ea`.
@@ -20,7 +20,7 @@ Commit source, rebuild from that clean commit, then freeze the archive:
 
 ```powershell
 python mods/soul-well/package.py
-python mods/soul-well/test_release.py --game "PATH/TO/Mewgenics" --archive "outputs/releases/soul-well/0.1.0-beta.1/SoulWell-0.1.0-beta.1.zip" --manifest "outputs/releases/soul-well/0.1.0-beta.1/SoulWell-0.1.0-beta.1.manifest.json"
+python mods/soul-well/test_release.py --game "PATH/TO/Mewgenics" --archive "outputs/releases/soul-well/0.1.0-beta.2/SoulWell-0.1.0-beta.2.zip" --manifest "outputs/releases/soul-well/0.1.0-beta.2/SoulWell-0.1.0-beta.2.manifest.json"
 ```
 
 Use `tools/check_mewtator_package.py --mod-name SoulWell` with the frozen ZIP,
@@ -51,6 +51,9 @@ all native functions used by the mod.
 
 Partial hook installation leaves active scope null and hooks_ready false;
 installed hooks pass through. Tests exercise each install failure position.
+If all hooks install but data validation fails, SoulWell spawn calls are
+finished without spawning; other items still pass through. Unsupported builds,
+entry mismatches and partial hook installation cannot promise that blocking.
 Thread-attach notifications skip hashing to protect graphics threads with small
 stacks. File hashing stays out of DllMain's stack frame.
 
@@ -64,12 +67,31 @@ tiers and preservation of all other fields against the installed game archive.
 
 The startup gate requires an explicit enabled `-modpaths` directory matching
 either the DLL parent (Mewtator) or its SoulWell sibling (Vortex/manual).
-It checks item/shop hashes and exact ability prefix/suffix around the editable
-passive body, accepting CRLF and UTF-8 BOM for that ability file. Strings and
-comments cannot escape the editable block. The body is left to the game's GON
-parser. It is not hashed, so passive edits need no DLL rebuild. Changes to core
-files require a new matching build. Later mods can still override effective
-definitions; the file gate is not a proof of final runtime load order.
+It compares GON tokens against the built-in source definitions. Whitespace,
+comments, CRLF and UTF-8 BOM do not affect matching in any of the three files.
+Two ability positions are editable: the positive signed-32-bit integer value
+of target.max_range, and the balanced additional_passives body. Duplicate
+fields, extra definitions, changed core values, embedded NUL, unterminated
+strings/comments and mismatched delimiters are rejected. Passive nesting is
+bounded at 64 delimiters, file size below 64 KiB. The game's parser still owns
+passive key/value semantics. Source generation embeds the complete baseline,
+so nested passive definitions no longer confuse a first-closing-brace search.
+Later mods can still override effective definitions; this is not a runtime
+load-order validator. Other settings/order changes require a matching build.
+
+Failures log a specific reason and queue a single Windows MessageBox on a new
+thread. The DLL holds a module reference until the notice finishes. DllMain
+does not call User32 or wait for the thread; see Microsoft's
+[DLL guidance](https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices).
+If thread creation fails, the error stays in the log and one extra module
+reference survives until process exit. A DLL that never loads cannot notify.
+Non-Mewgenics host processes skip initialization, including package fixtures.
+The notification text is tested with a substituted UI callback; the actual
+dialog and fullscreen focus still need an owner check.
+
+Each cast logs scan totals before spawning and each jar ID requested by native
+cloning. This does not count successfully placed shades. No names or save
+contents are logged.
 
 ## Evidence and pending gameplay
 
@@ -79,13 +101,19 @@ entries were skipped. Repeated ordinary use was blocked. After normal save,
 quit and reload, it summoned the same three cats again. The game resets the
 fight on reload. Original saves/settings were restored with save-hash checks.
 
-Those results apply to the prototype's summon flow. This release removes the
-fixture restriction and adds startup checks, packaging and Tracy acquisition.
-These changes have offline coverage; the packaged beta has not been played.
-Under the owner workflow, leave the installation and saves unchanged.
+The recipient reported beta.1's random-looking, move-only shades after changing
+max_range to 10, then reported normal behavior after restoring 1. The exact
+published DLL reproduced that gate failure offline (1 accepted, 10 rejected).
+Beta.2 fixes that check and adds notices, failure blocking and clone-request
+logs. Tests model the reported 380 items/20 jars/five unique IDs. These changes
+have offline coverage; beta.2 has not been played. Leave the installation and
+saves unchanged under the owner-testing workflow.
 
 Owner test: install this exact ZIP; refresh Tracy's stock and buy Soul Well;
 equip it and summon with jars at home/backpack/equipped; save/reload and repeat;
 edit a known passive and confirm new shades receive it. Check a crowded board,
 no jars and Armor Specialist extra uses. Record logs separately from observed
-behavior. Full-board outcomes, large collections and removal remain unverified.
+behavior. For beta.2, test range 10 plus customized passives; deliberately
+change a core value, confirm the startup dialog and that no generic shade
+spawns, then restore it and restart. Full-board outcomes, large collections
+and removal remain unverified.

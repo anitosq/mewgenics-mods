@@ -1,4 +1,4 @@
-# Change Soul Well's summon passives
+# Change Soul Well's range and summon passives
 
 Close the game and open this file in a text editor:
 
@@ -6,7 +6,19 @@ Close the game and open this file in a text editor:
 SoulWell/data/abilities/item_abilities.gon.merge
 ```
 
-Find `tk_SoulWell`, then its `spawn` section. Edit the contents of this block:
+In `tk_SoulWell`'s `target` section, change `max_range` to extend the targeting
+range. For example:
+
+```gon
+max_range 10
+```
+
+Use a positive whole number no larger than 2,147,483,647. Leave `min_range`,
+`max_aoe` and the other targeting settings unchanged. The default remains 1;
+the startup check accepts 10 without rebuilding the DLL. A larger range does
+not increase the number of free spaces around the selected tile.
+
+For summon passives, find the `spawn` section and edit this block:
 
 ```gon
 additional_passives {
@@ -22,7 +34,8 @@ copy that passive entry, including any arguments it requires. An ability
 name alone is not necessarily a valid passive entry.
 
 Save as UTF-8 and restart the game. The DLL accepts edits inside this block,
-including nested values, comments, and Windows line endings. It does not
+including nested values, comments, and Windows line endings. Formatting and
+comments elsewhere in the supplied GON files are also accepted. It does not
 validate whether a passive exists or what the passive does. Changes apply
 to newly created shades.
 
@@ -36,7 +49,8 @@ temporary-shade behavior. The effects of removing them are untested.
 - Vortex: edit the file in the mod's staging folder, then deploy. Editing only
   the deployed copy can be overwritten on the next deployment.
 
-Keep a copy of your edited block before updating or reinstalling the mod.
+Keep a copy of your edits before updating or reinstalling the mod. Replace the
+DLL and data together, then reapply your range and passive changes.
 
 ## What stays fixed
 
@@ -46,9 +60,12 @@ Soul Jar definition.
 
 The native code depends on the surrounding summon definition, particularly
 `template spawn`, `lob false`, `catdata item_aux_catid`, the shade object and
-targeting. Leave everything outside the `additional_passives` block unchanged.
-The startup check also expects the supplied item and shop files. If those
-core files change, the DLL stays inactive and logs a data mismatch.
+single-target setup. Apart from `max_range` and the contents of
+`additional_passives`, keep the supplied settings and their order unchanged.
+The startup check also expects the supplied item and shop definitions.
+If a required setting changes, the DLL shows a startup error and records the
+reason in `mod_logs/chainloader.log`. Restore the named file from this ZIP,
+reapply supported edits and restart.
 
 All files remain plain text. The source repository includes the DLL builder
 for changes that go beyond passive customization; see `DEVELOPMENT.md` there.

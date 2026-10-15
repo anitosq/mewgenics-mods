@@ -60,31 +60,42 @@ def gate_check(module, assets, other_module):
         gate = dll.SoulWellValidateAssetsW
         gate.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
         gate.restype = ctypes.c_int
-        def check(command, expected, path=module):
+        status = dll.SoulWellAssetStatusW
+        status.argtypes = gate.argtypes
+        status.restype = ctypes.c_int
+        def check(command, expected, path=module, reason=None):
             assert gate(str(path), subprocess.list2cmdline(command)) == expected, command
+            if reason is not None:
+                assert status(str(path), subprocess.list2cmdline(command)) == reason, command
         enabled = ['Mewgenics.exe', '-modpaths', str(assets)]
         check(enabled, 1)
         check(enabled, 1, other_module)
-        check(['Mewgenics.exe'], 0)
+        check(['Mewgenics.exe'], 0, reason=2)
         check(['Mewgenics.exe', '-modpaths', str(assets) + '-disabled'], 0)
         check(['Mewgenics.exe', '-other', str(assets)], 0)
-        check(['Mewgenics.exe', '-modpaths', str(assets), str(assets.parent)], 0, assets.parent / 'SoulWell.dll')
-        for relative in (ITEM, SHOP, ABILITY):
+        check(['Mewgenics.exe', '-modpaths', str(assets), str(assets.parent)], 0, assets.parent / 'SoulWell.dll', reason=3)
+        for relative, error in ((ITEM, 4), (SHOP, 5), (ABILITY, 6)):
             path = assets / relative; original = path.read_bytes()
-            path.unlink(); check(enabled, 0); path.write_bytes(original)
-            path.write_bytes(b'changed'); check(enabled, 0); path.write_bytes(original)
+            path.unlink(); check(enabled, 0, reason=error); path.write_bytes(original)
+            path.write_bytes(b'changed'); check(enabled, 0, reason=error); path.write_bytes(original)
+            formatted = '// formatting only\n' + original.decode().replace('\r\n', '\n').replace('{\n', '{\n\t')
+            path.write_bytes(b'\xef\xbb\xbf' + formatted.replace('\n', '\r\n').encode()); check(enabled, 1, reason=1)
+            path.write_bytes(original)
         path = assets / ABILITY; original = path.read_bytes()
-        custom = original.decode().replace('InjuryImmunity 1', 'InjuryImmunity 2\n            // User edit: } is harmless in a comment')
+        custom = original.decode().replace('InjuryImmunity 1', 'InjuryImmunity 2\n            // User edit: } is harmless in a comment').replace('max_range 1', 'max_range 10')
         assert parse_gon(custom)['tk_SoulWell']['spawn']['additional_passives']['InjuryImmunity'] == '2'
         path.write_text(custom, encoding='utf-8'); check(enabled, 1)
         path.write_bytes(b'\xef\xbb\xbf' + custom.replace('\r\n', '\n').replace('\n', '\r\n').encode()); check(enabled, 1)
         path.write_text(custom.replace('lob false', 'lob true')); check(enabled, 0)
         path.write_text(custom.replace('item_aux_catid', 'other')); check(enabled, 0)
+        for value in ('0', '-10', '1.5', '2147483648', '10 max_range 1'):
+            path.write_text(custom.replace('max_range 10', 'max_range ' + value)); check(enabled, 0, reason=6)
+        path.write_text(custom + '\n tk_SoulWell { target { max_aoe 5 } }'); check(enabled, 0, reason=6)
         path.write_bytes(original)
     finally:
         ctypes.windll.kernel32.FreeLibrary.argtypes = [ctypes.c_void_p]
         ctypes.windll.kernel32.FreeLibrary(dll._handle)
-    print('PASS: nested/sibling DLL layout, paths with spaces/Unicode, disabled/missing/mismatched data, editable passives, CRLF/BOM, core mutation rejection.')
+    print('PASS: DLL layouts, exact paths, specific failure reasons, range 10/passives, formatting/CRLF/BOM, invalid range/core override rejection.')
 
 
 def package_check(archive, manifest):

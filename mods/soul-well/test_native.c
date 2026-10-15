@@ -87,31 +87,103 @@ static int mock_install(UINT_PTR rva, int bytes, void* hook, void** original, in
 static void hook_failure_check(void) {
     for (fail_install = 1; fail_install <= 3; fail_install++) {
         install_count = 0;
-        assert(!activate_hooks(mock_install) && !hooks_ready && install_count == fail_install);
+        assert(!activate_hooks(mock_install, 1) && !hooks_ready && install_count == fail_install);
         if (fail_install > 1) { point_calls = 0; castpoint(NULL, 0, 0); assert(point_calls == 1); }
         if (fail_install > 2) assert(source_item((void*)123) == (void*)123);
     }
     fail_install = 0; install_count = 0;
-    assert(activate_hooks(mock_install) && hooks_ready && install_count == 3);
+    assert(activate_hooks(mock_install, 1) && hooks_ready && install_count == 3);
     spawn_calls = 0; spawn(NULL); assert(spawn_calls == 1); /* Unrelated source passes through. */
-    hooks_ready = 0;
+    install_count = 0;
+    assert(activate_hooks(mock_install, 0) && !hooks_ready && install_count == 3);
+}
+static void edit_check(const char* find, const char* replacement, int accepted) {
+    char body[8192];
+    const char* at = strstr(ABILITY_TEXT, find); assert(at);
+    int prefix = (int)(at - ABILITY_TEXT);
+    int n = snprintf(body, sizeof(body), "%.*s%s%s", prefix, ABILITY_TEXT, replacement, at + strlen(find));
+    assert(n > 0 && (size_t)n < sizeof(body));
+    assert(ability_text_matches(body, (size_t)n) == accepted);
 }
 static void passive_edit_check(void) {
-    char body[4096];
-    snprintf(body, sizeof(body), "%s\n SafeDoomed 1 InjuryImmunity 1\n%s", ABILITY_PREFIX, ABILITY_SUFFIX);
-    assert(ability_text_matches(body, strlen(body)));
-    snprintf(body, sizeof(body), "%s\n // } is a comment\n Added { key \"}\\\"\" } /* } */\n%s", ABILITY_PREFIX, ABILITY_SUFFIX);
-    assert(ability_text_matches(body, strlen(body)));
-    snprintf(body, sizeof(body), "%s}\n spawn { object Other }\n%s", ABILITY_PREFIX, ABILITY_SUFFIX);
-    assert(!ability_text_matches(body, strlen(body)));
-    snprintf(body, sizeof(body), "%s /* unfinished %s", ABILITY_PREFIX, ABILITY_SUFFIX);
-    assert(!ability_text_matches(body, strlen(body)));
+    assert(ability_text_matches(ABILITY_TEXT, strlen(ABILITY_TEXT)));
+    edit_check("max_range 1", "max_range 10", 1);
+    edit_check("max_range 1", "max_range /* reach */ 2147483647", 1);
+    edit_check("max_range 1", "max_range 2147483648", 0);
+    edit_check("max_range 1", "max_range 0", 0);
+    edit_check("max_range 1", "max_range -10", 0);
+    edit_check("max_range 1", "max_range 1.5", 0);
+    edit_check("max_range 1", "max_range nope", 0);
+    edit_check("max_range 1", "max_range 10 max_range 1", 0);
+    edit_check("max_range 1", "max_range 10 max_aoe 4", 0);
+    edit_check("InjuryImmunity 1", "InjuryImmunity 2\n // }\n Added { key \"}\\\"\" nested [1 { a 2 }] } /* } */", 1);
+    edit_check("InjuryImmunity 1", "}", 0);
+    edit_check("InjuryImmunity 1", "Bad [1 }", 0);
+    edit_check("InjuryImmunity 1", "Bad \"unfinished", 0);
+    edit_check("InjuryImmunity 1", "/* unfinished", 0);
+    edit_check("template spawn", "template /* unchanged */\n\tspawn", 1);
+    edit_check("lob false", "lob true", 0);
+    edit_check("item_aux_catid", "clone", 0);
+    edit_check("PlayerCat_Shade", "Other", 0);
+    edit_check("max_aoe 0", "max_aoe 2", 0);
+    char broken[] = "//\0hidden\n";
+    assert(!data_text_matches(broken, sizeof(broken) - 1, "", 0));
+}
+static int notice_calls, notice_status;
+static int WINAPI notice_fixture(HWND window, LPCSTR message, LPCSTR title, UINT flags) {
+    assert(!window && !strcmp(title, "Soul Well is inactive"));
+    assert(strstr(message, startup_reason(notice_status)) && strstr(message, "mod_logs/chainloader.log"));
+    assert(strstr(message, "Do not use Soul Well") && (flags & MB_ICONERROR));
+    notice_calls++; return IDOK;
+}
+static void notice_check(void) {
+    for (notice_status = SW_PATH; notice_status <= SW_HOOK; notice_status++) {
+        if (notice_status == SW_READY) continue;
+        notice_calls = 0; display_startup_failure(notice_status, notice_fixture); assert(notice_calls == 1);
+    }
+}
+static byte source_fixture[0x60];
+static void* fixed_source(void* ability) { (void)ability; return source_fixture; }
+static int finish_calls;
+static void finish_fixture(void* ability) { assert(ability); finish_calls++; }
+static void inactive_cast_check(void) {
+    byte* saved_base = base;
+    base = VirtualAlloc(NULL, 0x45000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE); assert(base);
+    memcpy(base + 0x43a50, "\xff\x25\0\0\0\0", 6); ptr(base, 0x43a56, (void*)finish_fixture);
+    DWORD old; assert(VirtualProtect(base + 0x43000, 0x1000, PAGE_EXECUTE_READ, &old));
+    assert(FlushInstructionCache(GetCurrentProcess(), base + 0x43a50, 14));
+    byte ability[0x8b0] = {0}, callback[16] = {0}; ptr(callback, 0, ability);
+    original_source = fixed_source; original_spawn = pass_spawn; hooks_ready = 0;
+    item(source_fixture, "SoulWell", -1);
+    spawn_calls = finish_calls = 0; spawn(callback);
+    assert(!spawn_calls && finish_calls == 1);
+    item(source_fixture, "SoulJar_Full", 7); spawn(callback);
+    assert(spawn_calls == 1 && finish_calls == 1);
+    assert(VirtualFree(base, 0, MEM_RELEASE)); base = saved_base;
+}
+static void reported_inventory_check(void) {
+    byte manager[0xf8] = {0}, head[0x18] = {0};
+    byte* nodes = calloc(380, 0x78); assert(nodes);
+    ptr(manager, 0x80, head); uint64_t count = 380; memcpy(manager + 0x88, &count, 8);
+    ptr(head, 0, nodes);
+    for (unsigned i = 0; i < 380; i++) {
+        byte* node = nodes + i * 0x78;
+        ptr(node, 0, i == 379 ? head : node + 0x78);
+        item(node + 0x18, i < 20 ? "SoulJar_Full" : "Book", i < 20 ? (int)(10 + i % 5) : -1);
+    }
+    Souls result = {0};
+    assert(scan_container(&result, manager, 0x78, 1));
+    assert(result.count == 5 && result.stored == 20 && result.duplicates == 15 && !result.invalid);
+    free(nodes);
 }
 int main(void) {
     source_trampoline_check();
     ordinary_campaign_check();
     hook_failure_check();
     passive_edit_check();
+    notice_check();
+    inactive_cast_check();
+    reported_inventory_check();
     byte one[0x60], duplicate[0x60], other[0x60], empty[0x60], well[0x60];
     item(one, "SoulJar_Full", 7); item(duplicate, "SoulJar_Full", 7);
     item(other, "SoulJar_Full", 0); item(empty, "SoulJar", 18);

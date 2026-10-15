@@ -163,7 +163,9 @@ static void* source_item(void* ability) {
     Scope* scope = active;
     if (scope && scope->prepared && scope->ability == ability &&
         __builtin_return_address(0) == base + 0x7a3c51 && scope->next < scope->souls.count) {
-        memcpy(scope->source + 0x4c, &scope->souls.ids[scope->next++], 4);
+        int32_t id = scope->souls.ids[scope->next++];
+        memcpy(scope->source + 0x4c, &id, 4);
+        if (logger) logger("SoulWell", "Clone request %u/%u: jar cat ID %d.", scope->next, scope->souls.count, id);
         return scope->source;
     }
     return original_source(ability);
@@ -171,7 +173,12 @@ static void* source_item(void* ability) {
 static void spawn(void* callback) {
     void* ability = pointer(callback, 0);
     void* source = original_source(ability);
-    if (!hooks_ready || !named(source, "SoulWell")) { original_spawn(callback); return; }
+    if (!named(source, "SoulWell")) { original_spawn(callback); return; }
+    if (!hooks_ready) {
+        if (logger) logger("SoulWell", "Cast blocked: Soul Well is inactive. Fix the startup error and restart.");
+        FN(Spawn, 0x43a50)(ability);
+        return;
+    }
     Scope scope = {0};
     scope.ability = ability;
     int stage = -1;
@@ -182,6 +189,9 @@ static void spawn(void* callback) {
         FN(Spawn, 0x43a50)(ability);
         return;
     }
+    if (logger) logger("SoulWell", "Scan: stored=%u carried=%u equipped=%u unique=%u duplicates=%u invalid=%u",
+        scope.souls.stored, scope.souls.carried, scope.souls.equipped, scope.souls.count,
+        scope.souls.duplicates, scope.souls.invalid);
     Scope* previous = active;
     active = &scope;
     original_spawn(callback);
@@ -216,12 +226,12 @@ done:
 }
 #include "startup.h"
 
-static int activate_hooks(Install install) {
+static int activate_hooks(Install install, int assets_ready) {
     hooks_ready = 0;
     if (!install(0x43350, 0, (void*)castpoint, (void**)&original_castpoint, 50, "SoulWell.CastPoint") ||
         !install(0x475c0, SOURCE_STOLEN, (void*)source_item, (void**)&original_source, 50, "SoulWell.Source") ||
         !install(0x7a2ba0, 0, (void*)spawn, (void**)&original_spawn, 50, "SoulWell.Spawn")) return 0;
-    hooks_ready = 1;
+    hooks_ready = assets_ready;
     return 1;
 }
 
@@ -229,34 +239,34 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved) {
     (void)reserved;
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
     DisableThreadLibraryCalls(module);
+    wchar_t executable[MAX_PATH], module_path[MAX_PATH];
+    DWORD length = GetModuleFileNameW(NULL, executable, MAX_PATH);
+    if (!length || length >= MAX_PATH) return TRUE;
+    const wchar_t* name = wcsrchr(executable, L'\\');
+    if (_wcsicmp(name ? name + 1 : executable, L"Mewgenics.exe")) return TRUE;
     base = (byte*)GetModuleHandleW(NULL);
     HMODULE loader = GetModuleHandleW(L"version.dll");
-    if (!loader) return TRUE;
+    if (!loader) { report_startup_failure(SW_LOADER); return TRUE; }
     Install install = (Install)(void*)GetProcAddress(loader, "MJ_InstallHook");
     int (*version)(void) = (int (*)(void))(void*)GetProcAddress(loader, "MJ_GetVersion");
     logger = (Log)(void*)GetProcAddress(loader, "MJ_Log");
-    wchar_t executable[MAX_PATH], module_path[MAX_PATH];
-    if (!install || !version || version() < 3) return TRUE;
-    if (!GetModuleFileNameW(NULL, executable, MAX_PATH) ||
-        !file_matches(executable, EXPECTED_SHA256)) {
-        if (logger) logger("SoulWell", "Disabled: unsupported executable.");
-        return TRUE;
-    }
-    if (!GetModuleFileNameW(module, module_path, MAX_PATH) ||
-        !SoulWellValidateAssetsW(module_path, GetCommandLineW())) {
-        if (logger) logger("SoulWell", "Disabled: data missing, disabled or incompatible. Check -modpaths and restore core GON fields.");
-        return TRUE;
-    }
+    if (!install || !version || version() < 3) { report_startup_failure(SW_LOADER); return TRUE; }
+    if (!file_matches(executable, EXPECTED_SHA256)) { report_startup_failure(SW_GAME); return TRUE; }
     for (unsigned i = 0; i < sizeof(GUARDS) / sizeof(*GUARDS); i++) {
         if (memcmp(base + GUARDS[i].rva, GUARDS[i].bytes, 64)) {
             if (logger) logger("SoulWell", "Disabled: native entry differs at RVA %x.", GUARDS[i].rva);
+            report_startup_failure(SW_ENTRY);
             return TRUE;
         }
     }
-    if (!activate_hooks(install)) {
-        if (logger) logger("SoulWell", "Disabled: hook installation failed.");
+    length = GetModuleFileNameW(module, module_path, MAX_PATH);
+    int status = length && length < MAX_PATH ? SoulWellAssetStatusW(module_path, GetCommandLineW()) : SW_PATH;
+    /* On a verified executable, keep the spawn guard even when data validation fails. */
+    if (!activate_hooks(install, status == SW_READY)) {
+        report_startup_failure(SW_HOOK);
         return TRUE;
     }
+    if (status != SW_READY) { report_startup_failure(status); return TRUE; }
     if (logger) logger("SoulWell", "%s loaded. Scanning home storage, backpack and allied adventurers.", SW_VERSION);
     return TRUE;
 }

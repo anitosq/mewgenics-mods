@@ -35,17 +35,12 @@ def main():
 
     out = ROOT / 'build'
     out.mkdir(exist_ok=True)
-    arrays = {'EXPECTED_SHA256': bytes.fromhex(EXPECTED),
-              'EXPECTED_ITEM_SHA256': hashlib.sha256((ROOT / ITEM).read_bytes()).digest(),
-              'EXPECTED_SHOP_SHA256': hashlib.sha256((ROOT / SHOP).read_bytes()).digest()}
+    arrays = {'EXPECTED_SHA256': bytes.fromhex(EXPECTED)}
     guard = [f'static const unsigned char {name}[] = {{' + ','.join(map(str, value)) + '};'
              for name, value in arrays.items()]
-    ability = (ROOT / ABILITY).read_text(encoding='utf-8')
-    begin = ability.index('additional_passives {') + len('additional_passives {')
-    end = ability.index('}', begin)
-    guard += ['static const char ABILITY_PREFIX[] = ' + json.dumps(ability[:begin]) + ';',
-              'static const char ABILITY_SUFFIX[] = ' + json.dumps(ability[end:]) + ';',
-              '#define SW_VERSION ' + json.dumps(VERSION),
+    for name, relative in (('ITEM_TEXT', ITEM), ('SHOP_TEXT', SHOP), ('ABILITY_TEXT', ABILITY)):
+        guard.append(f'static const char {name}[] = ' + json.dumps((ROOT / relative).read_text(encoding='utf-8')) + ';')
+    guard += ['#define SW_VERSION ' + json.dumps(VERSION),
               'static const struct { unsigned rva; unsigned char bytes[64]; } GUARDS[] = {']
     guard.extend('{0x%x, {%s}},' % (rva, ','.join(map(str, at(rva)))) for rva in RVAS)
     guard.append('};\n')
@@ -53,9 +48,9 @@ def main():
     common = [str(args.zig), 'cc', '-target', 'x86_64-windows-gnu', '-std=c11', '-O2',
               '-Wall', '-Wextra', '-Werror', '-I' + str(out)]
     subprocess.run([*common, '-shared', str(ROOT / 'native.c'), '-o', str(out / 'SoulWell.dll'),
-                    '-lbcrypt', '-lshell32'], check=True)
+                    '-lbcrypt', '-lshell32', '-luser32'], check=True)
     subprocess.run([*common, str(ROOT / 'test_native.c'), '-o', str(out / 'test_native.exe'),
-                    '-lbcrypt', '-lshell32'], check=True)
+                    '-lbcrypt', '-lshell32', '-luser32'], check=True)
     subprocess.run([str(out / 'test_native.exe')], check=True)
     report = {'version': VERSION, 'game_sha256': EXPECTED, 'offline_tests': 'passed',
               'compiler': subprocess.check_output([str(args.zig), 'version'], text=True).strip(),
