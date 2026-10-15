@@ -1,0 +1,32 @@
+tk_SoulWell {
+    template spawn
+    meta { name "{itemname}" }
+    tags [summon]
+    graphics {
+        lob false
+        animation showTrinket
+    }
+    cost {
+        mana 0
+        cantrip true
+        once_per_fight true
+        must_not_be_a_summon true
+    }
+    target {
+        min_range 1
+        max_range 1
+        max_aoe 0
+        range_excludes_blocking false
+        restrictions aoe_must_exist
+    }
+    spawn {
+        object PlayerCat_Shade
+        catdata item_aux_catid
+        clone_items true
+        redirect_location_if_blocked true
+        additional_passives {
+            SafeDoomed 1
+            InjuryImmunity 1
+        }
+    }
+}

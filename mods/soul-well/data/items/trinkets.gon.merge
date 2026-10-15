@@ -1,0 +1,9 @@
+SoulWell {
+    name "Soul Well"
+    desc "Use: Summon each unique cat held in your full Soul Jars, including jars at home. Once per battle."
+    rarity very_rare
+    kind trinket
+    frame 206
+    aux -1
+    ability tk_SoulWell
+}

@@ -1,0 +1,23 @@
+// Beta access: replace Tracy's consumable offers on newly generated stock.
+TracyHouseShop {
+    item_groups {
+        consumable {
+            Item {
+                pool.overwrite [SoulWell]
+                cost 1
+                allow_duplicates true
+            }
+        }
+    }
+}
+TracyHouseShopSpecialDay {
+    item_groups {
+        consumable {
+            Item {
+                pool.overwrite [SoulWell]
+                cost 1
+                allow_duplicates true
+            }
+        }
+    }
+}
