@@ -1,5 +1,5 @@
 /* Birth-only policy, derived from the supported game's inheritance helpers.
-   Part IDs are selected before coat propagation; birth gates prevent mirroring. */
+   Ordinary pairs mirror after selection; mutated pairs retain both IDs. */
 typedef void (*InheritPart)(void *, const void *, const void *, uintptr_t, uintptr_t, double, double);
 typedef void (*InheritStat)(int *, const int *, const int *, double, double, double);
 static InheritPart original_inherit_part;
@@ -89,6 +89,32 @@ static int has_inherited_mutation(const byte *part) {
     return definition && read_bytes(definition+0xa8, &kind, sizeof(kind)) ? kind != 0 : -1;
 }
 
+static void mirror_ordinary_birth_parts(byte *cat) {
+    /* The constructor already initialized and used TLS[0]+0x178. Move its
+       five draws here in native order, and bypass the original draw/copy block.
+       Draw even for mutated/unknown pairs so later birth RNG stays aligned. */
+    void *rng = (*(byte **)(uintptr_t)__readgsqword(0x58)) + 0x178;
+    static const unsigned pairs[][2] = {
+        {0x18c, 0x1e0}, {0x234, 0x288}, {0x42c, 0x480},
+        {0x2dc, 0x330}, {0x384, 0x3d8}
+    };
+    for (unsigned i = 0; i < COUNT(pairs); ++i) {
+        double roll = FN(double (*)(double, void *), 0x1595a0)(1.0, rng);
+        int kinds[2] = {-1, -1};
+        for (unsigned side = 0; side < 2; ++side) {
+            const byte *part = cat + pairs[i][side] - 4;
+            /* Classify the actual selected IDs, before native head visibility. */
+            byte *definition = definition_for(*(const int *)part, *(const int *)(part+4));
+            int kind;
+            if (definition && read_bytes(definition+0xa8, &kind, sizeof(kind)))
+                kinds[side] = kind != 0;
+        }
+        int source = birth_mirror_source(kinds[0], kinds[1], roll);
+        if (source >= 0)
+            memcpy(cat+pairs[i][source^1], cat+pairs[i][source], sizeof(int));
+    }
+}
+
 static void choose_part(void *child, const void *first, const void *second,
                         uintptr_t unused4, uintptr_t unused5, double common, double defect) {
     int a = has_inherited_mutation(first), b = has_inherited_mutation(second);
@@ -133,11 +159,12 @@ static __attribute__((noinline)) void inherit_part(void *child, const void *firs
     }
     choose_part(child, first, second, unused4, unused5, common, defect);
     if (caller == 0xa9bec) {
-        const byte *cat = (const byte *)child-0x4d0;
+        byte *cat = (byte *)child-0x4d0;
+        mirror_ordinary_birth_parts(cat);
         log_message(OWNER, "Birth part IDs before head visibility: body=%d head=%d tail=%d mouth=%d coat=%d.",
                     *(const int *)(cat+0x90), *(const int *)(cat+0xe4),
                     *(const int *)(cat+0x138), *(const int *)(cat+0x4d4), *(const int *)(cat+0x78));
-        log_message(OWNER, "Birth paired IDs (left/right), mirroring disabled: arms=%d/%d legs=%d/%d eyes=%d/%d eyebrows=%d/%d ears=%d/%d.",
+        log_message(OWNER, "Birth paired IDs (left/right), ordinary pairs mirrored: arms=%d/%d legs=%d/%d eyes=%d/%d eyebrows=%d/%d ears=%d/%d.",
                     *(const int *)(cat+0x18c), *(const int *)(cat+0x1e0),
                     *(const int *)(cat+0x234), *(const int *)(cat+0x288),
                     *(const int *)(cat+0x2dc), *(const int *)(cat+0x330),

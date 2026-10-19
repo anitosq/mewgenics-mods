@@ -77,13 +77,11 @@ def main():
     # Skills are selected once at the first part hook. Keep the TLS setup and
     # xmm9=0.5 load between these gates: later birth rolls still need them.
     # Skill Share, parental disorders, and ordinary house mutations remain native.
-    # Keep all five symmetry RNG calls, then skip each comparison/copy block so
-    # neither inherited side can overwrite its counterpart (including ordinary IDs).
+    # The final part hook now performs the five native symmetry draws in order,
+    # copying only ordinary pairs. Skip their original draws and copies together.
     for start, end, size in ((0xa927e, 0xa9380, 5), (0xa9389, 0xa94e1, 5),
                              (0xa9580, 0xa9636, 9), (0xa9728, 0xa97c1, 6),
-                             (0xa9c00, 0xa9c26, 5), (0xa9c31, 0xa9c57, 5),
-                             (0xa9c62, 0xa9c88, 5), (0xa9c93, 0xa9cb9, 5),
-                             (0xa9cc4, 0xa9cea, 5),
+                             (0xa9bf5, 0xa9cea, 6),
                              (0xa9e42, 0xa9fad, 13)):
         before = rva_bytes(data, start, size)
         after = bytes([0xe9]) + struct.pack("<i", end-start-5) + bytes([0x90])*(size-5)

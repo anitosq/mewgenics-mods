@@ -1,5 +1,34 @@
 # Development
 
+## Mutation-only asymmetry (2026-10-19)
+
+0.3.2.beta restores native cosmetic mirroring independently for each pair
+whose two selected definitions both have type zero. A nonzero type on either
+side preserves both inherited IDs, including inherited defects. Unreadable or
+missing definitions also preserve both IDs. Classification uses selected IDs,
+not appearance differences or facial visibility flags.
+
+The existing final part hook (return 0xa9bec, child CatData+0x4d0) now performs
+the five native 0x1595a0(1.0, TLS[0]+0x178) draws in arms/legs/ears/eyes/eyebrows
+order. Every pair consumes one draw, even when no copy is allowed. Below 0.5
+copies right to left; otherwise left to right. Only the four-byte ID is copied.
+The five draws move immediately before the mouth's coat-field assignment;
+there are no intervening random calls. The supported constructor has already
+initialized/used the same TLS pointer at 0xa926d-0xa927b. The loss gate leaves
+ebx=-1, so its final mouth inheritance call is unconditional in this build.
+
+One six-byte gate at 0xa9bf5 now skips to 0xa9cea, replacing the previous five
+blanket bypass gates. Its overwritten MOV RDX,RSI and MOVAPS XMM0,XMM7 are whole
+instructions. The original five draw/copy blocks are skipped together; the
+unrelated sixth draw and final head visibility remain native. Existing full
+constructor hash validation and transactional patch rollback cover the gate.
+No new entry hook, trampoline, persistent state, allocation or idle work.
+
+The 0.3.1 notes below describe the historical implementation, superseded here.
+Policy and gate regression checks were updated but not executed under the
+owner-only testing rule. Compilation/package checks are recorded separately
+in docs/releases/good-genes/0.3.2-beta-candidate.md.
+
 ## Asymmetric birth inheritance (2026-10-12)
 
 0.3.1.beta fixes the 0.3.0 report of Bolt/Fire eyes becoming a matching pair,
