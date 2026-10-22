@@ -6,9 +6,9 @@
 #include <string.h>
 #include <wchar.h>
 #define IQ_GRID_DEFAULT 6
-#define IQ_GRID_BUTTON_X 351
-#define IQ_GRID_BUTTON_PITCH 110
-#define IQ_GRID_BUTTON_WIDTH 108
+#define IQ_GRID_BUTTON_X 333
+#define IQ_GRID_BUTTON_PITCH 120
+#define IQ_GRID_BUTTON_WIDTH 118
 #define IQ_GRID_BUTTON_HEIGHT 22
 static const int iq_grid_sizes[]={5,6,7,8,10,0};
 static int iq_grid_cap[2]={IQ_GRID_DEFAULT,IQ_GRID_DEFAULT};

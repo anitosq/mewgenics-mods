@@ -140,11 +140,12 @@ for focused in range(2):
     parts+=m.button('x',533,0,38)
     m.sprite(f'IQSearch{focused}',m.feedback(parts,[(533,0,38,36)]))
 # Additional inset keeps both counts comfortably inside the lighter panel.
-m.sprite('IQCount',[(m.field(dynamic_font,18,0,562,24,18,'Matches'),'count')])
+# The width stops short of the grid-size buttons; the longest count label checks it.
+m.sprite('IQCount',[(m.field(dynamic_font,18,0,310,24,18,'Storage: 0    Trash: 0    No matches'),'count')])
 # Storage/Trash grid-size toggles on the count row; 22 units tall so they stay
 # clear of the first item row. Starts with the widest label for width checks.
-parts=m.paper(0,0,108,22)+[(m.field(dynamic_font,3,1,102,22,17,'Storage 10x10',align=2),'label')]
-m.sprite('IQGrid',m.feedback(parts,[(0,0,108,22)]))
+parts=m.paper(0,0,118,22)+[(m.field(dynamic_font,3,1,112,22,16,'Storage 10x10',align=2),'label')]
+m.sprite('IQGrid',m.feedback(parts,[(0,0,118,22)]))
 for active in range(4):
     parts=m.paper(0,0,440,443)+[m.text('Sets (match any selected)',12,28,22)]
     for i,label in enumerate(['All','Any','No set']):parts+=m.button(label,10+i*142,38,136,active==i,center=True)
