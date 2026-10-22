@@ -1,5 +1,7 @@
-/* InventoryScreen2 uses world-space InventoryItemBox drawers. Only the
- * pre-adventure Storage grid is adapted; equipped slots remain native. */
+/* InventoryScreen2 uses world-space InventoryItemBox drawers. Mode 1 is
+ * pre-adventure equipment selection (Storage sizes); mode 0 is the adventure
+ * Backpack (Trash sizes: no capacity limit there). Equipped slots remain
+ * native in both. Other modes are left unchanged. */
 static LayoutGrid original_equipment_grid;
 static DrawerUpdate original_equipment_update,original_equipment_drawer_update;
 static BindItem original_equipment_bind;
@@ -16,9 +18,11 @@ static void iq_layout_equipment_backgrounds(void) {
         iq_write_double(b->transform,0x98,b->sx*factor);iq_write_double(b->transform,0xa0,b->sy*factor);
     }
 }
+static int iq_equipment_cap(void) {return iq_grid_cap[iq.backpack];}
 static void iq_capture_equipment(void* owner) {
     if(!layout_test)return;
-    if(iq_int(owner,0x58)!=1) {
+    int mode=iq_int(owner,0x58);
+    if(mode!=0 && mode!=1) {
         if(iq.owner==owner){iq_hide_all();memset(&iq,0,sizeof(iq));}
         return;
     }
@@ -27,7 +31,7 @@ static void iq_capture_equipment(void* owner) {
     if(iq.owner==owner && iq_view_live())pending_view.row[0]=iq.row[0];
     memset(&iq,0,sizeof(iq));
 #define iq pending_view
-    iq.owner=owner;iq.equipment=1;iq.panels[0]=owner;
+    iq.owner=owner;iq.equipment=1;iq.backpack=mode==0;iq.panels[0]=owner;
     iq.owner_ref=iq_reference(owner);iq.panel_refs[0]=iq.owner_ref;
     iq.entity_ref=iq_reference(iq_ptr(owner,0x18));
     iq.scene_ref=iq_reference(iq_ptr(iq_ptr(owner,0x18),8));
@@ -40,7 +44,8 @@ static void iq_capture_equipment(void* owner) {
     ((void*(__cdecl*)(void*,double*,void*))(void*)(game_base+0x97cb30))(iq_ptr(owner,0x40),bounds,&key);
     double width=bounds[1]-bounds[0];
     if(!isfinite(width) || width<=0 || width>10000)return;
-    int cols=iq_grid_columns(columns,iq_grid_cap[0]);
+    /* iq is pending_view here, so read the mode-specific cap directly. */
+    int cols=iq_grid_columns(columns,iq_grid_cap[iq.backpack]);
     iq.columns[0]=cols;iq.columns[1]=1;iq.native_columns[0]=columns;
     iq.left[0]=bounds[0];iq.bottom[0]=bounds[2];iq.span[0]=width;
     for(int j=0;j<backgrounds;j++) {
@@ -74,7 +79,8 @@ static void iq_capture_equipment(void* owner) {
     iq_layout_equipment_backgrounds();
     for(int j=0;j<iq.count;j++)iq_present(&iq.drawers[j]);
     iq_ui_capture();
-    char msg[160];snprintf(msg,sizeof(msg),"Equipment layout: %d available, %d matching, %d columns; bounds %.1f %.1f %.1f",iq.count,iq.items[0],cols,iq.left[0],iq.bottom[0],width);report(msg);
+    char msg[180];snprintf(msg,sizeof(msg),"%s layout: %d available, %d matching, %d of %d columns; bounds %.1f %.1f %.1f",
+        iq.backpack?"Backpack":"Equipment",iq.count,iq.items[0],cols,columns,iq.left[0],iq.bottom[0],width);report(msg);
 }
 /* Applies a new grid setting to the open view without a native grid rebuild.
    Backgrounds and drawers are only repositioned; nothing is allocated. */
@@ -82,7 +88,7 @@ static void iq_apply_grid_setting(void) {
     if(!layout_test || !iq_view_live())return;
     for(int side=0;side<(iq.equipment?1:2);side++) {
         if(!iq.native_columns[side])return;
-        iq.columns[side]=iq_grid_columns(iq.native_columns[side],iq_grid_cap[side]);
+        iq.columns[side]=iq_grid_columns(iq.native_columns[side],iq.equipment?iq_equipment_cap():iq_grid_cap[side]);
         iq.scale[side]=iq.native_scale[side]/iq.columns[side];
     }
     iq_view_revision++;memset(iq.row,0,sizeof(iq.row));
@@ -95,7 +101,7 @@ static void __cdecl iq_equipment_grid(void* owner) {
     iq_before_grid(owner);
     original_equipment_grid(owner);
 #if IQ_ADVENTURE_PROBE
-    if(iq_int(owner,0x58)!=1)iq_probe_equipment_grid(owner,__builtin_return_address(0));
+    if(iq_int(owner,0x58)!=0 && iq_int(owner,0x58)!=1)iq_probe_equipment_grid(owner,__builtin_return_address(0));
 #endif
     iq_capture_equipment(owner);
 }

@@ -94,8 +94,10 @@ int main(void) {
     iq_select_all=1;changed();assert(!wcscmp(iq_controls.search[1].text[0],L"> abc <"));
     active_filter.type=1;changed();active_filter.rarity=2;changed();
     iq.items[0]=399;iq.items[1]=114;changed();assert(wcsstr(iq_controls.count.text[0],L"399"));
-    iq_grid_cap[0]=iq_grid_next(0,iq_grid_cap[0]);changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
+    iq_grid_cap[0]=iq_grid_next_within(0,iq_grid_cap[0],0);changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
     iq_grid_cap[1]=0;changed();assert(!wcscmp(iq_controls.sizes[1].text[0],L"Trash Auto"));
+    iq_grid_cap[0]=10;iq_storage_limit=7;changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
+    iq_storage_limit=0;changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 10x10"));
     iq_grid_cap[0]=iq_grid_cap[1]=IQ_GRID_DEFAULT;changed();
 
     iq_view_revision++;changed();iq_metadata_revision++;changed();

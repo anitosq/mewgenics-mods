@@ -33,18 +33,20 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.4.0-beta.3 candidate](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md)
-is the 0.4.0-beta.2 feature set plus read-only Backpack-screen probes for
-adventure inventory research. The
+The [0.4.0-beta.4 candidate](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md)
+adds the adventure Backpack, capacity-limited Storage sizes and fixed Trash
+grids. The [0.4.0-beta.3 candidate](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md)
+added read-only Backpack-screen probes, which betas still include. The
 [0.4.0-beta.2 candidate](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)
 adds per-container grid sizes and localized set names on top of the untested
 0.3.8-beta.1 performance work. It awaits owner testing; 0.3.7 remains the
 public release.
 
 The Storage and Trash buttons beside the item counts each cycle through 5x5,
-6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Each size caps the
-game's grid, which still grows up to it, then scrolls. Storage's game grid
-matches its capacity, so a size at or above it shows the whole capacity.
+6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Storage's game grid
+matches its capacity, so its button offers the sizes below the capacity and
+the capacity itself. A smaller size scrolls. A fixed Trash size raises the
+game's Trash grid to that size before it is built, then scrolls beyond it;
 Trash Auto never caps, as in the unmodded game. The choices are saved in
 `%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
 
@@ -54,7 +56,9 @@ under "Available".
 
 
 Equipment selection uses the same column cap with five rows for every six
-columns (6x5 by default), with scrolling for the rest. The Backpack screen during an adventure is unchanged.
+columns (6x5 by default), with scrolling for the rest. The adventure Backpack
+is the same native screen in another mode. It gets the same toolbar and grid
+and follows the Trash size, since adventures have no capacity limit.
 
 Run commands from the repository root. Python 3.10+, Node.js and Windows x64
 are used for development. The pinned native compiler is Zig 0.15.2; download

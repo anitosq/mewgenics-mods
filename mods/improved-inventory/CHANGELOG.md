@@ -1,5 +1,15 @@
 # Improved Inventory changelog
 
+## 0.4.0-beta.4
+
+- Search, filters, set list and a scrolling grid in the adventure Backpack.
+  The Backpack follows the Trash size (a fixed size or Auto); items equipped
+  on your cats stay in their slots.
+- The Storage button only offers sizes up to your Storage capacity.
+- A fixed Trash size now shows the full grid even when Trash is nearly empty.
+  A new Trash size applies the next time Trash opens.
+- Still logs the read-only Backpack diagnostics from 0.4.0-beta.3.
+
 ## 0.4.0-beta.3
 
 - Diagnostic beta: logs read-only details about the adventure Backpack screen

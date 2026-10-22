@@ -51,7 +51,7 @@ static void iq_ui_update(void) {
         for(int side=0;side<2;side++) {
             iq_control_show(&iq_controls.sizes[side],"IQGrid",x+(IQ_GRID_BUTTON_X+side*IQ_GRID_BUTTON_PITCH)*s,y-80*s);
             if(refresh || !iq_label_cache.valid) {
-                iq_grid_label(label,200,side,iq_grid_cap[side]);
+                iq_grid_label(label,200,side,side?iq_grid_cap[1]:iq_grid_effective(iq_grid_cap[0],iq_storage_limit));
                 ready&=iq_text(&iq_controls.sizes[side],0,"label",label);
             }
         }

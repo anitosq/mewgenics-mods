@@ -19,9 +19,18 @@ int main(void) {
     assert(iq_grid_columns(20,0)==20 && iq_grid_columns(12,5)==5);
     /* Storage cycles fixed sizes only; Trash adds Auto. */
     int cap=5;const int storage[]={6,7,8,10,5},trash[]={6,7,8,10,0,5};
-    for(int i=0;i<5;i++){cap=iq_grid_next(0,cap);assert(cap==storage[i]);}
-    for(int i=0;i<6;i++){cap=iq_grid_next(1,cap);assert(cap==trash[i]);}
-    assert(iq_grid_next(0,9)==IQ_GRID_DEFAULT && iq_grid_next(0,0)==IQ_GRID_DEFAULT);
+    for(int i=0;i<5;i++){cap=iq_grid_next_within(0,cap,0);assert(cap==storage[i]);}
+    for(int i=0;i<6;i++){cap=iq_grid_next_within(1,cap,0);assert(cap==trash[i]);}
+    assert(iq_grid_next_within(0,9,0)==IQ_GRID_DEFAULT && iq_grid_next_within(0,0,0)==IQ_GRID_DEFAULT);
+    /* Known Storage capacity (native columns): sizes below it, then itself. */
+    int choices[8];
+    assert(iq_grid_choices(0,7,choices)==3 && choices[0]==5 && choices[1]==6 && choices[2]==7);
+    assert(iq_grid_choices(0,12,choices)==6 && choices[4]==10 && choices[5]==12);
+    assert(iq_grid_choices(0,3,choices)==1 && choices[0]==3);
+    assert(iq_grid_choices(1,7,choices)==4 && choices[2]==7 && choices[3]==0);
+    assert(iq_grid_effective(10,7)==7 && iq_grid_effective(6,7)==6 && iq_grid_effective(0,7)==7 && iq_grid_effective(10,0)==10);
+    assert(iq_grid_next_within(0,5,7)==6 && iq_grid_next_within(0,6,7)==7 && iq_grid_next_within(0,7,7)==5);
+    assert(iq_grid_next_within(0,10,7)==5 && iq_grid_next_within(0,6,3)==3 && iq_grid_next_within(0,8,9)==9);
     assert(iq_grid_equipment_rows(4)==4 && iq_grid_equipment_rows(5)==5 && iq_grid_equipment_rows(6)==5);
     assert(iq_grid_equipment_rows(8)==6 && iq_grid_equipment_rows(10)==8 && iq_grid_equipment_rows(20)==16);
     wchar_t label[32];

@@ -52,7 +52,7 @@ typedef struct {
 } IQDrawer;
 typedef struct {
     void* owner;
-    int equipment;
+    int equipment, backpack;
     void* panels[2];
     IQReference owner_ref, panel_refs[2], scene_ref, manager_ref, entity_ref;
     IQDrawer drawers[IQ_MAX_DRAWERS];
@@ -281,6 +281,16 @@ static void iq_layout_house_backgrounds(void) {
     }
 }
 
+/* A fixed Trash size needs that many native backgrounds. The house grid only
+   ever grows its Trash columns from the stored count (minimum 4), so raising
+   the count before the native layout makes it build the chosen grid. */
+static void iq_presize_trash(void* owner) {
+    int cap=iq_grid_cap[1],columns=0;
+    if(!layout_test || cap<=0 || cap>20 || !iq_ptr(owner,0x38) || !iq_ptr(owner,0x40) ||
+       !iq_read((unsigned char*)owner+0x54,&columns,4) || columns<2 || columns>=cap)return;
+    memcpy((unsigned char*)owner+0x54,&cap,4);
+}
+
 static void iq_capture(void* owner) {
     if (!layout_test) return;
     /* Include failed/empty captures: they can also invalidate menu counts. */
@@ -369,6 +379,7 @@ static void iq_capture(void* owner) {
     iq_index_view();
     iq_filter_view();
     iq_layout_house_backgrounds();
+    iq_storage_limit=iq.native_columns[0];
     for(int i=0;i<iq.count;i++) iq_present(&iq.drawers[i]);
     iq_ui_capture();
     char message[180];

@@ -390,7 +390,7 @@ static int iq_ui_event(void* event) {
         if(size->hidden || !iq_control_point(size,p) || p[0]<0 || p[0]>=IQ_GRID_BUTTON_WIDTH ||
            p[1]<0 || p[1]>=IQ_GRID_BUTTON_HEIGHT)continue;
         iq_focus_set(0);iq_controls.captured_click=1;iq_sound(IQ_SOUND_SELECT);
-        iq_grid_cap[side]=iq_grid_next(side,iq_grid_cap[side]);iq_save_settings();iq_apply_grid_setting();iq_ui_update();return 1;
+        iq_grid_cap[side]=iq_grid_next_within(side,iq_grid_cap[side],side?0:iq_storage_limit);iq_save_settings();iq_apply_grid_setting();iq_ui_update();return 1;
     }
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;
     if(iq_control_point(&iq_controls.bars[selected],p) && p[1]>=0 && p[1]<36 && p[0]>=0 && p[0]<571) {

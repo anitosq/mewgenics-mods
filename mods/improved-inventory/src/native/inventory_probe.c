@@ -122,6 +122,7 @@ static int read_name(const char* source, char* destination, size_t capacity) {
 
 static void __cdecl observe_grid(void* instance) {
     iq_before_grid(instance);
+    iq_presize_trash(instance);
     original_grid(instance);
     iq_capture(instance);
     /* Bounded logging follows the optional layout experiment on the game thread. */
