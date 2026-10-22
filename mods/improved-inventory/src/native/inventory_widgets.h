@@ -140,7 +140,7 @@ static void iq_control_show(IQControl* c,const char* name,double x,double y) {
        (!strncmp(name,"IQRarity",8) && strcmp(name,"IQRarityLabels")) ||
        !strcmp(name,"IQUp") || !strcmp(name,"IQDown") || !strcmp(name,"IQGrid"))) {
         void* clip=iq_ptr(c->renderer,0x80);
-        for(int i=0;clip && i<18;i++) {
+        for(int i=0;clip && i<IQ_FEEDBACK_LIMIT;i++) {
             for(int pressed=0;pressed<2;pressed++) {
                 char child[24];snprintf(child,sizeof(child),"fx%d_%d",pressed,i);
                 IQGameString key=iq_borrow(child);
@@ -454,8 +454,6 @@ static int iq_ui_event(void* event) {
            p[1]<0 || p[1]>=IQ_GRID_BUTTON_HEIGHT)continue;
         iq_focus_set(0);iq_controls.captured_click=1;iq_sound(IQ_SOUND_SELECT);
         iq_grid_cap[side]=iq_grid_next_within(side,iq_grid_cap[side],side?0:iq_storage_limit);iq_save_settings();
-        /* Never pre-size the native Trash: its layout only builds backgrounds
-           when its column count changes (0.4.0-beta.5 regression). */
         iq_apply_grid_setting();iq_ui_update();return 1;
     }
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;

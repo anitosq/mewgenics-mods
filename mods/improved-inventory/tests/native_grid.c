@@ -47,6 +47,11 @@ int main(void) {
     assert(iq_grid_parse("",0)==6 && iq_grid_parse("trash_columns=9",1)==6 && iq_grid_parse("storage_columns=8x",0)==6);
     assert(iq_grid_parse("trash_columns=-8",1)==6 && iq_grid_parse("trash_columns=autox",1)==6);
     assert(iq_grid_parse("storage_columns=auto",0)==6 && iq_grid_parse("trash_columns=auto",0)==6);
+    /* A capacity size the button offers (9, 12) survives a restart; a BOM is skipped. */
+    {int caps[2]={9,0};iq_grid_format(text,sizeof(text),caps);assert(iq_grid_parse(text,0)==9 && iq_grid_parse(text,1)==0);}
+    {int caps[2]={12,10};iq_grid_format(text,sizeof(text),caps);assert(iq_grid_parse(text,0)==12 && iq_grid_parse(text,1)==10);}
+    assert(iq_grid_parse("storage_columns=21",0)==6 && iq_grid_parse("storage_columns=1",0)==6 && iq_grid_parse("trash_columns=9",1)==6);
+    assert(iq_grid_parse("\xEF\xBB\xBF" "storage_columns=8\r\n",0)==8);
     assert(iq_grid_parse("# note\r\n  storage_columns=10\r\n",0)==10 && iq_grid_parse("other=1\ntrash_columns=auto",1)==0);
     puts("Grid sizes, equipment rows, labels and settings parsing passed.");
 

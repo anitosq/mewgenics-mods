@@ -261,10 +261,16 @@ static void iq_before_grid(void* owner) {
     iq.background_count=0;
 }
 
+/* Grid-size clicks relayout retained backgrounds long after capture. */
+static int iq_background_live(const IQBackground* b) {
+    return iq_ptr(b->renderer,0x40)==b->transform && iq_generation(b->renderer)==b->renderer_generation &&
+        iq_generation(b->transform)==b->transform_generation;
+}
 /* Reuse the first cols*cols native backgrounds; capture recorded their originals. */
 static void iq_layout_house_backgrounds(void) {
     for(int i=0;i<iq.background_count;i++) {
         IQBackground* b=&iq.backgrounds[i];
+        if(!iq_background_live(b))continue;
         int side=b->side,j=b->ordinal,cols=iq.columns[side];
         int visible=j<cols*cols;
         *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;

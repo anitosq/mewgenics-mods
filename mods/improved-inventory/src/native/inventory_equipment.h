@@ -9,7 +9,9 @@ static BindItem original_equipment_bind;
 static void iq_layout_equipment_backgrounds(void) {
     int cols=iq.columns[0];double width=iq.span[0];
     for(int j=0;j<iq.background_count;j++) {
-        IQBackground* b=&iq.backgrounds[j];int visible=j<cols*iq_rows(0);
+        IQBackground* b=&iq.backgrounds[j];
+        if(!iq_background_live(b))continue;
+        int visible=j<cols*iq_rows(0);
         *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
         if(!visible)continue;
         double pitch=width/cols*0.90,factor=(double)iq.native_columns[0]/cols*0.90;
@@ -18,7 +20,9 @@ static void iq_layout_equipment_backgrounds(void) {
         iq_write_double(b->transform,0x98,b->sx*factor);iq_write_double(b->transform,0xa0,b->sy*factor);
     }
 }
-static int iq_equipment_cap(void) {return iq_grid_cap[iq.backpack];}
+/* Equipment selection follows Storage, limited to its capacity grid. */
+static int iq_equipment_cap_for(int backpack) {return backpack?iq_grid_cap[1]:iq_grid_effective(iq_grid_cap[0],iq_storage_limit);}
+static int iq_equipment_cap(void) {return iq_equipment_cap_for(iq.backpack);}
 static void iq_capture_equipment(void* owner) {
     if(!layout_test)return;
     int mode=iq_int(owner,0x58);
@@ -44,8 +48,8 @@ static void iq_capture_equipment(void* owner) {
     ((void*(__cdecl*)(void*,double*,void*))(void*)(game_base+0x97cb30))(iq_ptr(owner,0x40),bounds,&key);
     double width=bounds[1]-bounds[0];
     if(!isfinite(width) || width<=0 || width>10000)return;
-    /* iq is pending_view here, so read the mode-specific cap directly. */
-    int cols=iq_grid_columns(columns,iq_grid_cap[iq.backpack]);
+    /* iq is pending_view here, so pass its mode explicitly. */
+    int cols=iq_grid_columns(columns,iq_equipment_cap_for(iq.backpack));
     iq.columns[0]=cols;iq.columns[1]=1;iq.native_columns[0]=columns;
     iq.left[0]=bounds[0];iq.bottom[0]=bounds[2];iq.span[0]=width;
     for(int j=0;j<backgrounds;j++) {

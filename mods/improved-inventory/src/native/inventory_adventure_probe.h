@@ -1,4 +1,5 @@
-/* Beta-only, read-only discovery for the adventure Backpack screen.
+/* Beta-only, read-only probes that found the adventure Backpack screen
+ * (InventoryScreen2 mode 0, now managed) and still log unmanaged UI.
  * Nothing here changes layout, items or input: probes only log bounded,
  * de-duplicated observations of native UI objects the mod does not manage.
  * Stable builds compile none of it. */
@@ -51,7 +52,7 @@ static void iq_probe_drawer(void* drawer,int side) {
              (unsigned long long)iq_probe_vtable(owner),(unsigned long long)GetTickCount64());
     report(message);
 }
-/* Equipment grid calls outside pre-adventure selection (mode 1). */
+/* Equipment grid calls in modes the mod does not manage (not 0 or 1). */
 static void iq_probe_equipment_grid(void* owner,const void* caller) {
     if(iq_probe_grids>=60)return;
     iq_probe_grids++;

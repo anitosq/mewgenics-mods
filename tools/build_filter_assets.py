@@ -142,7 +142,7 @@ for focused in range(2):
     m.sprite(f'IQSearch{focused}',m.feedback(parts,[(277,0,38,36)]))
 parts=[]
 for x in (323,451):parts+=m.dropdown('',x,120)
-parts.append((m.field(dynamic_font,332,3,88,30,20,'Effects'),'stats'))
+parts.append((m.field(dynamic_font,332,3,88,30,20,'Stats'),'stats'))
 parts.append((m.field(dynamic_font,460,3,88,30,20,'Effects'),'effects'))
 m.sprite('IQFxBar',m.feedback(parts,[(323,0,120,36),(451,0,120,36)]))
 # Stats: Any, then bonus/malus per stat. Labels are the game's localized
@@ -171,7 +171,7 @@ rectangles+=[(10,410,90,36),(382,410,90,36)]
 m.sprite('IQEffects',m.feedback(parts,rectangles))
 # Additional inset keeps both counts comfortably inside the lighter panel.
 # The width stops short of the grid-size buttons; the longest count label checks it.
-m.sprite('IQCount',[(m.field(dynamic_font,18,0,310,24,18,'Storage: 0    Trash: 0    No matches'),'count')])
+m.sprite('IQCount',[(m.field(dynamic_font,18,0,300,24,18,'Storage: 0    Trash: 0    No matches'),'count')])
 # Storage/Trash grid-size toggles on the count row; 22 units tall so they stay
 # clear of the first item row. Starts with the widest label for width checks.
 parts=m.paper(0,0,118,22)+[(m.field(dynamic_font,3,1,112,22,16,'Storage 10x10',align=2),'label')]

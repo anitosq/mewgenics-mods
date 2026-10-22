@@ -1,6 +1,7 @@
-/* Player-selected grid widths, one per house container (0 Storage, 1 Trash).
- * A size caps the native column count: the grid grows up to it, then scrolls.
- * Trash also offers 0 ("Auto"), which keeps the native growing grid. */
+/* Player-selected grid widths: 0 Storage (also pre-adventure equipment) and
+ * 1 Trash (also the adventure Backpack). A size caps the native column count:
+ * the grid grows up to it, then scrolls. Trash also offers 0 ("Auto"), which
+ * keeps the native growing grid. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,16 +51,19 @@ static void iq_grid_label(wchar_t* out,size_t capacity,int side,int cap) {
 }
 static const char* iq_grid_keys[2]={"storage_columns=","trash_columns="};
 /* settings.ini holds "storage_columns=<size>" and "trash_columns=<size|auto>"
-   lines; anything else, including a missing or damaged file, keeps 6. */
+   lines; anything else, including a missing or damaged file, keeps 6. Storage
+   also accepts its own capacity size (2..20), which the button can offer. */
+static int iq_grid_valid(int side,int cap) {return side?iq_grid_index(side,cap)>=0:cap>=2 && cap<=20;}
 static int iq_grid_parse(const char* text,int side) {
     const char* key=iq_grid_keys[side];
+    if(text && !strncmp(text,"\xEF\xBB\xBF",3))text+=3;
     for(const char* line=text;line && *line;) {
         while(*line==' ' || *line=='\t' || *line=='\r' || *line=='\n')line++;
         if(!strncmp(line,key,strlen(key))) {
             const char* value=line+strlen(key);
             if(side && !strncmp(value,"auto",4) && (!value[4] || value[4]=='\r' || value[4]=='\n'))return 0;
             char* end=NULL;long cap=strtol(value,&end,10);
-            if(end!=value && (!*end || *end=='\r' || *end=='\n') && cap>0 && iq_grid_index(side,(int)cap)>=0)return (int)cap;
+            if(end!=value && (!*end || *end=='\r' || *end=='\n') && cap>0 && cap<=20 && iq_grid_valid(side,(int)cap))return (int)cap;
             return IQ_GRID_DEFAULT;
         }
         line=strchr(line,'\n');
