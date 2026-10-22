@@ -16,20 +16,28 @@ int main(void) {
     /* Column cap: native growth up to the cap, Auto (0) never caps. */
     assert(iq_grid_columns(4,6)==4 && iq_grid_columns(9,6)==6 && iq_grid_columns(9,10)==9);
     assert(iq_grid_columns(20,0)==20 && iq_grid_columns(12,5)==5);
-    int cap=5;const int cycle[]={6,7,8,10,0,5};
-    for(int i=0;i<6;i++){cap=iq_grid_next(cap);assert(cap==cycle[i]);}
-    assert(iq_grid_next(9)==IQ_GRID_DEFAULT);
+    /* Storage cycles fixed sizes only; Trash adds Auto. */
+    int cap=5;const int storage[]={6,7,8,10,5},trash[]={6,7,8,10,0,5};
+    for(int i=0;i<5;i++){cap=iq_grid_next(0,cap);assert(cap==storage[i]);}
+    for(int i=0;i<6;i++){cap=iq_grid_next(1,cap);assert(cap==trash[i]);}
+    assert(iq_grid_next(0,9)==IQ_GRID_DEFAULT && iq_grid_next(0,0)==IQ_GRID_DEFAULT);
     assert(iq_grid_equipment_rows(4)==4 && iq_grid_equipment_rows(5)==5 && iq_grid_equipment_rows(6)==5);
     assert(iq_grid_equipment_rows(8)==6 && iq_grid_equipment_rows(10)==8 && iq_grid_equipment_rows(20)==16);
     wchar_t label[32];
-    iq_grid_label(label,32,10);assert(!wcscmp(label,L"Grid: 10x10"));
-    iq_grid_label(label,32,0);assert(!wcscmp(label,L"Grid: Auto"));
+    iq_grid_label(label,32,0,10);assert(!wcscmp(label,L"Storage 10x10"));
+    iq_grid_label(label,32,1,7);assert(!wcscmp(label,L"Trash 7x7"));
+    iq_grid_label(label,32,1,0);assert(!wcscmp(label,L"Trash Auto"));
     /* settings.ini round trip and damaged input. */
-    char text[64];
-    for(int i=0;i<6;i++){assert(iq_grid_format(text,sizeof(text),cycle[i])>0);assert(iq_grid_parse(text)==cycle[i]);}
-    assert(iq_grid_parse("")==6 && iq_grid_parse("grid_columns=9")==6 && iq_grid_parse("grid_columns=8x")==6);
-    assert(iq_grid_parse("grid_columns=-8")==6 && iq_grid_parse("grid_columns=autox")==6);
-    assert(iq_grid_parse("# note\r\n  grid_columns=10\r\n")==10 && iq_grid_parse("other=1\ngrid_columns=auto")==0);
+    char text[96];
+    for(int i=0;i<6;i++) {
+        int caps[2]={storage[i%5],trash[i]};
+        assert(iq_grid_format(text,sizeof(text),caps)>0);
+        assert(iq_grid_parse(text,0)==caps[0] && iq_grid_parse(text,1)==caps[1]);
+    }
+    assert(iq_grid_parse("",0)==6 && iq_grid_parse("trash_columns=9",1)==6 && iq_grid_parse("storage_columns=8x",0)==6);
+    assert(iq_grid_parse("trash_columns=-8",1)==6 && iq_grid_parse("trash_columns=autox",1)==6);
+    assert(iq_grid_parse("storage_columns=auto",0)==6 && iq_grid_parse("trash_columns=auto",0)==6);
+    assert(iq_grid_parse("# note\r\n  storage_columns=10\r\n",0)==10 && iq_grid_parse("other=1\ntrash_columns=auto",1)==0);
     puts("Grid sizes, equipment rows, labels and settings parsing passed.");
 
     /* SETBONUS_*_NAME strings from the supported build, one per game language. */

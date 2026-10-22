@@ -3,7 +3,7 @@ enum { IQ_RARITY_COUNT=5, IQ_POPUP_COUNT=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4 };
 static const double iq_rarity_popup_scale=0.70;
 static struct {
     void* owner;uint64_t generation;
-    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,grid,rarity_art[3],rarity_labels;
+    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,sizes[2],rarity_art[3],rarity_labels;
     double offset_x,offset_y,scale,grid_x[2],grid_y[2];
     int captured_click;
 } iq_controls;
@@ -66,7 +66,7 @@ static void iq_hide_all(void) {
     for(int i=0;i<IQ_TYPE_COUNT*IQ_RARITY_COUNT;i++)iq_control_hide(&iq_controls.bars[i]);
     for(int i=0;i<IQ_POPUP_COUNT;i++)iq_control_hide(&iq_controls.popups[i]);
     for(int i=0;i<2;i++){iq_control_hide(&iq_controls.search[i]);for(int j=0;j<2;j++)iq_control_hide(&iq_controls.arrows[i][j]);}
-    iq_control_hide(&iq_controls.count);iq_control_hide(&iq_controls.grid);
+    iq_control_hide(&iq_controls.count);for(int side=0;side<2;side++)iq_control_hide(&iq_controls.sizes[side]);
     for(int i=0;i<3;i++)iq_control_hide(&iq_controls.rarity_art[i]);
     iq_control_hide(&iq_controls.rarity_labels);
 }
@@ -289,7 +289,7 @@ static void iq_feedback_update(void) {
     IQControl* bar=&iq_controls.bars[active_filter.type*IQ_RARITY_COUNT+active_filter.rarity];
     const double fields[][2]={{0,230},{238,135},{381,114},{503,68}};
     for(int i=0;i<4;i++)if(iq_feedback_rect(&sample,bar,i,fields[i][0],0,fields[i][1],36))return;
-    if(!iq.equipment && iq_feedback_rect(&sample,&iq_controls.grid,0,0,0,IQ_GRID_BUTTON_WIDTH,IQ_GRID_BUTTON_HEIGHT))return;
+    for(int side=0;side<2 && !iq.equipment;side++)if(iq_feedback_rect(&sample,&iq_controls.sizes[side],0,0,0,IQ_GRID_BUTTON_WIDTH,IQ_GRID_BUTTON_HEIGHT))return;
     for(int side=0;side<2;side++)for(int dir=0;dir<2;dir++)if(iq_feedback_rect(&sample,&iq_controls.arrows[side][dir],0,0,0,32,36))return;
 }
 static void iq_edit_insert(const wchar_t* text) {
@@ -385,10 +385,12 @@ static int iq_ui_event(void* event) {
         iq_controls.captured_click=1;
         if(p[0]>=533){iq_sound(IQ_SOUND_RESET);iq_search.query[0]=0;iq_focus_set(0);iq_refilter();}else {if(iq_focus!=1)iq_sound(IQ_SOUND_SELECT);iq_focus_set(1);iq_ui_update();}return 1;
     }
-    if(!iq.equipment && !iq_controls.grid.hidden && iq_control_point(&iq_controls.grid,p) &&
-       p[0]>=0 && p[0]<IQ_GRID_BUTTON_WIDTH && p[1]>=0 && p[1]<IQ_GRID_BUTTON_HEIGHT) {
+    for(int side=0;side<2 && !iq.equipment;side++) {
+        IQControl* size=&iq_controls.sizes[side];
+        if(size->hidden || !iq_control_point(size,p) || p[0]<0 || p[0]>=IQ_GRID_BUTTON_WIDTH ||
+           p[1]<0 || p[1]>=IQ_GRID_BUTTON_HEIGHT)continue;
         iq_focus_set(0);iq_controls.captured_click=1;iq_sound(IQ_SOUND_SELECT);
-        iq_grid_cap=iq_grid_next(iq_grid_cap);iq_save_settings();iq_apply_grid_setting();iq_ui_update();return 1;
+        iq_grid_cap[side]=iq_grid_next(side,iq_grid_cap[side]);iq_save_settings();iq_apply_grid_setting();iq_ui_update();return 1;
     }
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;
     if(iq_control_point(&iq_controls.bars[selected],p) && p[1]>=0 && p[1]<36 && p[0]>=0 && p[0]<571) {

@@ -33,15 +33,16 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.4.0-beta.1 candidate](../../docs/releases/improved-inventory/0.4.0-beta.1-candidate.md)
-adds a grid-size choice and localized set names on top of the untested
+The [0.4.0-beta.2 candidate](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)
+adds per-container grid sizes and localized set names on top of the untested
 0.3.8-beta.1 performance work. It awaits owner testing; 0.3.7 remains the
 public release.
 
-The Grid button beside the Storage/Trash counts cycles through 5x5, 6x6
-(default), 7x7, 8x8, 10x10 and Auto. Each size is a maximum: the game's grid
-still grows up to it, then scrolls. Auto never caps the grid, as in the
-unmodded game. The choice is saved in
+The Storage and Trash buttons beside the item counts each cycle through 5x5,
+6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Each size caps the
+game's grid, which still grows up to it, then scrolls. Storage's game grid
+matches its capacity, so a size at or above it shows the whole capacity.
+Trash Auto never caps, as in the unmodded game. The choices are saved in
 `%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
 
 Set counts include duplicate copies and use all items in each container,

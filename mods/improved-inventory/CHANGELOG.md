@@ -1,10 +1,12 @@
 # Improved Inventory changelog
 
-## 0.4.0-beta.1
+## 0.4.0-beta.2
 
-- Choose the grid size with the new Grid button in Storage: 5x5, 6x6, 7x7, 8x8,
-  10x10 or Auto. Auto keeps the game's growing grid, without scrolling.
-  The choice also applies to pre-adventure equipment and is remembered.
+- Choose each grid's size with the new Storage and Trash buttons beside the
+  item counts: 5x5, 6x6, 7x7, 8x8 or 10x10, with scrolling beyond that.
+  Trash can also be set to Auto, which grows with the items to discard, as in
+  the unmodded game. The Storage size also applies to pre-adventure equipment.
+  Both choices are remembered.
 - Set names now appear without the "Set Bonus" wording in every game language,
   so the set filter and set list show the actual set name in French and others.
 - Includes the 0.3.8-beta.1 performance changes.

@@ -40,7 +40,7 @@ static void iq_capture_equipment(void* owner) {
     ((void*(__cdecl*)(void*,double*,void*))(void*)(game_base+0x97cb30))(iq_ptr(owner,0x40),bounds,&key);
     double width=bounds[1]-bounds[0];
     if(!isfinite(width) || width<=0 || width>10000)return;
-    int cols=iq_grid_columns(columns,iq_grid_cap);
+    int cols=iq_grid_columns(columns,iq_grid_cap[0]);
     iq.columns[0]=cols;iq.columns[1]=1;iq.native_columns[0]=columns;
     iq.left[0]=bounds[0];iq.bottom[0]=bounds[2];iq.span[0]=width;
     for(int j=0;j<backgrounds;j++) {
@@ -82,7 +82,7 @@ static void iq_apply_grid_setting(void) {
     if(!layout_test || !iq_view_live())return;
     for(int side=0;side<(iq.equipment?1:2);side++) {
         if(!iq.native_columns[side])return;
-        iq.columns[side]=iq_grid_columns(iq.native_columns[side],iq_grid_cap);
+        iq.columns[side]=iq_grid_columns(iq.native_columns[side],iq_grid_cap[side]);
         iq.scale[side]=iq.native_scale[side]/iq.columns[side];
     }
     iq_view_revision++;memset(iq.row,0,sizeof(iq.row));

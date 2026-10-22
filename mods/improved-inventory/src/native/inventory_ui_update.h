@@ -41,17 +41,19 @@ static void iq_ui_update(void) {
         else swprintf(label,200,L"%ls",iq_search.set_mode==1?L"Any set":iq_search.set_mode==2?L"No set":L"All sets");
         ready&=iq_text(&iq_controls.bars[selected],0,"sets",label);
     }
-    if(iq.equipment){iq_control_hide(&iq_controls.count);iq_control_hide(&iq_controls.grid);}
+    if(iq.equipment){iq_control_hide(&iq_controls.count);for(int side=0;side<2;side++)iq_control_hide(&iq_controls.sizes[side]);}
     else {
         iq_control_show(&iq_controls.count,"IQCount",x+12*s,y-80*s);
         if(refresh || !iq_label_cache.valid) {
             swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
             ready&=iq_text(&iq_controls.count,0,"count",label);
         }
-        iq_control_show(&iq_controls.grid,"IQGrid",x+IQ_GRID_BUTTON_X*s,y-80*s);
-        if(refresh || !iq_label_cache.valid) {
-            iq_grid_label(label,200,iq_grid_cap);
-            ready&=iq_text(&iq_controls.grid,0,"label",label);
+        for(int side=0;side<2;side++) {
+            iq_control_show(&iq_controls.sizes[side],"IQGrid",x+(IQ_GRID_BUTTON_X+side*IQ_GRID_BUTTON_PITCH)*s,y-80*s);
+            if(refresh || !iq_label_cache.valid) {
+                iq_grid_label(label,200,side,iq_grid_cap[side]);
+                ready&=iq_text(&iq_controls.sizes[side],0,"label",label);
+            }
         }
     }
     if(filter_popup==1 || filter_popup==2) {

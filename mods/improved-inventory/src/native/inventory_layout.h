@@ -313,7 +313,7 @@ static void iq_capture(void* owner) {
         int backgrounds=iq_int(owner,side?0x84:0x74);
         void** cells=iq_ptr(owner,side?0x88:0x78);
         if (columns<2 || columns>20 || backgrounds!=columns*columns || !cells) return;
-        int cols=iq_grid_columns(columns,iq_grid_cap);
+        int cols=iq_grid_columns(columns,iq_grid_cap[side]);
         iq.columns[side]=cols;iq.native_columns[side]=columns;
         void *first=NULL;
         if (!iq_read(cells,&first,8)) return;
