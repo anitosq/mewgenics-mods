@@ -16,6 +16,8 @@ typedef struct {
     double stats[AF_STATS];
 } AFShape;
 typedef struct { int x,y,sx,sy,used; } AFPlacement;
+#define AF_EVALUATIONS 100000
+#define AF_RESTART 8 /* one fresh start per this many repairs */
 typedef struct {
     int width,height,count;
     unsigned selected,targets,caps;
@@ -34,6 +36,9 @@ typedef struct {
     int order[AF_ITEMS];
     double priority[AF_ITEMS];
     double area_divisor[5][AF_ITEMS];
+    short surface[2][AF_CELLS];
+    int shape_class[AF_ITEMS];
+    unsigned failed[AF_ITEMS],version;
     int (*stop)(void*);
     void* stop_context;
     uint32_t random;
@@ -71,7 +76,7 @@ static void af_sort(double* values,int n) {
 static int af_parse_bound(const char* text,double* value) {
     *value=0;if(!*text)return 0;
     char* end=NULL;*value=strtod(text,&end);
-    return end==text||*end||!isfinite(*value)||*value<0||*value>1000000?-1:1;
+    return end==text||*end||!isfinite(*value)||*value<-1000000||*value>1000000?-1:1;
 }
 static double af_correct_max(double minimum,double maximum) {
     return maximum<=minimum?minimum+1:maximum;
@@ -108,8 +113,8 @@ static int af_valid_problem(const AFProblem* p) {
     if(p->width<1||p->height<1||p->width>64||p->height>64||p->count<0||p->count>AF_ITEMS||
        !p->selected||(p->selected&~AF_ALL_STATS)||(p->targets&~p->selected)||(p->caps&~p->selected))return 0;
     for(int j=0;j<AF_STATS;j++) {
-        if(!isfinite(p->base[j])||!isfinite(p->minimum[j])||p->minimum[j]<0||
-           !isfinite(p->maximum[j])||p->maximum[j]<0)return 0;
+        /* Bounds may be negative: some furniture lowers stats, and players may want that. */
+        if(!isfinite(p->base[j])||!isfinite(p->minimum[j])||!isfinite(p->maximum[j]))return 0;
         if((p->targets&p->caps&(1u<<j))&&p->maximum[j]<=p->minimum[j])return 0;
     }
     for(int i=0;i<p->width*p->height;i++)if(p->grid[i]>8)return 0;
@@ -178,6 +183,12 @@ static int af_start(const AFProblem* p,AFSearch* search,const AFLayout* initial)
     memset(search,0,sizeof(*search));search->random=0x9145ab13;
     for(int phase=0;phase<5;phase++)for(int i=0;i<p->count;i++)
         search->area_divisor[phase][i]=pow(fmax(1,p->shape[i].solid),0.3+phase*0.2);
+    for(int i=0;i<p->count;i++) {
+        int j=0;
+        while(j<i&&(p->shape[j].count!=p->shape[i].count||
+              memcmp(p->shape[j].cells,p->shape[i].cells,(size_t)p->shape[i].count*sizeof(AFCell))))j++;
+        search->shape_class[i]=j;
+    }
     if(initial)search->best=*initial;
     if(!af_rebuild(p,&search->best,search->grid,0))return 0;
     /* Old builds could invert furniture. Do not seed new layouts with those pieces. */
@@ -190,13 +201,16 @@ static void af_keep(const AFProblem* p,AFSearch* s) {
 }
 static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
     unsigned evaluations=0;
-    int progress=1;
+    int progress=1,surfaces=0,surfaces_ready=0;
+    /* Placing pieces only removes space, except new surfaces. A shape that found no spot stays
+       impossible, together with every identical piece, until another surface appears. */
+    s->version++;
     while(progress) {
         progress=0;
         for(int at=0;at<p->count;at++) {
             if(!(at%64)&&af_stopped(s))return;
             int i=s->order[at];if(s->trial.placement[i].used)continue;
-            const AFShape* shape=&p->shape[i];AFPlacement choice={0};unsigned options=0;
+            const AFShape* shape=&p->shape[i];AFPlacement choice={0};
             if(fill_utilities) {
                 if(!shape->utility)continue;
                 int safe=1;
@@ -204,20 +218,46 @@ static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
                     ((p->caps&(1u<<j))&&s->trial.stats[j]+shape->stats[j]>p->maximum[j]+1e-8))safe=0;
                 if(!safe)continue;
             }
+            if(s->failed[s->shape_class[i]]==s->version)continue;
             int flip=(int)(af_random(s)%2),reverse=(int)(af_random(s)%2);
+            int anchor=-1;unsigned options=0;
+            for(int c=0;c<shape->count&&anchor<0;c++)if(shape->cells[c].value==3)anchor=c;
+            if(anchor>=0&&!surfaces_ready) {
+                /* Surface cells by row, left to right and right to left, matching the full scan. */
+                surfaces=0;
+                for(int y=0,k=0;y<p->height;y++) {
+                    for(int x=0;x<p->width;x++)if(s->grid[y*p->width+x]==2)s->surface[0][surfaces++]=(short)(y*p->width+x);
+                    for(int x=p->width-1;x>=0;x--)if(s->grid[y*p->width+x]==2)s->surface[1][k++]=(short)(y*p->width+x);
+                }
+                surfaces_ready=1;
+            }
             for(int orient=0;orient<2;orient++) {
                 int sx=((orient+flip)&1)?-1:1,sy=1;
                 int xmin=-23,xmax=p->width+22,ymin=-23,ymax=p->height+22;
                 for(int c=0;c<shape->count;c++) {
                     int dx=shape->cells[c].x*sx,dy=shape->cells[c].y*sy;
-                    if(-dx>xmin)xmin=-dx;if(p->width-1-dx<xmax)xmax=p->width-1-dx;
-                    if(-dy>ymin)ymin=-dy;if(p->height-1-dy<ymax)ymax=p->height-1-dy;
+                    if(-dx>xmin)xmin=-dx;
+                    if(p->width-1-dx<xmax)xmax=p->width-1-dx;
+                    if(-dy>ymin)ymin=-dy;
+                    if(p->height-1-dy<ymax)ymax=p->height-1-dy;
                 }
-                for(int y=ymin;y<=ymax;y++)for(int xx=xmin;xx<=xmax;xx++) {
+                /* A piece that rests on a surface can only sit where its first resting cell
+                   meets one, so try those surface cells instead of every cell in the room. */
+                int total=anchor>=0?surfaces:(ymax-ymin+1)*(xmax-xmin+1);
+                for(int k=0;k<total;k++) {
+                    int x,y;
+                    if(anchor>=0) {
+                        int cell=s->surface[reverse][k];
+                        x=cell%p->width-shape->cells[anchor].x*sx;y=cell/p->width-shape->cells[anchor].y;
+                        if(x<xmin||x>xmax||y<ymin||y>ymax)continue;
+                    } else {
+                        int xx=xmin+k%(xmax-xmin+1);y=ymin+k/(xmax-xmin+1);
+                        x=reverse?xmax-(xx-xmin):xx;
+                    }
                     /* Keep a single trial bounded even with huge modded inventories. */
-                    if(++evaluations>100000)return;
+                    if(++evaluations>AF_EVALUATIONS)goto found;
                     if(!(evaluations%256)&&af_stopped(s))return;
-                    int x=reverse?xmax-(xx-xmin):xx;AFPlacement v={x,y,sx,sy,1};
+                    AFPlacement v={x,y,sx,sy,1};
                     if(!af_fits(p,s->grid,shape,v))continue;
                     if(fill_utilities) {
                         /* Do not overwrite existing type-1 occupancy with a type-5 overlay. */
@@ -225,15 +265,20 @@ static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
                         for(int c=0;c<shape->count;c++)if(shape->cells[c].value==5&&
                             s->grid[(y+shape->cells[c].y)*p->width+x+shape->cells[c].x*sx]==1)overlap=1;
                         if(overlap)continue;
+                        choice=v;goto found;
                     }
+                    /* Uniform over all fitting spots: measured better than first-fit or
+                       compact packing, because varied placements feed the repair search. */
                     options++;
                     if(!choice.used||af_random(s)%options==0)choice=v;
-                    if(fill_utilities||s->iterations%3==0)goto found;
                 }
             }
+            if(!choice.used){s->failed[s->shape_class[i]]=s->version;continue;}
 found:
             if(!choice.used)continue;
             s->trial.placement[i]=choice;af_stamp(p,s->grid,shape,choice);s->trial.used++;progress++;
+            surfaces_ready=0;
+            for(int c=0;c<shape->count;c++)if(shape->cells[c].value==2){s->version++;break;}
             for(int j=0;j<AF_STATS;j++)s->trial.stats[j]+=shape->stats[j];
             if(fill_utilities)s->best=s->trial;else af_keep(p,s);
         }
@@ -262,20 +307,44 @@ static int af_order(AFSearch* s,int count) {
 static void af_step(const AFProblem* p,AFSearch* s) {
     if(af_stopped(s))return;
     memset(&s->trial,0,sizeof(s->trial));
-    if(s->iterations%4) {
+    if(s->iterations%AF_RESTART) {
         s->trial=s->best;
-        unsigned remove=15+af_random(s)%70;
-        for(int i=0;i<p->count;i++)if(af_random(s)%100<remove)s->trial.placement[i].used=0;
+        if(af_random(s)%2) {
+            /* Clear a vertical band so neighbouring pieces can be repacked together. */
+            int band=1+(int)(af_random(s)%(unsigned)(p->width/2+1)),left=(int)(af_random(s)%(unsigned)p->width);
+            for(int i=0;i<p->count;i++)if(s->trial.placement[i].used) {
+                int x=s->trial.placement[i].x;
+                if(x>=left-2&&x<left+band)s->trial.placement[i].used=0;
+            }
+        } else {
+            unsigned remove=15+af_random(s)%70;
+            for(int i=0;i<p->count;i++)if(af_random(s)%100<remove)s->trial.placement[i].used=0;
+        }
     }
     if(!af_rebuild_checked(p,&s->trial,s->grid,1,s))return;
     af_keep(p,s);
     double weights[AF_STATS];
     for(int j=0;j<AF_STATS;j++)weights[j]=(p->selected&(1u<<j))?(0.1+(af_random(s)%1000)/250.0):0;
+    /* Balanced stats improve the lowest first, so most repairs favour the weakest selected
+       stat, unmet Min targets, and avoid stats already at their Max. */
+    if(s->iterations%2) {
+        double low=INFINITY,scale=1;
+        for(int j=0;j<AF_STATS;j++)if(p->selected&(1u<<j)) {
+            if(s->best.stats[j]<low)low=s->best.stats[j];scale+=fabs(s->best.stats[j]);
+        }
+        scale=0.15*scale/AF_STATS+1;
+        for(int j=0;j<AF_STATS;j++)if(p->selected&(1u<<j)) {
+            double gap=s->best.stats[j]-low;
+            if((p->targets&(1u<<j))&&s->best.stats[j]<p->minimum[j])gap=0;
+            weights[j]*=1/(1+gap/scale);
+            if((p->caps&(1u<<j))&&s->best.stats[j]>=p->maximum[j]-1e-8)weights[j]=-weights[j];
+        }
+    }
     for(int i=0;i<p->count;i++) {
         s->order[i]=i;double value=0;
         for(int j=0;j<AF_STATS;j++)value+=p->shape[i].stats[j]*weights[j];
         /* Fresh starts also explore orders that raw stat value would always reject. */
-        s->priority[i]=s->iterations%4?value/s->area_divisor[s->iterations%5][i]:0;
+        s->priority[i]=s->iterations%AF_RESTART?value/s->area_divisor[s->iterations%5][i]:0;
         s->priority[i]+=(af_random(s)%1000)*0.003;
     }
     if(!af_order(s,p->count))return;

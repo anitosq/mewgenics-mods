@@ -41,7 +41,8 @@ Italian, Brazilian Portuguese, Russian, Korean, Japanese or Simplified Chinese.
 After changing language, reopen the room's wand panel.
 
 - Min is a best-effort target; Max is a limit. Leave either blank for no bound.
-  Zero is an explicit bound. When both are set, Max must exceed Min.
+  Zero is an explicit bound, and negative values are allowed, for example
+  Max -5 to keep a stat at -5 or lower. When both are set, Max must exceed Min.
 - Multiple selected stats are balanced, improving the lowest first after
   addressing bounds. Unselected stats may decrease; review all five results.
   Appeal is the selected room's contribution, not the whole-house total.
@@ -60,7 +61,8 @@ After changing language, reopen the room's wand panel.
 Only loose inventory and the selected room are used. Furniture is never taken
 from other rooms. The search uses horizontal mirroring, not rotation or
 vertical flipping. Shapes, supports and inventory limits can leave gaps.
-Best found is not a guaranteed mathematical optimum.
+Best found is not a guaranteed mathematical optimum. A calculation takes up to
+about 2.5 seconds.
 
 Mouse and keyboard required. The mod stays inactive on unsupported game builds
 or missing, disabled or mismatched UI assets. If room contents change after

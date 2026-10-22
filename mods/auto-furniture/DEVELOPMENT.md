@@ -131,3 +131,25 @@ for utility filling when utility candidates exist. This is a cooperative budget,
 not a hard wall-clock guarantee; capture/preparation and Apply/Undo are separate.
 Tests retain cancellation-free helpers for deterministic fixed-iteration checks.
 See the [candidate record](../../docs/releases/auto-furniture/0.2.2-beta.1-candidate.md).
+
+## 0.3.0 search-quality candidate (untested in game)
+
+- Min/Max accept negative values (-1000000 to 1000000). The UI already allowed
+  typing `-`; only parsing and problem validation rejected it.
+- Placement picks uniformly among all fitting spots. The old one-in-three
+  first-fit pass was dropped: on `bench_solver.c` it scored lower, and so did a
+  compact contact-scoring variant that was tried and removed.
+- Pieces that rest on a surface only try spots where their first resting cell
+  meets a surface cell, instead of every room cell. Identical shapes share a
+  failed-fit cache, invalidated whenever a new surface is stamped. Together
+  these roughly halve trial time and stop large rooms from hitting the
+  100,000-evaluation cap before most of the inventory has been tried.
+- Repairs clear either random pieces or a vertical band of the room. Half of
+  them weight the weakest selected stat and unmet Min targets, and avoid stats
+  already at Max. Fresh starts dropped from one in 4 to one in 8 iterations.
+- The worker budget is 2.5 s (was 1.2 s), capped at 50,000 iterations (was 3,000).
+
+Synthetic benchmark (`bench_solver.c`, 36 cases, 0.6 s each): TOTAL 2726 → 2821
+for 150 items in 16–24 × 9 rooms, and 5978 → 6352 for 400 items in 30–42 × 16
+rooms. Old code at 3 s still scores below the new code at 1.2 s. These rooms are
+synthetic and are not evidence of in-game results.

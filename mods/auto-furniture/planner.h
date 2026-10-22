@@ -20,12 +20,12 @@ static int search_stopped(void* deadline) {
     return InterlockedCompareExchange(&plan_cancel,0,0)||GetTickCount64()>=*(ULONGLONG*)deadline;
 }
 static DWORD WINAPI search_worker(void* ignored) {
-    (void)ignored;ULONGLONG until=GetTickCount64()+1200;
+    (void)ignored;ULONGLONG until=GetTickCount64()+2500;
     /* Reserve part of the same budget for utility fill; closing cancels both phases. */
     int utilities=0;for(int i=0;i<problem.count;i++)utilities|=problem.shape[i].utility;
     ULONGLONG deadline=until-(utilities?100:0);
     search.stop=search_stopped;search.stop_context=&deadline;
-    while(search.iterations<3000&&!af_stopped(&search))af_step(&problem,&search);
+    while(search.iterations<50000&&!af_stopped(&search))af_step(&problem,&search);
     deadline=until;
     if(!af_stopped(&search))af_fill_utilities(&problem,&search);
     search.stop=NULL;search.stop_context=NULL;

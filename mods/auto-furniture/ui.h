@@ -185,7 +185,7 @@ static int ui_bounds(double minimum[AF_STATS],double maximum[AF_STATS],unsigned*
     for(int i=0;i<AF_STATS;i++)if(ui_state.selected&(1u<<i)) {
         int lo=af_parse_bound(ui_state.minimum[i],&minimum[i]);
         int hi=af_parse_bound(ui_state.maximum[i],&maximum[i]);
-        if(lo<0||hi<0){report("Min and Max must be zero or higher, or blank.");return 0;}
+        if(lo<0||hi<0){report("Min and Max must be numbers (negative allowed), or blank.");return 0;}
         if(lo&&hi) {
             double corrected=af_correct_max(minimum[i],maximum[i]);
             if(corrected!=maximum[i]) {
