@@ -6,11 +6,14 @@ from pathlib import Path
 import struct
 import localization
 
-PANEL_HITS = [(558,0,42,48)] + [(18,90+i*44,215,36) for i in range(5)]
+PANEL_WIDTH = 680
+PANEL_HITS = [(638,0,42,48)] + [(18,90+i*44,215,36) for i in range(5)]
 PANEL_HITS += [(x,90+i*44,76,36) for i in range(5) for x in (238,320)]
-PANEL_HITS += [(18,324,420,28),(450,320,132,38)]
-PANEL_HITS += [(18+i*144,370,132,38) for i in range(4)]
-PANEL_HITS += [(18,546,276,38),(306,546,276,38)]
+PANEL_HITS += [(18,324,420,28),(530,320,132,38)]
+PANEL_HITS += [(18+i*166,370,146,38) for i in range(4)]
+PANEL_HITS += [(18,546,316,38),(346,546,316,38)]
+# Appended so earlier indices keep their meaning in ui.h.
+PANEL_HITS += [(402,90+i*44,72,36) for i in range(5)]
 PIN_HITS = [(558,0,42,48),(18,436,55,36),(85,436,55,36),(450,436,132,36)]
 # Native catparts.swf Rare/Quest item tints, sampled at gray 177 and blended 35% over paper.
 CALCULATE_FILL = (224,219,177,255)
@@ -110,30 +113,33 @@ def build():
                          (20,17),(15,20),(13,19),(15,13),(11,10),(12,8),(18,8)],ink),
               wand([(20,6),(22,11),(26,10),(22,13),(23,17),(20,14),(16,17),(17,12),(14,10),(19,10)],(232,225,206,255))]
     m.sprite('AFRoom',m.feedback(parts,[(0,0,32,32)]))
-    parts = m.paper(0,0,600,604)
-    parts += [(m.field(18,10,530,36,27,'Auto Furniture'),'title'),m.field(565,10,30,36,26,'X'),
+    inner = PANEL_WIDTH-36
+    parts = m.paper(0,0,PANEL_WIDTH,604)
+    parts += [(m.field(18,10,inner-34,36,27,'Auto Furniture'),'title'),m.field(PANEL_WIDTH-35,10,30,36,26,'X'),
               (m.field(18,56,210,30,19,'Stat'),'stat'),(m.field(238,56,76,30,19,'Min'),'min'),
-              (m.field(320,56,76,30,19,'Max'),'max'),(m.field(410,56,75,30,19,'Before',align=2),'before'),
-              (m.field(493,56,90,30,17,'Best found',align=2),'best')]
-    parts += [m.box(18,82,564,1,(54,50,42,90)),m.box(18,313,564,1,(54,50,42,90))]
+              (m.field(320,56,76,30,19,'Max'),'max'),(m.field(402,56,72,30,17,'Goal',align=2),'goal'),
+              (m.field(490,56,75,30,19,'Before',align=2),'before'),
+              (m.field(573,56,90,30,17,'Best found',align=2),'best')]
+    parts += [m.box(18,82,inner,1,(54,50,42,90)),m.box(18,313,inner,1,(54,50,42,90))]
     for i,label in enumerate(('Comfort','Stimulation','Health','Mutation','Appeal')):
         y=90+i*44
         parts += m.paper(18,y+3,28,28)+[(m.field(21,y+2,25,30,23),'check'+str(i)),(m.field(92,y+3,141,32,20,label),'stat'+str(i))]
         for prefix,x in [('min',238),('max',320)]:
             parts += m.paper(x,y,76,36)+[(m.field(x+3,y+4,70,30,18,align=2),prefix+str(i))]
-        parts += [(m.field(410,y+4,75,30,21,align=2),'old'+str(i)),(m.field(493,y+4,90,30,21,align=2),'new'+str(i))]
+        parts += m.paper(402,y,72,36)+[(m.field(405,y+3,66,30,21,align=2),'goal'+str(i))]
+        parts += [(m.field(490,y+4,75,30,21,align=2),'old'+str(i)),(m.field(573,y+4,90,30,21,align=2),'new'+str(i))]
     parts += m.paper(18,324,28,28)+[(m.field(21,322,25,30,23),'utility'),(m.field(58,321,380,34,21,'Include utility furniture'),'utility_label')]
-    parts += m.paper(450,320,132,38)+[(m.field(454,325,124,30,22,'Clear',align=2),'clear')]
-    for label,x,fill in [('Calculate',18,CALCULATE_FILL),('Apply',162,APPLY_FILL),
-                         ('Undo',306,(232,225,206,255)),('Pins',450,(232,225,206,255))]:
-        field = m.field(x+4,375,124,30,22,label,align=2)
-        parts += m.paper(x,370,132,38,fill=fill)+[(field,label.lower())]
-    parts += [(m.field(18,426,564,44,17,wrap=True),'status'),(m.field(18,476,72,28,18),'change')]
+    parts += m.paper(530,320,132,38)+[(m.field(534,325,124,30,22,'Clear',align=2),'clear')]
+    for label,x,fill in [('Calculate',18,CALCULATE_FILL),('Apply',184,APPLY_FILL),
+                         ('Undo',350,(232,225,206,255)),('Pins',516,(232,225,206,255))]:
+        field = m.field(x+4,375,138,30,22,label,align=2)
+        parts += m.paper(x,370,146,38,fill=fill)+[(field,label.lower())]
+    parts += [(m.field(18,426,inner,44,17,wrap=True),'status'),(m.field(18,476,72,28,18),'change')]
     for i in range(5):
         parts += [(m.field(118+i*94,476,72,28,18,align=0),'delta'+str(i))]
-    parts += [m.box(18,522,564,1,(54,50,42,90))]
-    for label,x,name in [('Return room',18,'return_room'),('Return all rooms',306,'return_all')]:
-        parts += m.paper(x,546,276,38)+[(m.field(x+4,551,268,30,22,label,align=2),name)]
+    parts += [m.box(18,522,inner,1,(54,50,42,90))]
+    for label,x,name in [('Return room',18,'return_room'),('Return all rooms',346,'return_all')]:
+        parts += m.paper(x,546,316,38)+[(m.field(x+4,551,308,30,22,label,align=2),name)]
     m.sprite('AFPanel',m.feedback(parts,PANEL_HITS))
     parts=m.paper(0,0,600,490)+[(m.field(18,10,530,36,27,'Pinned furniture'),'title'),m.field(565,10,30,36,26,'X')]
     for label,x,w in [('',18,55),('',85,55),('Done',450,132)]:
@@ -155,6 +161,7 @@ def build():
     layout='typedef struct {double x,y,w,h;} UIBox;\n'
     for name,boxes in [('panel_boxes',PANEL_HITS),('pin_boxes',PIN_HITS)]:
         layout+='static const UIBox '+name+'[]={'+','.join('{'+','.join(map(str,b))+'}' for b in boxes)+'};\n'
+    layout+=f'#define PANEL_WIDTH {PANEL_WIDTH}\n'
     (root.parents[1]/'ui-layout.h').write_text(layout,encoding='ascii')
 
 

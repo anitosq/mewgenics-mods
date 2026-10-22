@@ -23,6 +23,7 @@ typedef struct {
     int width,height,count;
     unsigned selected,targets,caps;
     double minimum[AF_STATS],maximum[AF_STATS],base[AF_STATS];
+    int goal[AF_STATS]; /* 0 balance; +rank maximize, -rank minimize; rank 1 first */
     unsigned char grid[AF_CELLS];
     AFShape shape[AF_ITEMS];
 } AFProblem;
@@ -86,7 +87,8 @@ static int af_within_caps(const AFProblem* p,const double stats[AF_STATS]) {
     for(int i=0;i<AF_STATS;i++)if((p->caps&(1u<<i))&&stats[i]>p->maximum[i]+1e-8)return 0;
     return 1;
 }
-/* Caps, minimum targets, selected stats, then unselected stats. */
+static int af_goal_rank(const AFProblem* p,int stat) {return abs(p->goal[stat]);}
+/* Caps, minimum targets, ranked goals, balanced selected stats, then unselected stats. */
 static int af_compare(const AFProblem* p,const double a[AF_STATS],const double b[AF_STATS]) {
     double av[AF_STATS],bv[AF_STATS];int n=0;
     for(int i=0;i<AF_STATS;i++)if(p->caps&(1u<<i)) {
@@ -100,8 +102,10 @@ static int af_compare(const AFProblem* p,const double a[AF_STATS],const double b
     }
     af_sort(av,n);af_sort(bv,n);
     for(int i=n-1;i>=0;i--)if(fabs(av[i]-bv[i])>1e-8)return av[i]<bv[i]?1:-1;
+    for(int rank=1;rank<=AF_STATS;rank++)for(int i=0;i<AF_STATS;i++)
+        if(af_goal_rank(p,i)==rank&&fabs(a[i]-b[i])>1e-8)return (p->goal[i]>0)==(a[i]>b[i])?1:-1;
     n=0;
-    for(int i=0;i<AF_STATS;i++)if(p->selected&(1u<<i)){av[n]=a[i];bv[n++]=b[i];}
+    for(int i=0;i<AF_STATS;i++)if((p->selected&(1u<<i))&&!p->goal[i]){av[n]=a[i];bv[n++]=b[i];}
     af_sort(av,n);af_sort(bv,n);
     for(int i=0;i<n;i++)if(fabs(av[i]-bv[i])>1e-8)return av[i]>bv[i]?1:-1;
     n=0;
@@ -117,6 +121,12 @@ static int af_valid_problem(const AFProblem* p) {
         /* Bounds may be negative: some furniture lowers stats, and players may want that. */
         if(!isfinite(p->base[j])||!isfinite(p->minimum[j])||!isfinite(p->maximum[j]))return 0;
         if((p->targets&p->caps&(1u<<j))&&p->maximum[j]<=p->minimum[j])return 0;
+    }
+    unsigned ranks=0;
+    for(int j=0;j<AF_STATS;j++)if(p->goal[j]) {
+        int rank=af_goal_rank(p,j);
+        if(rank>AF_STATS||!(p->selected&(1u<<j))||(ranks&(1u<<rank)))return 0;
+        ranks|=1u<<rank;
     }
     for(int i=0;i<p->width*p->height;i++)if(p->grid[i]>8)return 0;
     for(int i=0;i<p->count;i++) {
@@ -222,10 +232,10 @@ static int af_list_surfaces(const AFProblem* p,AFSearch* s) {
     }
     return count;
 }
-/* Utility fill only adds pieces that cannot lower a stat or break a Max. */
+/* Utility fill only adds pieces that cannot lower a stat, raise a minimized one or break a Max. */
 static int af_utility_allowed(const AFProblem* p,const AFSearch* s,const AFShape* shape) {
     if(!shape->utility)return 0;
-    for(int j=0;j<AF_STATS;j++)if(shape->stats[j]<0||
+    for(int j=0;j<AF_STATS;j++)if(shape->stats[j]<0||(p->goal[j]<0&&shape->stats[j]>0)||
         ((p->caps&(1u<<j))&&s->trial.stats[j]+shape->stats[j]>p->maximum[j]+1e-8))return 0;
     return 1;
 }
@@ -342,12 +352,17 @@ static void af_clear_random(const AFProblem* p,AFSearch* s) {
     unsigned remove=15+af_random(s)%70;
     for(int i=0;i<p->count;i++)if(af_random(s)%100<remove)s->trial.placement[i].used=0;
 }
-/* Balanced stats improve the lowest first, so favour the weakest selected stat and unmet
+/* Ranked goals outweigh balanced stats, rank 1 most; minimized stats pull the other way. */
+static void af_goal_weights(const AFProblem* p,double weights[AF_STATS]) {
+    for(int j=0;j<AF_STATS;j++)if(p->goal[j])
+        weights[j]*=ldexp(p->goal[j]>0?1:-1,AF_STATS-af_goal_rank(p,j));
+}
+/* Balanced stats improve the lowest first, so favour the weakest balanced stat and unmet
    Min targets, and push away from stats already at their Max. */
 static void af_focus_weights(const AFProblem* p,const AFSearch* s,double weights[AF_STATS]) {
     const double* stats=s->best.stats;
     double low=INFINITY,scale=1;
-    for(int j=0;j<AF_STATS;j++)if(p->selected&(1u<<j)) {
+    for(int j=0;j<AF_STATS;j++)if((p->selected&(1u<<j))&&!p->goal[j]) {
         if(stats[j]<low)low=stats[j];
         scale+=fabs(stats[j]);
     }
@@ -356,8 +371,8 @@ static void af_focus_weights(const AFProblem* p,const AFSearch* s,double weights
         int below_min=(p->targets&(1u<<j))&&stats[j]<p->minimum[j];
         int at_max=(p->caps&(1u<<j))&&stats[j]>=p->maximum[j]-1e-8;
         double gap=below_min?0:stats[j]-low;
-        weights[j]*=1/(1+gap/scale);
-        if(at_max)weights[j]=-weights[j];
+        if(!p->goal[j])weights[j]*=1/(1+gap/scale);
+        if(at_max)weights[j]=-fabs(weights[j]);
     }
 }
 static void af_step(const AFProblem* p,AFSearch* s) {
@@ -372,6 +387,7 @@ static void af_step(const AFProblem* p,AFSearch* s) {
     af_keep(p,s);
     double weights[AF_STATS];
     for(int j=0;j<AF_STATS;j++)weights[j]=(p->selected&(1u<<j))?(0.1+(af_random(s)%1000)/250.0):0;
+    af_goal_weights(p,weights);
     if(s->iterations%2)af_focus_weights(p,s,weights);
     for(int i=0;i<p->count;i++) {
         s->order[i]=i;double value=0;

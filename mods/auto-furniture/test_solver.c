@@ -228,5 +228,22 @@ int main(void) {
     assert(af_start(p,s,NULL)&&s->shape_class[1]==0&&s->shape_class[2]==0);
     for(int i=0;i<20;i++)af_step(p,s);
     assert(s->best.used==2&&s->best.stats[0]==2&&af_rebuild(p,&s->best,s->grid,0));
-    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache");
+    /* Ranked goals: piece 0 adds Comfort, piece 1 trades Comfort for Stimulation, piece 2 adds Stimulation. */
+    memset(p,0,sizeof(*p));p->width=3;p->height=1;p->count=3;p->selected=3;
+    for(int i=0;i<3;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
+    p->shape[0].stats[0]=3;p->shape[1].stats[0]=-2;p->shape[1].stats[1]=5;p->shape[2].stats[1]=1;
+    static const struct {int goal[AF_STATS];double comfort,stimulation;} goals[]={
+        {{0},1,6},{{1},3,1},{{-1},-2,6},{{-2,1},-2,6},{{2,1},1,6}};
+    for(unsigned k=0;k<sizeof(goals)/sizeof(goals[0]);k++) {
+        memcpy(p->goal,goals[k].goal,sizeof(p->goal));
+        assert(af_start(p,s,NULL));for(int i=0;i<100;i++)af_step(p,s);
+        assert(s->best.stats[0]==goals[k].comfort&&s->best.stats[1]==goals[k].stimulation);
+    }
+    double up[AF_STATS]={5,0},down[AF_STATS]={1,9};
+    memset(p->goal,0,sizeof(p->goal));p->goal[0]=1;assert(af_compare(p,up,down)>0);
+    p->goal[0]=-1;assert(af_compare(p,up,down)<0);
+    p->goal[1]=-1;assert(!af_valid_problem(p));
+    p->goal[1]=6;assert(!af_valid_problem(p));
+    p->goal[1]=0;p->goal[2]=2;assert(!af_valid_problem(p));
+    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, ranked goals");
 }

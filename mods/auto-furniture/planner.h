@@ -99,7 +99,8 @@ static int room_stats(byte* room,double stats[AF_STATS]) {
     }
     return 1;
 }
-static void preview(void* ui,const char* room_name,unsigned selected,unsigned targets,const double minimum[AF_STATS],unsigned caps,const double maximum[AF_STATS]) {
+static void preview(void* ui,const char* room_name,unsigned selected,unsigned targets,const double minimum[AF_STATS],
+                    unsigned caps,const double maximum[AF_STATS],const int goal[AF_STATS]) {
     if(plan_worker){report("Searching...");return;}
     plan_ready=0;
     void* inv=NULL;byte* live[MAX_ITEMS];unsigned n=0;byte* scene=ptr(ptr(ui,0x18),8);
@@ -118,6 +119,7 @@ static void preview(void* ui,const char* room_name,unsigned selected,unsigned ta
     problem.width=integer(plan_room,0xf0);problem.height=integer(plan_room,0xf4);
     problem.selected=selected;problem.targets=targets;memcpy(problem.minimum,minimum,sizeof(problem.minimum));
     problem.caps=caps;if(maximum)memcpy(problem.maximum,maximum,sizeof(problem.maximum));
+    if(goal)memcpy(problem.goal,goal,sizeof(problem.goal));
     if(problem.width<1||problem.width>64||problem.height<1||problem.height>64||
        !read_bytes(ptr(plan_room,0x108),problem.grid,(size_t)problem.width*problem.height)) {
         report("Cannot read the room layout.");return;

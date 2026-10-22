@@ -5,6 +5,7 @@ AUTO_FURNITURE_TITLE,%1: %2,Mod name and room name,%1: %2,%1 : %2,%1: %2,%1: %2,
 AUTO_FURNITURE_STAT,Stat,Column header,Atributo,Stat.,Wert,Stat.,Atributo,Параметр,능력치,項目,属性
 AUTO_FURNITURE_MIN,Min,Optional minimum,Mín,Min,Min,Min,Mín,Мин,최소,下限,最小
 AUTO_FURNITURE_MAX,Max,Optional maximum,Máx,Max,Max,Max,Máx,Макс,최대,上限,最大
+AUTO_FURNITURE_GOAL,Goal,"Column header: per-stat goal button (blank balances, +N maximizes, -N minimizes; N is the priority rank)",Objetivo,Objectif,Ziel,Obiettivo,Objetivo,Цель,목표,目標,目标
 AUTO_FURNITURE_BEFORE,Before,Current stat total,Antes,Avant,Vorher,Prima,Antes,Было,현재,変更前,当前
 AUTO_FURNITURE_BEST,Best found,Best calculated stat total,Mejor,Meilleur,Bestwert,Migliore,Melhor,Лучшее,최선,最良結果,最佳结果
 AUTO_FURNITURE_COMFORT,Comfort,Game room stat,Comodidad,Bien-être,Komfort,Comfort,Conforto,Комфорт,편안함,快適さ,舒适

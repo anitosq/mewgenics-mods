@@ -154,6 +154,22 @@ for 150 items in 16–24 × 9 rooms, and 5978 → 6352 for 400 items in 30–42 
 rooms. Old code at 3 s still scores below the new code at 1.2 s. These rooms are
 synthetic and are not evidence of in-game results.
 
+### Ranked goals (0.3.0-beta.3)
+
+Each selected stat has a Goal button cycling balance, `+rank` and `-rank`
+(`AFProblem.goal`). Ranks follow the order goals were set and close up when one
+is cleared or its stat is deselected. Layouts compare Max excess, Min shortfall,
+then each ranked goal in order (higher for `+`, lower for `-`), then the
+remaining selected stats balanced, then unselected stats. Repair weights scale
+goal stats by 2^(5-rank) with the goal's sign; balance focus only considers
+blank-goal stats. Utility fill skips pieces that would raise a minimized stat.
+The panel is 680 px wide to fit the column; goal hits are appended after the
+existing 24 so earlier hit indices keep their meaning. The ASCII `+`/`-` label
+avoids relying on arrow glyphs in the game font. With no goals set, the
+iteration-capped benchmark output is identical to beta.2. Solver fixtures cover
+each goal combination and validation; neither the wider panel nor the Goal
+header's fit in each language has been checked in game.
+
 Build and run the benchmark from the repository root (`V=1` prints each case).
 A large time budget with an iteration cap gives repeatable output, which is
 useful to check that a refactor leaves the search unchanged:
