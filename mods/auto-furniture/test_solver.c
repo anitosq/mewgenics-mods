@@ -259,5 +259,18 @@ int main(void) {
     p->rank[1]=AF_RANKS+1;assert(!af_valid_problem(p));
     p->rank[1]=0;p->rank[2]=2;assert(!af_valid_problem(p));
     p->rank[2]=0;p->minimize=4;assert(!af_valid_problem(p));
-    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, directions and ranks");
+    /* Floating pieces: a column with a floor surface, one resting piece and one balloon. The
+       balloon costs less high up, leaving the cell above the floor to the resting piece. */
+    memset(p,0,sizeof(*p));p->width=1;p->height=3;p->count=2;p->selected=1;p->grid[0]=2;
+    p->shape[0].count=2;p->shape[0].solid=1;p->shape[0].stats[0]=1;
+    p->shape[0].cells[0]=(AFCell){0,0,3};p->shape[0].cells[1]=(AFCell){0,1,1};
+    p->shape[1].count=p->shape[1].solid=1;p->shape[1].stats[0]=1;p->shape[1].cells[0]=(AFCell){0,0,1};
+    assert(af_start(p,s,NULL)&&s->up==1);af_list_reach(p,s);
+    assert(s->reach[0]==0&&s->reach[1]==1&&s->reach[2]==2);
+    assert(af_resting_cost(p,s,&p->shape[1],(AFPlacement){0,2,1,1,1})<af_resting_cost(p,s,&p->shape[1],(AFPlacement){0,1,1,1,1}));
+    for(int i=0;i<20;i++)af_step(p,s);
+    assert(s->best.used==2&&s->best.placement[1].y==2&&af_rebuild(p,&s->best,s->grid,0));
+    p->shape[0].cells[0]=(AFCell){0,1,3};p->shape[0].cells[1]=(AFCell){0,0,1};
+    assert(af_up_direction(p)==-1);
+    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, directions and ranks, floating pieces");
 }

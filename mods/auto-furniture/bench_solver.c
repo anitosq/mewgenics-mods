@@ -1,7 +1,8 @@
 /* Offline solver benchmark on synthetic side-view rooms (floor, side walls, tables,
    wall decorations, utility boxes). Not game data: use it to compare solver changes.
    Usage: bench_solver [seconds=1.2] [items=150] [max_iterations=3000]
-   BIG=1 uses 30-42 x 16 rooms; V=1 prints each case. Higher TOTAL is better:
+   BIG=1 uses 30-42 x 16 rooms; FLOAT=1 makes one piece in ten float (no resting row,
+   like a balloon); V=1 prints each case. Higher TOTAL is better:
    per case, lowest selected stat + 0.05 * sum of selected stats. */
 #include "solver.h"
 #include <stdio.h>
@@ -14,7 +15,7 @@ static double now(void) {
 }
 static double deadline;
 static int past_deadline(void* context) {(void)context;return now()>=deadline;}
-static uint32_t rs;
+static uint32_t rs;static int floating;
 static int rnd(int n) {rs^=rs<<13;rs^=rs>>17;rs^=rs<<5;return (int)(rs%(unsigned)n);}
 static void add_cell(AFShape* s,int x,int y,int value) {
     s->cells[s->count++]=(AFCell){(unsigned char)x,(unsigned char)y,(unsigned char)value};
@@ -25,6 +26,8 @@ static void make_shape(AFShape* s) {
     if(kind<2) {
         w=1+rnd(2);h=1+rnd(2);
         for(int y=0;y<h;y++)for(int x=0;x<w;x++)add_cell(s,x,y,5);
+    } else if(floating&&kind==2) {
+        for(int y=0;y<h;y++)for(int x=0;x<w;x++)add_cell(s,x,y,1);
     } else {
         int table=kind<4;
         for(int x=0;x<w;x++)add_cell(s,x,0,3);
@@ -63,7 +66,7 @@ int main(int argc,char** argv) {
     double budget=argc>1?atof(argv[1]):1.2;
     int items=argc>2?atoi(argv[2]):150;
     unsigned max_iterations=(unsigned)(argc>3?atoi(argv[3]):3000);
-    int big=getenv("BIG")!=NULL,verbose=getenv("V")!=NULL;
+    int big=getenv("BIG")!=NULL,verbose=getenv("V")!=NULL;floating=getenv("FLOAT")!=NULL;
     static AFProblem p;static AFSearch s;
     const unsigned selections[3]={1|2,AF_ALL_STATS,16};
     double total=0;long total_filled=0;

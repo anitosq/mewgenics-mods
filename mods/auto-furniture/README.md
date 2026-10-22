@@ -71,7 +71,9 @@ After changing language, reopen the room's wand panel.
 
 Only loose inventory and the selected room are used. Furniture is never taken
 from other rooms. The search uses horizontal mirroring, not rotation or
-vertical flipping. Shapes, supports and inventory limits can leave gaps.
+vertical flipping. Pieces that need no support, such as balloons, prefer spots
+high above floors and tables, leaving room for furniture that must stand on
+something. Shapes, supports and inventory limits can still leave gaps.
 Best found is not a guaranteed mathematical optimum. A calculation takes up to
 about 2.5 seconds.
 

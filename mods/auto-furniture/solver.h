@@ -21,6 +21,7 @@ typedef struct { int x,y,sx,sy,used; } AFPlacement;
 #define AF_MAX_EVALUATIONS 100000 /* fit checks per placement pass */
 #define AF_RESTART_PERIOD 8 /* one fresh start per this many repairs */
 #define AF_BOUND_LIMIT 1000000
+#define AF_FLOAT_PACK_PERCENT 100 /* share of floating placements that avoid resting space */
 typedef struct {
     int width,height,count;
     unsigned selected,targets,caps;
@@ -46,6 +47,8 @@ typedef struct {
     short surface_cells[2][AF_CELLS]; /* scan order: left to right, right to left */
     int shape_class[AF_ITEMS]; /* first index with identical cells */
     unsigned failed_fit[AF_ITEMS],fit_version;
+    int up; /* +1 or -1: the y direction from a resting cell to its piece's body */
+    unsigned char reach[AF_CELLS]; /* free cells above the nearest usable surface, else 0 */
     int (*stop)(void*);
     void* stop_context;
     uint32_t random;
@@ -214,12 +217,25 @@ static void af_classify_shapes(const AFProblem* p,AFSearch* s) {
         s->shape_class[i]=j;
     }
 }
+/* The game data does not state which way y grows, so take it from resting pieces:
+   their body sits on the far side of the resting cells from the surface. */
+static int af_up_direction(const AFProblem* p) {
+    long balance=0;
+    for(int i=0;i<p->count;i++) {
+        const AFShape* shape=&p->shape[i];int rest_y=-1;
+        for(int c=0;c<shape->count;c++)if(shape->cells[c].value==3){rest_y=shape->cells[c].y;break;}
+        if(rest_y<0)continue;
+        for(int c=0;c<shape->count;c++)if(shape->cells[c].value<=2)balance+=shape->cells[c].y>rest_y?1:-1;
+    }
+    return balance<0?-1:1;
+}
 static int af_start(const AFProblem* p,AFSearch* search,const AFLayout* initial) {
     if(!af_valid_problem(p))return 0;
     memset(search,0,sizeof(*search));search->random=0x9145ab13;
     for(int phase=0;phase<5;phase++)for(int i=0;i<p->count;i++)
         search->area_divisor[phase][i]=pow(fmax(1,p->shape[i].solid),0.3+phase*0.2);
     af_classify_shapes(p,search);
+    search->up=af_up_direction(p);
     if(initial)search->best=*initial;
     if(!af_rebuild(p,&search->best,search->grid,0))return 0;
     /* Old builds could invert furniture. Do not seed new layouts with those pieces. */
@@ -261,14 +277,40 @@ static int af_covers_occupied(const AFProblem* p,const unsigned char* grid,const
         grid[(v.y+shape->cells[c].y)*p->width+v.x+shape->cells[c].x*v.sx]==1)return 1;
     return 0;
 }
+/* For each free cell, how far it is above the nearest surface that a resting piece could
+   grow up from; closer cells are more valuable to resting furniture. */
+static void af_list_reach(const AFProblem* p,AFSearch* s) {
+    for(int x=0;x<p->width;x++) {
+        int last=-1;
+        for(int k=0;k<p->height;k++) {
+            int y=s->up>0?k:p->height-1-k,at=y*p->width+x;unsigned char g=s->grid[at];
+            s->reach[at]=0;
+            if(g==2)last=k;
+            else if(g==1||g==5||g>=6)last=-1;
+            else if(last>=0)s->reach[at]=(unsigned char)(k-last>255?255:k-last);
+        }
+    }
+}
+/* Space a floating piece takes from resting furniture at this spot. */
+static double af_resting_cost(const AFProblem* p,const AFSearch* s,const AFShape* shape,AFPlacement v) {
+    double cost=0;
+    for(int c=0;c<shape->count;c++) {
+        AFCell cell=shape->cells[c];if(cell.value>2&&cell.value!=5)continue;
+        unsigned char reach=s->reach[(v.y+cell.y*v.sy)*p->width+v.x+cell.x*v.sx];
+        if(reach)cost+=1.0/reach;
+    }
+    return cost;
+}
 enum { AF_SCAN_STOPPED=-1, AF_SCAN_PARTIAL, AF_SCAN_COMPLETE };
 /* Chooses uniformly among all fitting spots; utility fill takes the first one. Uniform choice
    measured better than first-fit or compact packing: varied placements feed the repair search.
-   Returns AF_SCAN_COMPLETE only when every candidate spot was checked. */
+   With pack set, a floating piece chooses uniformly among the spots that take the least
+   space from resting furniture instead. Returns AF_SCAN_COMPLETE only when every candidate
+   spot was checked. */
 static int af_choose_spot(const AFProblem* p,AFSearch* s,const AFShape* shape,int rest,int surfaces,
-                          int fill_utilities,unsigned* evaluations,AFPlacement* choice) {
+                          int fill_utilities,int pack,unsigned* evaluations,AFPlacement* choice) {
     int flip=(int)(af_random(s)%2),reverse=(int)(af_random(s)%2);
-    unsigned options=0;
+    unsigned options=0;double best_cost=INFINITY;
     *choice=(AFPlacement){0};
     for(int orient=0;orient<2;orient++) {
         int sx=((orient+flip)&1)?-1:1,sy=1;
@@ -301,15 +343,20 @@ static int af_choose_spot(const AFProblem* p,AFSearch* s,const AFShape* shape,in
                 if(af_covers_occupied(p,s->grid,shape,v))continue;
                 *choice=v;return AF_SCAN_PARTIAL;
             }
+            if(pack) {
+                double cost=af_resting_cost(p,s,shape,v);
+                if(cost<best_cost-1e-9){best_cost=cost;options=0;}
+                else if(cost>best_cost+1e-9)continue;
+            }
             options++;
-            if(!choice->used||af_random(s)%options==0)*choice=v;
+            if(options==1||af_random(s)%options==0)*choice=v;
         }
     }
     return AF_SCAN_COMPLETE;
 }
 static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
     unsigned evaluations=0;
-    int progress=1,surfaces=-1; /* -1 until listed, and again after each placement */
+    int progress=1,surfaces=-1,reach_ready=0; /* lists rebuilt lazily after each placement */
     /* Placing pieces only removes space, except new surfaces. A shape that found no spot stays
        impossible, together with every identical piece, until another surface appears. */
     s->fit_version++;
@@ -324,13 +371,16 @@ static void af_place(const AFProblem* p,AFSearch* s,int fill_utilities) {
             if(*failed==s->fit_version)continue;
             int rest=af_rest_cell(shape);
             if(rest>=0&&surfaces<0)surfaces=af_list_surfaces(p,s);
+            int pack=!fill_utilities&&rest<0&&(AF_FLOAT_PACK_PERCENT>=100||
+                (AF_FLOAT_PACK_PERCENT>0&&(int)(af_random(s)%100)<AF_FLOAT_PACK_PERCENT));
+            if(pack&&!reach_ready){af_list_reach(p,s);reach_ready=1;}
             AFPlacement choice;
-            int scan=af_choose_spot(p,s,shape,rest,surfaces,fill_utilities,&evaluations,&choice);
+            int scan=af_choose_spot(p,s,shape,rest,surfaces,fill_utilities,pack,&evaluations,&choice);
             if(scan==AF_SCAN_STOPPED)return;
             if(!choice.used){if(scan==AF_SCAN_COMPLETE)*failed=s->fit_version;continue;}
             s->trial.placement[i]=choice;af_stamp(p,s->grid,shape,choice);s->trial.used++;progress++;
             s->trial.utilities+=shape->utility;
-            surfaces=-1;
+            surfaces=-1;reach_ready=0;
             if(af_adds_surface(shape))s->fit_version++;
             for(int j=0;j<AF_STATS;j++)s->trial.stats[j]+=shape->stats[j];
             if(fill_utilities)s->best=s->trial;else af_keep(p,s);

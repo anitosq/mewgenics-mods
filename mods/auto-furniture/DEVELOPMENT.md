@@ -207,6 +207,25 @@ disabled at rank 1 and `-` when unranked. Defaults (all Maximize, no ranks)
 keep the beta.2 benchmark output byte-for-byte. The 112 px direction button and
 the Russian header `Направление` have not been checked for fit in game.
 
+### Floating pieces leave resting space (0.3.0-beta.7)
+
+Owner suggestion: pieces that need no support, such as a balloon, should use
+space that resting furniture cannot. A shape without a resting cell (value 3)
+now picks uniformly among the fitting spots with the lowest resting cost: the
+sum, over its stamped cells, of 1/d for free cells d rows above the nearest
+surface in their column (`af_list_reach`), so cells just above floors and tables
+cost most and overlays on furniture bodies cost nothing. Which way is up is not
+documented in the game data, so `af_up_direction` infers it from resting
+shapes (body cells on the far side of their resting cells).
+
+`bench_solver.c` gained `FLOAT=1`, turning one piece in ten into a floating
+block. Timed runs (0.6 s per case, 50,000-iteration cap, repeated) gave:
+small rooms with floating pieces TOTAL 2999-3006 before, 3023-3028 after;
+small rooms without them and large rooms with them were within run-to-run
+noise. A 50% mix was no better. Synthetic rooms only; in-game balloons and
+room geometry may differ. Default output is no longer identical to beta.2,
+so refactor checks should take a fresh iteration-capped baseline.
+
 Build and run the benchmark from the repository root (`V=1` prints each case).
 A large time budget with an iteration cap gives repeatable output, which is
 useful to check that a refactor leaves the search unchanged:
