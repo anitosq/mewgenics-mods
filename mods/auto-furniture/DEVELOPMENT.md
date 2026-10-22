@@ -153,3 +153,13 @@ Synthetic benchmark (`bench_solver.c`, 36 cases, 0.6 s each): TOTAL 2726 → 282
 for 150 items in 16–24 × 9 rooms, and 5978 → 6352 for 400 items in 30–42 × 16
 rooms. Old code at 3 s still scores below the new code at 1.2 s. These rooms are
 synthetic and are not evidence of in-game results.
+
+Build and run the benchmark from the repository root (`V=1` prints each case).
+A large time budget with an iteration cap gives repeatable output, which is
+useful to check that a refactor leaves the search unchanged:
+
+```powershell
+& "<toolchain>/zig.exe" cc -O2 -Wall -Wextra -Werror -Wno-unused-function mods/auto-furniture/bench_solver.c -o mods/auto-furniture/build/bench.exe
+./mods/auto-furniture/build/bench.exe 0.6 150
+$env:BIG=1; ./mods/auto-furniture/build/bench.exe 600 400 600
+```

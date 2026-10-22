@@ -16,16 +16,19 @@ static unsigned pinned_count;
 static double plan_original_stats[AF_STATS];
 static HANDLE plan_worker;
 static volatile LONG plan_cancel;
+#define SEARCH_BUDGET_MS 2500
+#define SEARCH_UTILITY_MS 100
+#define SEARCH_MAX_ITERATIONS 50000
 static int search_stopped(void* deadline) {
     return InterlockedCompareExchange(&plan_cancel,0,0)||GetTickCount64()>=*(ULONGLONG*)deadline;
 }
 static DWORD WINAPI search_worker(void* ignored) {
-    (void)ignored;ULONGLONG until=GetTickCount64()+2500;
+    (void)ignored;ULONGLONG until=GetTickCount64()+SEARCH_BUDGET_MS;
     /* Reserve part of the same budget for utility fill; closing cancels both phases. */
     int utilities=0;for(int i=0;i<problem.count;i++)utilities|=problem.shape[i].utility;
-    ULONGLONG deadline=until-(utilities?100:0);
+    ULONGLONG deadline=until-(utilities?SEARCH_UTILITY_MS:0);
     search.stop=search_stopped;search.stop_context=&deadline;
-    while(search.iterations<50000&&!af_stopped(&search))af_step(&problem,&search);
+    while(search.iterations<SEARCH_MAX_ITERATIONS&&!af_stopped(&search))af_step(&problem,&search);
     deadline=until;
     if(!af_stopped(&search))af_fill_utilities(&problem,&search);
     search.stop=NULL;search.stop_context=NULL;

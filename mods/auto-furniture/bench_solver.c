@@ -6,45 +6,79 @@
 #include "solver.h"
 #include <stdio.h>
 #include <time.h>
-static double now(void){struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return t.tv_sec+t.tv_nsec*1e-9;}
+#define SEEDS 12
+#define UTILITY_RESERVE 0.1 /* seconds, as in the planner */
+static double now(void) {
+    struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);
+    return t.tv_sec+t.tv_nsec*1e-9;
+}
 static double deadline;
-static int stopper(void* c){(void)c;return now()>=deadline;}
-static uint32_t rs;static int rnd(int n){rs^=rs<<13;rs^=rs>>17;rs^=rs<<5;return (int)(rs%(unsigned)n);}
-static void make(AFProblem* p,int seed,int items,int W,int H,unsigned sel){
-  memset(p,0,sizeof(*p));rs=seed*2654435761u+1;
-  p->width=W;p->height=H;p->selected=sel;
-  for(int x=0;x<W;x++)p->grid[x]=2;           /* floor surface */
-  for(int y=1;y<H;y++){p->grid[y*W]=6;p->grid[y*W+W-1]=6;} /* side walls */
-  p->count=items;
-  for(int i=0;i<items;i++){AFShape*s=&p->shape[i];int kind=rnd(10);
-    int w=1+rnd(4),h=1+rnd(3);
-    if(kind<2){ /* wall decoration */ w=1+rnd(2);h=1+rnd(2);
-      for(int y=0;y<h;y++)for(int x=0;x<w;x++)s->cells[s->count++]=(AFCell){x,y,5};
-      s->solid=w*h;
+static int past_deadline(void* context) {(void)context;return now()>=deadline;}
+static uint32_t rs;
+static int rnd(int n) {rs^=rs<<13;rs^=rs>>17;rs^=rs<<5;return (int)(rs%(unsigned)n);}
+static void add_cell(AFShape* s,int x,int y,int value) {
+    s->cells[s->count++]=(AFCell){(unsigned char)x,(unsigned char)y,(unsigned char)value};
+}
+/* Tables (cell value 2 on top) and other floor furniture rest on a surface (value 3). */
+static void make_shape(AFShape* s) {
+    int kind=rnd(10),w=1+rnd(4),h=1+rnd(3);
+    if(kind<2) {
+        w=1+rnd(2);h=1+rnd(2);
+        for(int y=0;y<h;y++)for(int x=0;x<w;x++)add_cell(s,x,y,5);
     } else {
-      for(int x=0;x<w;x++)s->cells[s->count++]=(AFCell){x,0,3};
-      for(int y=1;y<=h;y++)for(int x=0;x<w;x++)s->cells[s->count++]=(AFCell){x,y,(kind<4&&y==h)?2:1};
-      s->solid=w*h;
+        int table=kind<4;
+        for(int x=0;x<w;x++)add_cell(s,x,0,3);
+        for(int y=1;y<=h;y++)for(int x=0;x<w;x++)add_cell(s,x,y,table&&y==h?2:1);
     }
-    int ns=1+rnd(2);for(int k=0;k<ns;k++)s->stats[rnd(5)]+=1+rnd(6);
+    s->solid=w*h;
+    int boosts=1+rnd(2);
+    for(int k=0;k<boosts;k++)s->stats[rnd(5)]+=1+rnd(6);
     if(rnd(8)==0)s->stats[rnd(5)]-=1+rnd(3);
     if(rnd(6)==0){memset(s->stats,0,sizeof s->stats);s->utility=1;}
-  }
 }
-static int filled(const AFProblem*p,const AFSearch*s){unsigned char g[AF_CELLS];AFLayout L=s->best;af_rebuild(p,&L,g,0);
-  int f=0;for(int i=0;i<p->width*p->height;i++)f+=(g[i]==1||g[i]==2||g[i]==5)&&p->grid[i]!=2;return f;}
-int main(int argc,char**argv){
-  double budget=argc>1?atof(argv[1]):1.2; int items=argc>2?atoi(argv[2]):150;
-  static AFProblem p;static AFSearch s;
-  unsigned sels[3]={1|2,AF_ALL_STATS,16};
-  double total=0;long tf=0;int verbose=getenv("V")!=NULL;for(int seed=1;seed<=12;seed++)for(int k=0;k<3;k++){
-    make(&p,seed,items,getenv("BIG")?30+seed%3*6:18+seed%3*4,getenv("BIG")?16:9,sels[k]);
-    af_start(&p,&s,NULL);double t0=now();deadline=t0+budget-0.1;s.stop=stopper;
-    while(s.iterations<(unsigned)(argc>3?atoi(argv[3]):3000)&&!af_stopped(&s))af_step(&p,&s);
-    deadline=t0+budget;af_fill_utilities(&p,&s);
-    {double mn=1e9,sum=0;for(int j=0;j<5;j++)if(sels[k]&(1u<<j)){if(s.best.stats[j]<mn)mn=s.best.stats[j];sum+=s.best.stats[j];}total+=mn+0.05*sum;}tf+=filled(&p,&s);
-    if(verbose)printf("seed %d sel %2u: it %4u stats %5.1f %5.1f %5.1f %5.1f %5.1f  filled %d\n",seed,sels[k],s.iterations,
-      s.best.stats[0],s.best.stats[1],s.best.stats[2],s.best.stats[3],s.best.stats[4],filled(&p,&s));
-  }
-  printf("TOTAL %.1f filled %ld\n",total,tf);
+static void make_room(AFProblem* p,int seed,int items,int width,int height,unsigned selected) {
+    memset(p,0,sizeof(*p));rs=seed*2654435761u+1;
+    p->width=width;p->height=height;p->selected=selected;
+    for(int x=0;x<width;x++)p->grid[x]=2;
+    for(int y=1;y<height;y++){p->grid[y*width]=6;p->grid[y*width+width-1]=6;}
+    p->count=items;
+    for(int i=0;i<items;i++)make_shape(&p->shape[i]);
+}
+/* Occupied cells outside the starting floor. */
+static int filled(const AFProblem* p,const AFSearch* s) {
+    unsigned char grid[AF_CELLS];AFLayout layout=s->best;af_rebuild(p,&layout,grid,0);
+    int count=0;
+    for(int i=0;i<p->width*p->height;i++)count+=(grid[i]==1||grid[i]==2||grid[i]==5)&&p->grid[i]!=2;
+    return count;
+}
+static double score(const double stats[AF_STATS],unsigned selected) {
+    double lowest=1e9,sum=0;
+    for(int j=0;j<AF_STATS;j++)if(selected&(1u<<j)) {
+        if(stats[j]<lowest)lowest=stats[j];
+        sum+=stats[j];
+    }
+    return lowest+0.05*sum;
+}
+int main(int argc,char** argv) {
+    double budget=argc>1?atof(argv[1]):1.2;
+    int items=argc>2?atoi(argv[2]):150;
+    unsigned max_iterations=(unsigned)(argc>3?atoi(argv[3]):3000);
+    int big=getenv("BIG")!=NULL,verbose=getenv("V")!=NULL;
+    static AFProblem p;static AFSearch s;
+    const unsigned selections[3]={1|2,AF_ALL_STATS,16};
+    double total=0;long total_filled=0;
+    for(int seed=1;seed<=SEEDS;seed++)for(int k=0;k<3;k++) {
+        int width=big?30+seed%3*6:18+seed%3*4,height=big?16:9;
+        make_room(&p,seed,items,width,height,selections[k]);
+        af_start(&p,&s,NULL);
+        double start=now();deadline=start+budget-UTILITY_RESERVE;s.stop=past_deadline;
+        while(s.iterations<max_iterations&&!af_stopped(&s))af_step(&p,&s);
+        deadline=start+budget;af_fill_utilities(&p,&s);
+        total+=score(s.best.stats,selections[k]);
+        int room_filled=filled(&p,&s);total_filled+=room_filled;
+        if(verbose)printf("seed %d sel %2u: it %4u stats %5.1f %5.1f %5.1f %5.1f %5.1f  filled %d\n",
+            seed,selections[k],s.iterations,s.best.stats[0],s.best.stats[1],s.best.stats[2],
+            s.best.stats[3],s.best.stats[4],room_filled);
+    }
+    printf("TOTAL %.1f filled %ld\n",total,total_filled);
 }
