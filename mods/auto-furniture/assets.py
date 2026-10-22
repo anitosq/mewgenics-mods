@@ -6,14 +6,17 @@ from pathlib import Path
 import struct
 import localization
 
-PANEL_WIDTH = 680
-PANEL_HITS = [(638,0,42,48)] + [(18,90+i*44,215,36) for i in range(5)]
+PANEL_WIDTH = 704
+# Priority rows: five stats, then utility furniture on the utility row.
+PRIORITY_ROWS = [90+i*44 for i in range(5)] + [320]
+PRIORITY_MINUS, PRIORITY_PLUS, PRIORITY_BUTTON = 402, 466, 28
+PANEL_HITS = [(PANEL_WIDTH-42,0,42,48)] + [(18,90+i*44,215,36) for i in range(5)]
 PANEL_HITS += [(x,90+i*44,76,36) for i in range(5) for x in (238,320)]
-PANEL_HITS += [(18,324,420,28),(530,320,132,38)]
-PANEL_HITS += [(18+i*166,370,146,38) for i in range(4)]
-PANEL_HITS += [(18,546,316,38),(346,546,316,38)]
-# Appended so earlier indices keep their meaning in ui.h.
-PANEL_HITS += [(402,90+i*44,72,36) for i in range(5)]
+PANEL_HITS += [(18,324,380,28),(PANEL_WIDTH-150,320,132,38)]
+PANEL_HITS += [(18+i*172,370,152,38) for i in range(4)]
+PANEL_HITS += [(18,546,328,38),(358,546,328,38)]
+# Appended so earlier indices keep their meaning in ui.h: minus then plus for each row.
+PANEL_HITS += [(x,y,PRIORITY_BUTTON,36) for y in PRIORITY_ROWS for x in (PRIORITY_MINUS,PRIORITY_PLUS)]
 PIN_HITS = [(558,0,42,48),(18,436,55,36),(85,436,55,36),(450,436,132,36)]
 # Native catparts.swf Rare/Quest item tints, sampled at gray 177 and blended 35% over paper.
 CALCULATE_FILL = (224,219,177,255)
@@ -117,29 +120,35 @@ def build():
     parts = m.paper(0,0,PANEL_WIDTH,604)
     parts += [(m.field(18,10,inner-34,36,27,'Auto Furniture'),'title'),m.field(PANEL_WIDTH-35,10,30,36,26,'X'),
               (m.field(18,56,210,30,19,'Stat'),'stat'),(m.field(238,56,76,30,19,'Min'),'min'),
-              (m.field(320,56,76,30,19,'Max'),'max'),(m.field(402,56,72,30,17,'Goal',align=2),'goal'),
-              (m.field(490,56,75,30,19,'Before',align=2),'before'),
-              (m.field(573,56,90,30,17,'Best found',align=2),'best')]
+              (m.field(320,56,76,30,19,'Max'),'max'),(m.field(402,56,92,30,17,'Priority',align=2),'priority'),
+              (m.field(514,56,75,30,19,'Before',align=2),'before'),
+              (m.field(597,56,90,30,17,'Best found',align=2),'best')]
     parts += [m.box(18,82,inner,1,(54,50,42,90)),m.box(18,313,inner,1,(54,50,42,90))]
     for i,label in enumerate(('Comfort','Stimulation','Health','Mutation','Appeal')):
         y=90+i*44
         parts += m.paper(18,y+3,28,28)+[(m.field(21,y+2,25,30,23),'check'+str(i)),(m.field(92,y+3,141,32,20,label),'stat'+str(i))]
         for prefix,x in [('min',238),('max',320)]:
             parts += m.paper(x,y,76,36)+[(m.field(x+3,y+4,70,30,18,align=2),prefix+str(i))]
-        parts += m.paper(402,y,72,36)+[(m.field(405,y+3,66,30,21,align=2),'goal'+str(i))]
-        parts += [(m.field(490,y+4,75,30,21,align=2),'old'+str(i)),(m.field(573,y+4,90,30,21,align=2),'new'+str(i))]
-    parts += m.paper(18,324,28,28)+[(m.field(21,322,25,30,23),'utility'),(m.field(58,321,380,34,21,'Include utility furniture'),'utility_label')]
-    parts += m.paper(530,320,132,38)+[(m.field(534,325,124,30,22,'Clear',align=2),'clear')]
-    for label,x,fill in [('Calculate',18,CALCULATE_FILL),('Apply',184,APPLY_FILL),
-                         ('Undo',350,(232,225,206,255)),('Pins',516,(232,225,206,255))]:
-        field = m.field(x+4,375,138,30,22,label,align=2)
-        parts += m.paper(x,370,146,38,fill=fill)+[(field,label.lower())]
+        parts += [(m.field(514,y+4,75,30,21,align=2),'old'+str(i)),(m.field(597,y+4,90,30,21,align=2),'new'+str(i))]
+    # Drawn signs avoid depending on the game font for the stepper buttons.
+    for i,y in enumerate(PRIORITY_ROWS):
+        for x in (PRIORITY_MINUS,PRIORITY_PLUS):
+            cx,cy=x+PRIORITY_BUTTON//2,y+18
+            parts += m.paper(x,y,PRIORITY_BUTTON,36)+[m.box(cx-7,cy-1,14,3,ink)]
+            if x==PRIORITY_PLUS: parts += [m.box(cx-1,cy-7,3,14,ink)]
+        parts += [(m.field(PRIORITY_MINUS+PRIORITY_BUTTON,y+3,PRIORITY_PLUS-PRIORITY_MINUS-PRIORITY_BUTTON,30,20,align=2),'priority'+str(i))]
+    parts += m.paper(18,324,28,28)+[(m.field(21,322,25,30,23),'utility'),(m.field(58,321,340,34,21,'Include utility furniture'),'utility_label')]
+    parts += m.paper(PANEL_WIDTH-150,320,132,38)+[(m.field(PANEL_WIDTH-146,325,124,30,22,'Clear',align=2),'clear')]
+    for label,x,fill in [('Calculate',18,CALCULATE_FILL),('Apply',190,APPLY_FILL),
+                         ('Undo',362,(232,225,206,255)),('Pins',534,(232,225,206,255))]:
+        field = m.field(x+4,375,144,30,22,label,align=2)
+        parts += m.paper(x,370,152,38,fill=fill)+[(field,label.lower())]
     parts += [(m.field(18,426,inner,44,17,wrap=True),'status'),(m.field(18,476,72,28,18),'change')]
     for i in range(5):
         parts += [(m.field(118+i*94,476,72,28,18,align=0),'delta'+str(i))]
     parts += [m.box(18,522,inner,1,(54,50,42,90))]
-    for label,x,name in [('Return room',18,'return_room'),('Return all rooms',346,'return_all')]:
-        parts += m.paper(x,546,316,38)+[(m.field(x+4,551,308,30,22,label,align=2),name)]
+    for label,x,name in [('Return room',18,'return_room'),('Return all rooms',358,'return_all')]:
+        parts += m.paper(x,546,328,38)+[(m.field(x+4,551,320,30,22,label,align=2),name)]
     m.sprite('AFPanel',m.feedback(parts,PANEL_HITS))
     parts=m.paper(0,0,600,490)+[(m.field(18,10,530,36,27,'Pinned furniture'),'title'),m.field(565,10,30,36,26,'X')]
     for label,x,w in [('',18,55),('',85,55),('Done',450,132)]:

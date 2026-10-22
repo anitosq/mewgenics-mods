@@ -100,7 +100,7 @@ static int room_stats(byte* room,double stats[AF_STATS]) {
     return 1;
 }
 static void preview(void* ui,const char* room_name,unsigned selected,unsigned targets,const double minimum[AF_STATS],
-                    unsigned caps,const double maximum[AF_STATS],const int goal[AF_STATS]) {
+                    unsigned caps,const double maximum[AF_STATS],const int goal[AF_GOALS]) {
     if(plan_worker){report("Searching...");return;}
     plan_ready=0;
     void* inv=NULL;byte* live[MAX_ITEMS];unsigned n=0;byte* scene=ptr(ptr(ui,0x18),8);

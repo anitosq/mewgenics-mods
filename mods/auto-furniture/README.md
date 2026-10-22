@@ -45,11 +45,13 @@ After changing language, reopen the room's wand panel.
   Max -5 to keep a stat at -5 or lower. When both are set, Max must exceed Min.
 - Multiple selected stats are balanced, improving the lowest first after
   addressing bounds. Unselected stats may decrease; review all five results.
-- Goal sets priorities. Click a selected stat's Goal box to cycle through blank
-  (balance), +N (as high as possible) and -N (as low as possible). N is the
-  priority, numbered in the order you set goals. After Max and Min, the +1 or -1
-  stat is decided first, then 2, and so on; blank stats are balanced last.
-  Clearing a goal moves the later ones up.
+- Priority: click + to push a selected stat as high as possible or - to push
+  it as low as possible. The number shows its rank, in the order you set them.
+  After Max and Min, rank 1 is decided first, then 2, and so on; stats without a
+  priority are balanced last. Click the same button again to remove a priority
+  (later ranks move up), or the other button to reverse it. With utility
+  furniture included, + on that row places as many utility pieces as possible
+  at that rank.
   Appeal is the selected room's contribution, not the whole-house total.
 - Pins keep placed pieces and their supports in position.
 - Include utility furniture allows pieces such as food storage boxes to be

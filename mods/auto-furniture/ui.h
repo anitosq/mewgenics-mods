@@ -8,12 +8,12 @@ static HitTest original_hit;
 static Update original_furniture_hover;
 static int ui_enabled;
 typedef struct {
-    byte* renderer;uint64_t generation;char text[4+7*AF_STATS][AF_TEXT_BYTES];uint64_t text_written;
-    byte* feedback[3][32];int feedback_count,visible,content_ready;
+    byte* renderer;uint64_t generation;char text[4+6*AF_STATS+AF_GOALS][AF_TEXT_BYTES];uint64_t text_written;
+    byte* feedback[3][40];int feedback_count,visible,content_ready;
 } Control;
 static struct {
     void* owner;void* scene;uint64_t generation;int allowed,modal,action,focus,captured;
-    unsigned selected;int goal[AF_STATS];char minimum[AF_STATS][8],maximum[AF_STATS][8];char room[128];unsigned pin_page,pin_total,pin_revision;
+    unsigned selected;int goal[AF_GOALS];char minimum[AF_STATS][8],maximum[AF_STATS][8];char room[128];unsigned pin_page,pin_total,pin_revision;
     uint64_t pin_list[MAX_ITEMS];char pin_labels[MAX_ITEMS][AF_TEXT_BYTES];
     char status_source[180],status_label[AF_TEXT_BYTES];unsigned status_count,text_revision;
     int text_ready;
@@ -21,7 +21,7 @@ static struct {
     Control icons[MAX_ROOMS],panel,pins,pin_rows[9],hint,shade,stats[AF_STATS],result_stats[AF_STATS];
 } ui_state={.focus=-1,.selected=AF_ALL_STATS};
 #define PANEL_HIT_COUNT (sizeof(panel_boxes)/sizeof(panel_boxes[0]))
-enum {UI_GOAL_HIT=24};
+enum {UI_PRIORITY_HIT=24}; /* minus, plus for each AF_GOALS row */
 static double number(void* p,size_t offset) {double n=0;if(p)read_bytes((byte*)p+offset,&n,8);return n;}
 static uint64_t generation(void* p) {uint64_t n=0;if(p)read_bytes((byte*)p-8,&n,8);return n;}
 static int control_valid(Control* c) {
@@ -58,7 +58,7 @@ static void control_show(Control* c,const char* symbol,double x,double y,double 
     if(!c->feedback_count&&(!strcmp(symbol,"AFRoom")||!strcmp(symbol,"AFPanel")||
        !strcmp(symbol,"AFPins")||!strcmp(symbol,"AFPinRow"))) {
         void* clip=ptr(c->renderer,0x80);
-        for(int i=0;clip&&i<32;i++) {
+        for(int i=0;clip&&i<40;i++) {
             for(int state=0;state<3;state++) {
                 char name[16];snprintf(name,16,"fx%d_%d",state,i);
                 GameString key={{0},strlen(name),15};memcpy(key.data,name,key.size+1);
@@ -134,7 +134,11 @@ static int ui_target(const UIBox* boxes,unsigned count,double p[2]) {
 static int ui_available(int modal,int at) {
     if(modal==2)return at!=1&&at!=2?1:at==1?ui_state.pin_page>0:(ui_state.pin_page+1)*9<ui_state.pin_total;
     if(at>=6&&at<16)return !!(ui_state.selected&(1u<<((at-6)/2)));
-    if(at>=UI_GOAL_HIT)return !!(ui_state.selected&(1u<<(at-UI_GOAL_HIT)));
+    if(at>=UI_PRIORITY_HIT) {
+        int row=(at-UI_PRIORITY_HIT)/2,plus=(at-UI_PRIORITY_HIT)%2;
+        /* Utility priority only raises the count of utility pieces. */
+        return row==AF_UTILITY_GOAL?include_utilities&&plus:!!(ui_state.selected&(1u<<row));
+    }
     if(at==18)return !plan_worker&&ui_state.selected;
     if(at==19)return !plan_worker&&plan_ready&&af_within_caps(&problem,search.best.stats);
     if(at==20)return !plan_worker&&undo_ready;
@@ -183,19 +187,24 @@ static void ui_reset(void) {
     memset(ui_state.minimum,0,sizeof(ui_state.minimum));memset(ui_state.maximum,0,sizeof(ui_state.maximum));
     memset(ui_state.goal,0,sizeof(ui_state.goal));include_utilities=0;pinned_count=0;ui_invalidate();
 }
-/* Goal ranks stay 1..n in the order the goals were set. */
-static void ui_clear_goal(int stat) {
-    int rank=abs(ui_state.goal[stat]);if(!rank)return;
-    ui_state.goal[stat]=0;
-    for(int i=0;i<AF_STATS;i++)if(abs(ui_state.goal[i])>rank)ui_state.goal[i]+=ui_state.goal[i]>0?-1:1;
+/* Priority ranks stay 1..n in the order they were set. */
+static void ui_clear_goal(int row) {
+    int rank=abs(ui_state.goal[row]);if(!rank)return;
+    ui_state.goal[row]=0;
+    for(int i=0;i<AF_GOALS;i++)if(abs(ui_state.goal[i])>rank)ui_state.goal[i]+=ui_state.goal[i]>0?-1:1;
 }
-/* Balance, then maximize at the next free rank, then minimize at the same rank. */
-static void ui_cycle_goal(int stat) {
-    int* goal=&ui_state.goal[stat];
-    if(*goal>0){*goal=-*goal;return;}
-    if(*goal<0){ui_clear_goal(stat);return;}
-    int ranked=0;for(int i=0;i<AF_STATS;i++)ranked+=!!ui_state.goal[i];
-    *goal=ranked+1;
+/* Plus raises and minus lowers at the next free rank; the same button again clears it,
+   and the other button switches direction keeping the rank. */
+static void ui_press_priority(int row,int direction) {
+    int* goal=&ui_state.goal[row];
+    if(*goal&&(*goal>0)==(direction>0)){ui_clear_goal(row);return;}
+    if(*goal){*goal=-*goal;return;}
+    int ranked=0;for(int i=0;i<AF_GOALS;i++)ranked+=!!ui_state.goal[i];
+    *goal=direction*(ranked+1);
+}
+static void ui_priority_text(int row,char value[40]) {
+    value[0]=0;
+    if(ui_state.goal[row])snprintf(value,40,"%c%d",ui_state.goal[row]>0?'+':'-',abs(ui_state.goal[row]));
 }
 static int ui_bounds(double minimum[AF_STATS],double maximum[AF_STATS],unsigned* targets,unsigned* caps) {
     *targets=*caps=0;
@@ -256,7 +265,7 @@ static void ui_action(void* ui) {
     else if(action==5||action==6){ui_invalidate();return_room(ui,action==6?"all":ui_state.room);}
 }
 typedef struct {
-    unsigned selected,language,returned;int focus,ready,utility,goal[AF_STATS];
+    unsigned selected,language,returned;int focus,ready,utility,goal[AF_GOALS];
     char minimum[AF_STATS][8],maximum[AF_STATS][8],room[128],status[180];
     double before[AF_STATS],best[AF_STATS];
 } PanelContent;
@@ -274,7 +283,7 @@ static void ui_panel_content(void) {
     int ok=1;
     {
         static const struct {const char* field;int text;} labels[]={
-            {"stat",AF_STAT},{"min",AF_MIN},{"max",AF_MAX},{"goal",AF_GOAL},{"before",AF_BEFORE},{"best",AF_BEST},
+            {"stat",AF_STAT},{"min",AF_MIN},{"max",AF_MAX},{"priority",AF_PRIORITY},{"before",AF_BEFORE},{"best",AF_BEST},
             {"stat0",AF_COMFORT},{"stat1",AF_STIMULATION},{"stat2",AF_HEALTH},{"stat3",AF_MUTATION},{"stat4",AF_APPEAL},
             {"utility_label",AF_UTILITY},{"clear",AF_CLEAR},{"calculate",AF_CALCULATE},{"apply",AF_APPLY},
             {"undo",AF_UNDO},{"pins",AF_PINS},{"return_room",AF_RETURN_ROOM},{"return_all",AF_RETURN_ALL}};
@@ -302,9 +311,12 @@ static void ui_panel_content(void) {
             snprintf(value,40,fabs(delta)<0.05?"%.1f":"%+.1f",fabs(delta)<0.05?0.0:delta);
         }
         ok&=control_text(&ui_state.panel,4+5*AF_STATS+i,key,value);
-        snprintf(key,16,"goal%d",i);value[0]=0;
-        if(ui_state.goal[i])snprintf(value,40,"%c%d",ui_state.goal[i]>0?'+':'-',abs(ui_state.goal[i]));
+        snprintf(key,16,"priority%d",i);ui_priority_text(i,value);
         ok&=control_text(&ui_state.panel,4+6*AF_STATS+i,key,value);
+    }
+    {
+        char value[40];ui_priority_text(AF_UTILITY_GOAL,value);
+        ok&=control_text(&ui_state.panel,4+6*AF_STATS+AF_UTILITY_GOAL,"priority5",value);
     }
     ok&=control_text(&ui_state.panel,3+5*AF_STATS,"change",plan_ready?af_text(AF_CHANGE):"");
     ok&=control_text(&ui_state.panel,1+5*AF_STATS,"utility",include_utilities?"X":"");
@@ -461,9 +473,15 @@ static unsigned char ui_input(void* input,void* event) {
                 if(!(ui_state.selected&(1u<<(at-1))))ui_clear_goal(at-1);
                 ui_invalidate();return 0;
             }
-            if(at>=UI_GOAL_HIT){ui_cycle_goal(at-UI_GOAL_HIT);ui_sound(UI_SELECT);ui_invalidate();return 0;}
+            if(at>=UI_PRIORITY_HIT) {
+                int row=(at-UI_PRIORITY_HIT)/2;ui_press_priority(row,(at-UI_PRIORITY_HIT)%2?1:-1);
+                ui_sound(ui_state.goal[row]?UI_CHECK:UI_UNCHECK);ui_invalidate();return 0;
+            }
             if(at>=6&&at<16){ui_state.focus=at-6;ui_sound(UI_SELECT);return 0;}
-            if(at==16){include_utilities=!include_utilities;ui_sound(include_utilities?UI_CHECK:UI_UNCHECK);ui_invalidate();}
+            if(at==16) {
+                include_utilities=!include_utilities;if(!include_utilities)ui_clear_goal(AF_UTILITY_GOAL);
+                ui_sound(include_utilities?UI_CHECK:UI_UNCHECK);ui_invalidate();
+            }
             if(at==17){ui_sound(UI_RESET);ui_reset();return 0;}
             if(at>=18){ui_sound(UI_SELECT);ui_state.action=at-17;}
             return 0;

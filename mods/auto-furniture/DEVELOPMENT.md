@@ -154,21 +154,31 @@ for 150 items in 16–24 × 9 rooms, and 5978 → 6352 for 400 items in 30–42 
 rooms. Old code at 3 s still scores below the new code at 1.2 s. These rooms are
 synthetic and are not evidence of in-game results.
 
-### Ranked goals (0.3.0-beta.3)
+### Ranked priorities (0.3.0-beta.4)
 
-Each selected stat has a Goal button cycling balance, `+rank` and `-rank`
-(`AFProblem.goal`). Ranks follow the order goals were set and close up when one
-is cleared or its stat is deselected. Layouts compare Max excess, Min shortfall,
-then each ranked goal in order (higher for `+`, lower for `-`), then the
-remaining selected stats balanced, then unselected stats. Repair weights scale
-goal stats by 2^(5-rank) with the goal's sign; balance focus only considers
-blank-goal stats. Utility fill skips pieces that would raise a minimized stat.
-The panel is 680 px wide to fit the column; goal hits are appended after the
-existing 24 so earlier hit indices keep their meaning. The ASCII `+`/`-` label
-avoids relying on arrow glyphs in the game font. With no goals set, the
-iteration-capped benchmark output is identical to beta.2. Solver fixtures cover
-each goal combination and validation; neither the wider panel nor the Goal
-header's fit in each language has been checked in game.
+beta.3 used one Goal box per stat that cycled through states; the owner found
+the label unclear and the cycling awkward in game. beta.4 replaces it with a
+Priority column of drawn `-`/`+` buttons around the rank, plus a sixth row for
+utility furniture (`AFProblem.goal`, slot `AF_UTILITY_GOAL`).
+
+- Plus or minus sets `+rank`/`-rank` at the next free rank; the same button
+  clears it (later ranks close up) and the other one reverses it. Deselecting a
+  stat or unticking utility furniture clears its priority. Utility only has `+`.
+- Layouts compare Max excess, Min shortfall, then each rank in order (stat
+  higher for `+`, lower for `-`; utility: more utility pieces placed), then the
+  remaining selected stats balanced, then unselected stats.
+- Repair weights scale ranked stats by 2^(6-rank) with their sign; ranked
+  utility adds a random weight of the same scale to utility pieces. Balance
+  focus only considers unranked stats. Utility fill skips pieces that would
+  raise a minimized stat.
+- The panel is 704 px wide. Priority hits (minus, plus per row) are appended
+  after the original 24 so earlier hit indices keep their meaning; signs are
+  drawn shapes, so they do not depend on font glyphs.
+
+With no priorities set, the iteration-capped benchmark output is identical to
+beta.2. Solver fixtures cover stat and utility rankings and validation; UI
+fixtures cover button availability, ranking and labels. The wider panel and the
+Priority header's fit in each language have not been checked in game.
 
 Build and run the benchmark from the repository root (`V=1` prints each case).
 A large time budget with an iteration cap gives repeatable output, which is

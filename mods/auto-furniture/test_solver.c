@@ -239,11 +239,23 @@ int main(void) {
         assert(af_start(p,s,NULL));for(int i=0;i<100;i++)af_step(p,s);
         assert(s->best.stats[0]==goals[k].comfort&&s->best.stats[1]==goals[k].stimulation);
     }
+    /* One cell: a Comfort piece competes with a utility piece; the utility priority decides. */
+    memset(p,0,sizeof(*p));p->width=1;p->height=1;p->count=2;p->selected=1;
+    for(int i=0;i<2;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
+    p->shape[0].stats[0]=2;p->shape[1].utility=1;
+    static const struct {int comfort,utility;double result;} utility_goals[]={{0,0,2},{0,1,0},{1,2,2},{2,1,0}};
+    for(unsigned k=0;k<sizeof(utility_goals)/sizeof(utility_goals[0]);k++) {
+        p->goal[0]=utility_goals[k].comfort;p->goal[AF_UTILITY_GOAL]=utility_goals[k].utility;
+        assert(af_start(p,s,NULL));for(int i=0;i<50;i++)af_step(p,s);
+        assert(s->best.stats[0]==utility_goals[k].result&&s->best.utilities==(utility_goals[k].result==0));
+    }
+    p->goal[0]=0;p->goal[AF_UTILITY_GOAL]=-1;assert(!af_valid_problem(p));
+    p->selected=3;
     double up[AF_STATS]={5,0},down[AF_STATS]={1,9};
     memset(p->goal,0,sizeof(p->goal));p->goal[0]=1;assert(af_compare(p,up,down)>0);
     p->goal[0]=-1;assert(af_compare(p,up,down)<0);
     p->goal[1]=-1;assert(!af_valid_problem(p));
-    p->goal[1]=6;assert(!af_valid_problem(p));
+    p->goal[1]=AF_GOALS+1;assert(!af_valid_problem(p));
     p->goal[1]=0;p->goal[2]=2;assert(!af_valid_problem(p));
     free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, ranked goals");
 }

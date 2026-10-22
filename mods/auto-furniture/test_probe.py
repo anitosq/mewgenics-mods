@@ -60,8 +60,8 @@ class Checks(unittest.TestCase):
              patch.object(movie, "polygon", wraps=movie.polygon) as polygon, \
              patch.object(movie, "field", wraps=movie.field) as field:
             assets.build()
-            paper.assert_any_call(18, 370, 146, 38, fill=assets.CALCULATE_FILL)
-            paper.assert_any_call(184, 370, 146, 38, fill=assets.APPLY_FILL)
+            paper.assert_any_call(18, 370, 152, 38, fill=assets.CALCULATE_FILL)
+            paper.assert_any_call(190, 370, 152, 38, fill=assets.APPLY_FILL)
             paper.assert_any_call(0, 0, 32, 32)
             labels = [call.args[5] for call in field.call_args_list if len(call.args) > 5]
             self.assertIn("Calculate", labels)
