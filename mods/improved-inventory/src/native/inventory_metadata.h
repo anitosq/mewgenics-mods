@@ -42,7 +42,8 @@ static int iq_register_set(void* manager,const char* id) {
     void* def=((void*(__cdecl*)(void*,void*))(void*)(game_base+0x942da0))((unsigned char*)manager+0x668,&key);
     void* name=iq_property(def,"name");char label[256];wchar_t translated[160];
     if(iq_int(name,0xa8)==1 && iq_string_read((unsigned char*)name+0x68,label,sizeof(label))) {
-        iq_localize(label,translated,160);iq_plain_text(iq_sets[i].name,160,translated);
+        wchar_t plain[160];iq_localize(label,translated,160);
+        iq_plain_text(plain,160,translated);iq_set_name(iq_sets[i].name,plain);
     }
     if(!iq_sets[i].name[0])MultiByteToWideChar(CP_UTF8,0,id,-1,iq_sets[i].name,160);
     return i;

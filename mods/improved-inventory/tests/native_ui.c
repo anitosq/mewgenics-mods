@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include "../src/native/inventory_filter.h"
 #include "../src/native/inventory_search.h"
+#include "../src/native/inventory_grid.h"
 enum { IQ_RARITY_COUNT=5, IQ_POPUP_COUNT=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4, IQ_SET_PAGE=7 };
 static struct {int equipment,items[2],row[2],columns[2];double span[2];} iq;
 static IQFilter active_filter;
@@ -20,7 +21,7 @@ static void iq_build_ownership(void) {}
 /* Fake native rendering; exercise the production toolbar update and cache. */
 typedef struct {void* renderer;int hidden;double x,y;wchar_t text[32][200];} IQControl;
 static struct {
-    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count;
+    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,grid;
     double offset_x,offset_y,scale,grid_x[2],grid_y[2];
 } iq_controls;
 static int open=1,text_calls,formats,feedback,shows,disabled_lookups,missing_text,missing_child;
@@ -62,7 +63,6 @@ static int iq_text(IQControl* c,int slot,const char* name,const wchar_t* text) {
     if(missing_text && slot==8)return 0;
     wcscpy(c->text[slot],text);return 1;
 }
-static void iq_set_name(wchar_t* out,const wchar_t* in) {wcscpy(out,in);}
 static void iq_rarity_art(double x,double y,double scale) {(void)x;(void)y;(void)scale;}
 static void iq_feedback_update(void) {feedback++;}
 static int counted_format(wchar_t* out,size_t n,const wchar_t* format,...) {
@@ -81,7 +81,7 @@ int main(void) {
     iq.span[0]=iq.span[1]=600;iq_controls.scale=1;
     iq_set_count=10;
     for(int i=0;i<10;i++){swprintf(iq_sets[i].name,160,L"Set %02d",i);iq_owned.counts[i][0]=i+1;}
-    iq_ui_update();assert(text_calls==3);
+    iq_ui_update();assert(text_calls==4 && !wcscmp(iq_controls.grid.text[0],L"Grid: 6x6"));
     text_calls=formats=feedback=shows=0;
     for(int frame=0;frame<600;frame++){panel[0][0]=frame;iq_ui_update();}
     assert(!text_calls && !formats && feedback==600 && shows>=1800);
@@ -93,6 +93,10 @@ int main(void) {
     iq_select_all=1;changed();assert(!wcscmp(iq_controls.search[1].text[0],L"> abc <"));
     active_filter.type=1;changed();active_filter.rarity=2;changed();
     iq.items[0]=399;iq.items[1]=114;changed();assert(wcsstr(iq_controls.count.text[0],L"399"));
+    iq_grid_cap=iq_grid_next(iq_grid_cap);changed();assert(!wcscmp(iq_controls.grid.text[0],L"Grid: 7x7"));
+    iq_grid_cap=0;changed();assert(!wcscmp(iq_controls.grid.text[0],L"Grid: Auto"));
+    iq_grid_cap=IQ_GRID_DEFAULT;changed();
+
     iq_view_revision++;changed();iq_metadata_revision++;changed();
     filter_popup=3;iq_focus=0;changed();
     IQControl* popup=&iq_controls.popups[iq_popup_index()];
@@ -113,12 +117,13 @@ int main(void) {
     recreate=popup;changed();assert(!wcscmp(popup->text[1],L"[x] Set 00"));
     recreate=&iq_controls.search[0];changed();
     recreate=&iq_controls.count;changed();
+    recreate=&iq_controls.grid;changed();assert(!wcscmp(iq_controls.grid.text[0],L"Grid: 6x6"));
     missing_text=1;iq_metadata_revision++;iq_ui_update();assert(!iq_label_cache.valid);
     text_calls=0;iq_ui_update();assert(text_calls>0 && !iq_label_cache.valid);
     missing_text=0;changed();
     missing_child=1;iq_set_offset=1;iq_ui_update();assert(iq_label_cache.valid);
     missing_child=0;text_calls=0;iq_ui_update();assert(!text_calls && !(disabled[0][8]&0x20));
-    iq.equipment=1;changed();assert(iq_controls.count.hidden);
+    iq.equipment=1;changed();assert(iq_controls.count.hidden && iq_controls.grid.hidden);
     assert(!wcscmp(popup->text[23],L"Available") && !popup->text[24][0] && !popup->text[15][0]);
     open=0;iq_focus=2;iq_ui_update();assert(!iq_focus && !filter_popup && popup->hidden);
     open=1;changed();filter_popup=3;changed();

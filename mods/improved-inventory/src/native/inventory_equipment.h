@@ -4,6 +4,18 @@ static LayoutGrid original_equipment_grid;
 static DrawerUpdate original_equipment_update,original_equipment_drawer_update;
 static BindItem original_equipment_bind;
 
+static void iq_layout_equipment_backgrounds(void) {
+    int cols=iq.columns[0];double width=iq.span[0];
+    for(int j=0;j<iq.background_count;j++) {
+        IQBackground* b=&iq.backgrounds[j];int visible=j<cols*iq_rows(0);
+        *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
+        if(!visible)continue;
+        double pitch=width/cols*0.90,factor=(double)iq.native_columns[0]/cols*0.90;
+        iq_write_double(b->transform,0x80,iq.left[0]+pitch*(j%cols+0.5));
+        iq_write_double(b->transform,0x88,iq.bottom[0]+width-pitch*(cols-j/cols-0.5)+width*0.072);
+        iq_write_double(b->transform,0x98,b->sx*factor);iq_write_double(b->transform,0xa0,b->sy*factor);
+    }
+}
 static void iq_capture_equipment(void* owner) {
     if(!layout_test)return;
     if(iq_int(owner,0x58)!=1) {
@@ -28,8 +40,8 @@ static void iq_capture_equipment(void* owner) {
     ((void*(__cdecl*)(void*,double*,void*))(void*)(game_base+0x97cb30))(iq_ptr(owner,0x40),bounds,&key);
     double width=bounds[1]-bounds[0];
     if(!isfinite(width) || width<=0 || width>10000)return;
-    int cols=columns<IQ_COLUMNS?columns:IQ_COLUMNS;
-    iq.columns[0]=cols;iq.columns[1]=1;
+    int cols=iq_grid_columns(columns,iq_grid_cap);
+    iq.columns[0]=cols;iq.columns[1]=1;iq.native_columns[0]=columns;
     iq.left[0]=bounds[0];iq.bottom[0]=bounds[2];iq.span[0]=width;
     for(int j=0;j<backgrounds;j++) {
         void* renderer=NULL;if(!iq_read(cells+j,&renderer,8))return;
@@ -43,7 +55,7 @@ static void iq_capture_equipment(void* owner) {
     }
     /* The native item targets supply the icon scale; background art has its
        own scale. Capture both rather than assuming their symbols match. */
-    iq.scale[0]=4.0/cols;
+    iq.native_scale[0]=4.0;
     for(int j=0;j<n;j++) {
         void* drawer=NULL;if(!iq_read(drawers+j,&drawer,8))return;
         uint64_t id=0;if(!iq_read((unsigned char*)drawer+0x58,&id,8))return;
@@ -52,24 +64,32 @@ static void iq_capture_equipment(void* owner) {
         IQDrawer* d=&iq.drawers[iq.count++];d->drawer=drawer;d->reference=iq_reference(drawer);d->item_id=id;
         d->traits=iq_traits(drawer,id);d->rarity=iq_int(drawer,0xfc);
         d->ordinal=-1;
-        iq.scale[0]=iq_double(drawer,0xc8)*columns/cols;
+        iq.native_scale[0]=iq_double(drawer,0xc8)*columns;
     }
+    iq.scale[0]=iq.native_scale[0]/cols;
 #undef iq
     iq=pending_view;
     iq_index_view();
     iq_filter_view();
-    for(int j=0;j<iq.background_count;j++) {
-        IQBackground* b=&iq.backgrounds[j];int visible=j<cols*iq_rows(0);
-        *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
-        if(!visible)continue;
-        double pitch=width/cols*0.90,factor=(double)columns/cols*0.90;
-        iq_write_double(b->transform,0x80,iq.left[0]+pitch*(j%cols+0.5));
-        iq_write_double(b->transform,0x88,iq.bottom[0]+width-pitch*(cols-j/cols-0.5)+width*0.072);
-        iq_write_double(b->transform,0x98,b->sx*factor);iq_write_double(b->transform,0xa0,b->sy*factor);
-    }
+    iq_layout_equipment_backgrounds();
     for(int j=0;j<iq.count;j++)iq_present(&iq.drawers[j]);
     iq_ui_capture();
     char msg[160];snprintf(msg,sizeof(msg),"Equipment layout: %d available, %d matching, %d columns; bounds %.1f %.1f %.1f",iq.count,iq.items[0],cols,iq.left[0],iq.bottom[0],width);report(msg);
+}
+/* Applies a new grid setting to the open view without a native grid rebuild.
+   Backgrounds and drawers are only repositioned; nothing is allocated. */
+static void iq_apply_grid_setting(void) {
+    if(!layout_test || !iq_view_live())return;
+    for(int side=0;side<(iq.equipment?1:2);side++) {
+        if(!iq.native_columns[side])return;
+        iq.columns[side]=iq_grid_columns(iq.native_columns[side],iq_grid_cap);
+        iq.scale[side]=iq.native_scale[side]/iq.columns[side];
+    }
+    iq_view_revision++;memset(iq.row,0,sizeof(iq.row));
+    iq_filter_view();
+    if(iq.equipment)iq_layout_equipment_backgrounds();else iq_layout_house_backgrounds();
+    for(int i=0;i<iq.count;i++)iq_present(&iq.drawers[i]);
+    char msg[100];snprintf(msg,sizeof(msg),"Grid setting applied: columns %d/%d.",iq.columns[0],iq.columns[1]);report(msg);
 }
 static void __cdecl iq_equipment_grid(void* owner) {
     iq_before_grid(owner);

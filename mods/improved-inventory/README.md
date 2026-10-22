@@ -33,17 +33,24 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.3.8-beta.1 candidate](../../docs/releases/improved-inventory/0.3.8-beta.1-candidate.md)
-targets remaining large-inventory overhead while Storage or Trash is open.
-It awaits owner testing; 0.3.7 remains the public release.
+The [0.4.0-beta.1 candidate](../../docs/releases/improved-inventory/0.4.0-beta.1-candidate.md)
+adds a grid-size choice and localized set names on top of the untested
+0.3.8-beta.1 performance work. It awaits owner testing; 0.3.7 remains the
+public release.
+
+The Grid button beside the Storage/Trash counts cycles through 5x5, 6x6
+(default), 7x7, 8x8, 10x10 and Auto. Each size is a maximum: the game's grid
+still grows up to it, then scrolls. Auto never caps the grid, as in the
+unmodded game. The choice is saved in
+`%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
 
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
 under "Available".
 
 
-Equipment selection shows up to six columns and five rows, with scrolling for
-the rest. The Backpack screen during an adventure is unchanged.
+Equipment selection uses the same column cap with five rows for every six
+columns (6x5 by default), with scrolling for the rest. The Backpack screen during an adventure is unchanged.
 
 Run commands from the repository root. Python 3.10+, Node.js and Windows x64
 are used for development. The pinned native compiler is Zig 0.15.2; download

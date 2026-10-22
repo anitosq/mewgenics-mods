@@ -3,8 +3,8 @@
 #include <stddef.h>
 #include "inventory_filter.h"
 #include "inventory_search.h"
+#include "inventory_grid.h"
 #define IQ_MAX_DRAWERS 1024
-#define IQ_COLUMNS 6
 typedef void (__cdecl *DrawerUpdate)(void*);
 typedef unsigned char (__cdecl *MouseEvent)(void*, void*);
 typedef void (__cdecl *ItemClick)(void*);
@@ -56,10 +56,10 @@ typedef struct {
     void* panels[2];
     IQReference owner_ref, panel_refs[2], scene_ref, manager_ref, entity_ref;
     IQDrawer drawers[IQ_MAX_DRAWERS];
-    int count, items[2], row[2], columns[2];
+    int count, items[2], row[2], columns[2], native_columns[2];
     IQBackground backgrounds[800];
     int background_count;
-    double left[2], bottom[2], span[2], scale[2];
+    double left[2], bottom[2], span[2], scale[2], native_scale[2];
     int update_seen;
     int house_activity;
 } IQView;
@@ -140,7 +140,7 @@ static void* iq_tracking(void* panel, void* transform, int* index) {
     return NULL;
 }
 
-static int iq_rows(int side) {return iq.equipment && iq.columns[side]>5?5:iq.columns[side];}
+static int iq_rows(int side) {return iq.equipment?iq_grid_equipment_rows(iq.columns[side]):iq.columns[side];}
 static int iq_scroll_limit(int side) {return iq.equipment?iq_last_row(iq.items[side],iq.columns[side],iq_rows(side)):iq_max_row(iq.items[side],iq.columns[side]);}
 static int iq_visible(const IQDrawer* d) {
     if(d->ordinal<0) return 0;
@@ -258,6 +258,29 @@ static void iq_before_grid(void* owner) {
     iq.background_count=0;
 }
 
+/* Reuse the first cols*cols native backgrounds; capture recorded their originals. */
+static void iq_layout_house_backgrounds(void) {
+    for(int i=0;i<iq.background_count;i++) {
+        IQBackground* b=&iq.backgrounds[i];
+        int side=b->side,j=b->ordinal,cols=iq.columns[side];
+        int visible=j<cols*cols;
+        *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
+        if(visible) {
+            double pitch=iq.span[side]/cols*(side==0?0.90:1.0);
+            iq_write_double(b->transform,0x80,iq.left[side]+pitch*(j%cols+0.5));
+            iq_write_double(b->transform,0x88,iq.bottom[side]+pitch*(cols-j/cols-0.5)-(side==0?iq.span[side]*0.072:0));
+            double factor=(double)iq.native_columns[side]/cols*(side==0?0.90:1.0);
+            iq_write_double(b->transform,0x98,b->sx*factor);
+            iq_write_double(b->transform,0xa0,b->sy*factor);
+            void* track=iq_tracking(iq.panels[side],b->transform,NULL);
+            if(track) {
+                iq_write_double(track,0x10,b->offset_x+iq_double(b->transform,0x80)-b->x);
+                iq_write_double(track,0x18,b->offset_y+iq_double(b->transform,0x88)-b->y);
+            }
+        }
+    }
+}
+
 static void iq_capture(void* owner) {
     if (!layout_test) return;
     /* Include failed/empty captures: they can also invalidate menu counts. */
@@ -290,8 +313,8 @@ static void iq_capture(void* owner) {
         int backgrounds=iq_int(owner,side?0x84:0x74);
         void** cells=iq_ptr(owner,side?0x88:0x78);
         if (columns<2 || columns>20 || backgrounds!=columns*columns || !cells) return;
-        int cols=columns<IQ_COLUMNS?columns:IQ_COLUMNS;
-        iq.columns[side]=cols;
+        int cols=iq_grid_columns(columns,iq_grid_cap);
+        iq.columns[side]=cols;iq.native_columns[side]=columns;
         void *first=NULL;
         if (!iq_read(cells,&first,8)) return;
         void* t0=iq_ptr(first,0x40);
@@ -305,7 +328,8 @@ static void iq_capture(void* owner) {
         iq.left[side]=bounds[0];
         iq.bottom[side]=bounds[2];
         iq.span[side]=width;
-        iq.scale[side]=iq_double(t0,0x98)*columns/cols;
+        iq.native_scale[side]=iq_double(t0,0x98)*columns;
+        iq.scale[side]=iq.native_scale[side]/cols;
         /* Reuse existing backgrounds; never allocate or release game objects. */
         for(int j=0;j<backgrounds;j++) {
             void* renderer=NULL;
@@ -344,29 +368,11 @@ static void iq_capture(void* owner) {
     iq=pending_view;
     iq_index_view();
     iq_filter_view();
-    for(int i=0;i<iq.background_count;i++) {
-        IQBackground* b=&iq.backgrounds[i];
-        int side=b->side,j=b->ordinal,cols=iq.columns[side];
-        int visible=j<cols*cols;
-        *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
-        if(visible) {
-            double pitch=iq.span[side]/cols*(side==0?0.90:1.0);
-            iq_write_double(b->transform,0x80,iq.left[side]+pitch*(j%cols+0.5));
-            iq_write_double(b->transform,0x88,iq.bottom[side]+pitch*(cols-j/cols-0.5)-(side==0?iq.span[side]*0.072:0));
-            double factor=(double)iq_int(owner,0x50+side*4)/cols*(side==0?0.90:1.0);
-            iq_write_double(b->transform,0x98,b->sx*factor);
-            iq_write_double(b->transform,0xa0,b->sy*factor);
-            void* track=iq_tracking(iq.panels[side],b->transform,NULL);
-            if(track) {
-                iq_write_double(track,0x10,b->offset_x+iq_double(b->transform,0x80)-b->x);
-                iq_write_double(track,0x18,b->offset_y+iq_double(b->transform,0x88)-b->y);
-            }
-        }
-    }
+    iq_layout_house_backgrounds();
     for(int i=0;i<iq.count;i++) iq_present(&iq.drawers[i]);
     iq_ui_capture();
     char message[180];
-    snprintf(message,sizeof(message),"Layout test: %d/%d native drawers; six columns; wheel scroll enabled",iq.items[0],iq.items[1]);
+    snprintf(message,sizeof(message),"Layout test: %d/%d native drawers; columns %d/%d of %d/%d; wheel scroll enabled",iq.items[0],iq.items[1],iq.columns[0],iq.columns[1],iq.native_columns[0],iq.native_columns[1]);
     report(message);
 }
 

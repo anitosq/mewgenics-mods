@@ -8,6 +8,7 @@ static ButtonHit original_button_hit;
 static void* iq_camera;
 static uint64_t iq_camera_generation;
 #include "inventory_metadata_cache.h"
+#include "inventory_set_name.h"
 static struct {char id[128]; wchar_t name[160];} iq_sets[IQ_SET_LIMIT];
 static int iq_set_count;
 static wchar_t iq_set_query[IQ_QUERY_LIMIT];

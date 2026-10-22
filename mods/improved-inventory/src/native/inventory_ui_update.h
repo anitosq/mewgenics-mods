@@ -36,17 +36,22 @@ static void iq_ui_update(void) {
     if(refresh || !iq_label_cache.valid) {
         int selected_sets=0,last=0;
         for(int j=0;j<iq_set_count;j++)if(iq_search.sets[j/64]&(UINT64_C(1)<<(j%64))){selected_sets++;last=j;}
-        if(iq_search.set_mode==3 && selected_sets==1){iq_set_name(label,iq_sets[last].name);if(wcslen(label)>6)wcscpy(label+4,L"..");}
+        if(iq_search.set_mode==3 && selected_sets==1){wcscpy(label,iq_sets[last].name);if(wcslen(label)>6)wcscpy(label+4,L"..");}
         else if(iq_search.set_mode==3)swprintf(label,200,L"%d sets",selected_sets);
         else swprintf(label,200,L"%ls",iq_search.set_mode==1?L"Any set":iq_search.set_mode==2?L"No set":L"All sets");
         ready&=iq_text(&iq_controls.bars[selected],0,"sets",label);
     }
-    if(iq.equipment)iq_control_hide(&iq_controls.count);
+    if(iq.equipment){iq_control_hide(&iq_controls.count);iq_control_hide(&iq_controls.grid);}
     else {
         iq_control_show(&iq_controls.count,"IQCount",x+12*s,y-80*s);
         if(refresh || !iq_label_cache.valid) {
             swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
             ready&=iq_text(&iq_controls.count,0,"count",label);
+        }
+        iq_control_show(&iq_controls.grid,"IQGrid",x+IQ_GRID_BUTTON_X*s,y-80*s);
+        if(refresh || !iq_label_cache.valid) {
+            iq_grid_label(label,200,iq_grid_cap);
+            ready&=iq_text(&iq_controls.grid,0,"label",label);
         }
     }
     if(filter_popup==1 || filter_popup==2) {
@@ -69,7 +74,7 @@ static void iq_ui_update(void) {
                 int at=iq_set_offset+row,j=at<iq_set_rows_count?iq_set_rows[at]:-1;label[0]=0;
                 if(j>=0) {
                     int checked=iq_search.set_mode==3 && (iq_search.sets[j/64]&(UINT64_C(1)<<(j%64)))!=0;
-                    wchar_t short_name[160];iq_set_name(short_name,iq_sets[j].name);
+                    wchar_t short_name[160];wcscpy(short_name,iq_sets[j].name);
                     if(wcslen(short_name)>22)wcscpy(short_name+20,L"..");
                     swprintf(label,200,L"[%lc] %ls",checked?L'x':L' ',short_name);
                 } else if(!row)wcscpy(label,L"No matching sets");

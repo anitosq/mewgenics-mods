@@ -1,5 +1,14 @@
 # Improved Inventory changelog
 
+## 0.4.0-beta.1
+
+- Choose the grid size with the new Grid button in Storage: 5x5, 6x6, 7x7, 8x8,
+  10x10 or Auto. Auto keeps the game's growing grid, without scrolling.
+  The choice also applies to pre-adventure equipment and is remembered.
+- Set names now appear without the "Set Bonus" wording in every game language,
+  so the set filter and set list show the actual set name in French and others.
+- Includes the 0.3.8-beta.1 performance changes.
+
 ## 0.3.8-beta.1
 
 - Skip repeated animation updates for idle, hidden items while Storage or Trash is open.

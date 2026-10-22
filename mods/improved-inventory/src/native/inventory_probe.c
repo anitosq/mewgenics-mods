@@ -63,6 +63,7 @@ static void report(const char* message) {
 #include "inventory_controls.h"
 #include "inventory_equipment.h"
 #include "inventory_hooks.h"
+#include "inventory_settings.h"
 
 static int iq_file_matches(const wchar_t* path,const unsigned char expected[32]) {
     HANDLE file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -196,6 +197,7 @@ static DWORD WINAPI initialize(void* ignored) {
         return 0;
     }
     report("Executable hash matched.");
+    iq_load_settings();
     unsigned char* base = (unsigned char*)GetModuleHandleW(NULL);
     game_base=base;
     IQHook hooks[]={
