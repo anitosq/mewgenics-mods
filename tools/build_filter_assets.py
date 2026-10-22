@@ -100,7 +100,9 @@ class Movie:
         path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'FWS\x0a'+struct.pack('<I',len(body)+8)+body)
 
 m=Movie(); names=['Any rarity','Common','Uncommon','Rare','Very rare']
-types=['All','Weapon consumables','Item consumables','Worn','Broken','Reusable weapons']
+types=['All','Weapon consumables','Item consumables','Worn','Broken','Reusable weapons','Head','Face','Neck','Weapon','Trinket']
+# Popup layout mirrors iq_type_rect: categories left, equipment slots right.
+type_rect=lambda i:(10,43+i*43,260,36) if i<6 else (280,43+(i-6)*43,260,36)
 dynamic_font='Edmundm'
 for category,category_label in enumerate(types):
     for rarity,label in enumerate(names):
@@ -126,9 +128,9 @@ for i,label in enumerate(names[1:]):
     parts.append(m.field(dynamic_font,x+4,y+60,142,30,20,label,align=2))
 m.sprite('IQRarityLabels',parts)
 for active in range(len(types)):
-    parts=m.paper(0,0,280,311)+[m.text('Item type',12,29,22)]
-    for i,label in enumerate(types):parts+=m.button(label,10,43+i*43,260,i==active)
-    m.sprite(f'IQType{active}',m.feedback(parts,[(10,43+i*43,260,36) for i in range(len(types))]))
+    parts=m.paper(0,0,550,311)+[m.text('Item type',12,29,22),m.text('Slot',282,29,22)]
+    for i,label in enumerate(types):parts+=m.button(label,*type_rect(i)[:2],260,i==active)
+    m.sprite(f'IQType{active}',m.feedback(parts,[type_rect(i) for i in range(len(types))]))
 for direction in range(2):
     parts=m.button('',0,0,32)
     points=[(7,24),(16,11),(25,24)] if direction==0 else [(7,12),(25,12),(16,25)]

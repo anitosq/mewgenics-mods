@@ -17,7 +17,7 @@ static int iq_set_offset,iq_focus;
 
 static IQItemTraits iq_traits(void* drawer,uint64_t id) {
     IQMetadata* m=iq_find_metadata(drawer,id);
-    return m?m->traits:(IQItemTraits){-1,-1,-1,-1};
+    return m?m->traits:(IQItemTraits){-1,-1,-1,-1,0};
 }
 static void* iq_property(void* definition,const char* name) {
     struct {char data[16];uint64_t size,capacity;} key={{0},0,15};
@@ -30,6 +30,10 @@ static int iq_weapon(void* value) {
     uint64_t size=0;iq_read((unsigned char*)value+0x78,&size,8);
     if(size!=6)return 0;
     char kind[6];return iq_read((unsigned char*)value+0x68,kind,6)?!memcmp(kind,"weapon",6):-1;
+}
+static int iq_slot(void* value) {
+    char kind[16];
+    return iq_int(value,0xa8)==1 && iq_string_read((unsigned char*)value+0x68,kind,sizeof(kind))?iq_slot_index(kind):0;
 }
 static int iq_limited(void* value) {
     int type=iq_int(value,0xa8);
@@ -61,8 +65,9 @@ static void iq_cache_item(void* drawer,void* item) {
     int consumable=known?(flag!=0):(type==0?0:-1);
     uint64_t id=0;iq_read(item,&id,8);
     IQMetadata* metadata=iq_metadata_slot(drawer);
-    IQItemTraits traits={consumable,iq_weapon(iq_property(definition,"kind")),
-        iq_limited(iq_property(definition,"durability")),iq_int(item,0x5c)};
+    void* kind=iq_property(definition,"kind");
+    IQItemTraits traits={consumable,iq_weapon(kind),
+        iq_limited(iq_property(definition,"durability")),iq_int(item,0x5c),iq_slot(kind)};
     *metadata=(IQMetadata){.drawer=drawer,.id=id,.generation=iq_generation(drawer),.traits=traits,
         .fx=iq_item_traits_cached(definition)};
     iq_search_metadata(metadata,manager,item,definition);

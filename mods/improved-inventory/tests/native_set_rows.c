@@ -28,7 +28,7 @@ int main(void) {
     iq.count=1024;iq_set_count=12;
     for(int s=0;s<12;s++)swprintf(iq_sets[s].name,160,L"Set %02d",11-s);
     for(int i=0;i<iq.count;i++) {
-        iq.drawers[i]=(IQDrawer){.item_id=(uint64_t)i,.traits={i%2,0,0,0},.rarity=i%2?5:1,.side=i%2};
+        iq.drawers[i]=(IQDrawer){.item_id=(uint64_t)i,.traits={i%2,0,0,0,0},.rarity=i%2?5:1,.side=i%2};
         wcscpy(metadata[i].text,i%2?L"Rare potion":L"Common hat");
         metadata[i].sets_known=1;metadata[i].sets[0]=UINT64_C(1)<<(i%12);
     }

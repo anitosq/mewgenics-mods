@@ -305,7 +305,8 @@ static void iq_feedback_update(void) {
             if(iq_feedback_rect(&sample,popup,0,10,61,310,36/0.70))return;
             for(int i=0;i<4;i++)if(iq_feedback_rect(&sample,popup,i+1,10+(i%2)*160,126+(i/2)*160,150,150))return;
         } else if(filter_popup==2) {
-            for(int i=0;i<IQ_TYPE_COUNT;i++)if(iq_feedback_rect(&sample,popup,i,10,43+i*43,260,36))return;
+            double r[4];
+            for(int i=0;i<IQ_TYPE_COUNT;i++){iq_type_rect(i,r);if(iq_feedback_rect(&sample,popup,i,r[0],r[1],r[2],r[3]))return;}
         } else if(filter_popup==4) {
             double r[4];
             for(int i=0;i<IQ_STAT_CHOICES;i++){iq_stat_rect(i,r);if(iq_feedback_rect(&sample,popup,i,r[0],r[1],r[2],r[3]))return;}
@@ -434,7 +435,7 @@ static int iq_ui_event(void* event) {
         IQFilter previous=active_filter;int choice=0;iq_controls.captured_click=1;
         if(button==1 && iq_control_point(&iq_controls.popups[iq_popup_index()],p)) {
             if(filter_popup==1){int index=iq_rarity_choice(p[0],p[1]);if(index>=0){active_filter.rarity=index;choice=1;}}
-            else if(filter_popup==2 && p[0]>=10 && p[0]<270 && p[1]>=43 && p[1]<301){int row=(int)((p[1]-43)/43);if((p[1]-43)-row*43<36 && row<IQ_TYPE_COUNT){active_filter.type=row;choice=1;}}
+            else if(filter_popup==2){int index=iq_type_choice(p[0],p[1]);if(index>=0){active_filter.type=index;choice=1;}}
         }
         iq_sound(choice?IQ_SOUND_SELECT:IQ_SOUND_CLOSE);filter_popup=0;if(previous.type!=active_filter.type || previous.rarity!=active_filter.rarity)iq_refilter();else iq_ui_update();return 1;
     }
