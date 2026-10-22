@@ -1,5 +1,10 @@
 # Improved Inventory changelog
 
+## 0.4.0-beta.5
+
+- Fixed Trash sizes now apply: 0.4.0-beta.4 kept the game's 4x4 Trash.
+  A larger Trash size now takes effect immediately.
+
 ## 0.4.0-beta.4
 
 - Search, filters, set list and a scrolling grid in the adventure Backpack.

@@ -33,7 +33,9 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.4.0-beta.4 candidate](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md)
+The [0.4.0-beta.5 candidate](../../docs/releases/improved-inventory/0.4.0-beta.5-candidate.md)
+fixes fixed Trash sizes. The
+[0.4.0-beta.4 candidate](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md)
 adds the adventure Backpack, capacity-limited Storage sizes and fixed Trash
 grids. The [0.4.0-beta.3 candidate](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md)
 added read-only Backpack-screen probes, which betas still include. The
