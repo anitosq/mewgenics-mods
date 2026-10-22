@@ -17,6 +17,7 @@ PANEL_HITS += [(18+i*172,370,152,38) for i in range(4)]
 PANEL_HITS += [(18,546,328,38),(358,546,328,38)]
 # Appended so earlier indices keep their meaning in ui.h: minus then plus for each row.
 PANEL_HITS += [(x,y,PRIORITY_BUTTON,36) for y in PRIORITY_ROWS for x in (PRIORITY_MINUS,PRIORITY_PLUS)]
+PANEL_HITS += [(18,56,215,30)]  # select all / none, on the header row
 PIN_HITS = [(558,0,42,48),(18,436,55,36),(85,436,55,36),(450,436,132,36)]
 # Native catparts.swf Rare/Quest item tints, sampled at gray 177 and blended 35% over paper.
 CALCULATE_FILL = (224,219,177,255)
@@ -119,11 +120,12 @@ def build():
     inner = PANEL_WIDTH-36
     parts = m.paper(0,0,PANEL_WIDTH,604)
     parts += [(m.field(18,10,inner-34,36,27,'Auto Furniture'),'title'),m.field(PANEL_WIDTH-35,10,30,36,26,'X'),
-              (m.field(18,56,210,30,19,'Stat'),'stat'),(m.field(238,56,76,30,19,'Min'),'min'),
+              (m.field(58,56,170,30,19,'Stat'),'stat'),(m.field(238,56,76,30,19,'Min'),'min'),
               (m.field(320,56,76,30,19,'Max'),'max'),(m.field(402,56,92,30,17,'Priority',align=2),'priority'),
               (m.field(514,56,75,30,19,'Before',align=2),'before'),
               (m.field(597,56,90,30,17,'Best found',align=2),'best')]
-    parts += [m.box(18,82,inner,1,(54,50,42,90)),m.box(18,313,inner,1,(54,50,42,90))]
+    parts += m.paper(18,57,28,28)+[(m.field(21,56,25,30,23),'check_all')]
+    parts += [m.box(18,86,inner,1,(54,50,42,90)),m.box(18,313,inner,1,(54,50,42,90))]
     for i,label in enumerate(('Comfort','Stimulation','Health','Mutation','Appeal')):
         y=90+i*44
         parts += m.paper(18,y+3,28,28)+[(m.field(21,y+2,25,30,23),'check'+str(i)),(m.field(92,y+3,141,32,20,label),'stat'+str(i))]

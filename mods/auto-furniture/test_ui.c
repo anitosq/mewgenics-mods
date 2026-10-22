@@ -55,7 +55,7 @@ static void content_cache(void) {
     strcpy(ui_state.room,"Attic");strcpy(ui_status,"Ready.");plan_ready=0;
     attach_control(&ui_state.panel,memory,transform);
     missing_child=1;ui_panel_content();assert(!ui_state.panel.content_ready);
-    missing_child=0;ui_panel_content();assert(ui_state.panel.content_ready&&text_writes==59);
+    missing_child=0;ui_panel_content();assert(ui_state.panel.content_ready&&text_writes==60);
     unsigned writes=text_writes;reads=child_lookups=0;
     for(int i=0;i<600;i++)ui_panel_content();
     assert(reads==0&&child_lookups==0&&text_writes==writes);
@@ -68,11 +68,15 @@ static void content_cache(void) {
     assert(!strcmp(ui_state.panel.text[4],"2.0")&&!strcmp(ui_state.panel.text[5],"5.0")&&!strcmp(ui_state.panel.text[29],"+3.0"));
     plan_ready=0;ui_panel_content();assert(!strcmp(ui_state.panel.text[5],"-"));
     /* Goal buttons cycle balance -> +rank -> -rank -> balance; ranks close up when one is cleared. */
-    ui_state.selected=1;include_utilities=0;
-    assert(ui_available(1,UI_PRIORITY_HIT)&&ui_available(1,UI_PRIORITY_HIT+1)&&!ui_available(1,UI_PRIORITY_HIT+2));
+    ui_state.selected=0;include_utilities=0;
     const int utility_minus=UI_PRIORITY_HIT+2*AF_UTILITY_GOAL;
-    assert(!ui_available(1,utility_minus+1));include_utilities=1;
-    assert(!ui_available(1,utility_minus)&&ui_available(1,utility_minus+1));
+    assert(ui_available(1,UI_PRIORITY_HIT+2)&&!ui_available(1,utility_minus)&&ui_available(1,utility_minus+1));
+    /* Select all toggles every stat; partial selection shows "-". */
+    const char* select_all=ui_state.panel.text[4+6*AF_STATS+AF_GOALS];
+    ui_select_stat(3);ui_panel_content();assert(ui_state.selected==8&&!strcmp(select_all,"-"));
+    ui_select_all();ui_panel_content();assert(ui_state.selected==AF_ALL_STATS&&!strcmp(select_all,"X"));
+    ui_press_priority(1,1);ui_select_all();ui_panel_content();
+    assert(!ui_state.selected&&!ui_state.goal[1]&&!strcmp(select_all,""));
     ui_state.selected=AF_ALL_STATS;const char (*priority_text)[AF_TEXT_BYTES]=ui_state.panel.text+4+6*AF_STATS;
     ui_press_priority(2,-1);ui_press_priority(AF_UTILITY_GOAL,1);ui_press_priority(0,1);ui_panel_content();
     assert(ui_state.goal[2]==-1&&ui_state.goal[AF_UTILITY_GOAL]==2&&ui_state.goal[0]==3);
@@ -86,7 +90,7 @@ static void content_cache(void) {
     unsigned at=0;while(at<field_count&&strcmp(fields[at].name,"calculate"))at++;
     assert(at<field_count&&!wcscmp(fields[at].text,L"Calculate translated"));
     memset(af_strings,0,sizeof(af_strings));af_text_revision++;
-    writes=text_writes;attach_control(&ui_state.panel,memory,transform);ui_panel_content();assert(text_writes==writes+59);
+    writes=text_writes;attach_control(&ui_state.panel,memory,transform);ui_panel_content();assert(text_writes==writes+60);
     ui_state.panel.visible=1;control_hide(&ui_state.panel);assert(!ui_state.panel.content_ready);
     ui_panel_content();assert(ui_state.panel.content_ready);
     writes=child_lookups;text_writes=0;

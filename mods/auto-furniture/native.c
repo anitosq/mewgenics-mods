@@ -257,7 +257,7 @@ __declspec(dllexport) int AutoFurnitureProbeSelfTest(void) {
     memset(ui_state.minimum,'1',sizeof(ui_state.minimum));memset(ui_state.maximum,'2',sizeof(ui_state.maximum));
     ui_state.goal[1]=-1;ui_state.goal[AF_UTILITY_GOAL]=2;include_utilities=1;pinned_count=2;plan_ready=1;plan_cancel=0;undo_ready=1;
     ui_reset();
-    if(ui_state.selected!=AF_ALL_STATS||ui_state.focus!=-1||ui_state.action||ui_state.pin_page||
+    if(ui_state.selected||ui_state.focus!=-1||ui_state.action||ui_state.pin_page||
        include_utilities||pinned_count||plan_ready||!plan_cancel||!undo_ready)result|=2048;
     for(int i=0;i<AF_STATS;i++)if(ui_state.minimum[i][0]||ui_state.maximum[i][0]||ui_state.goal[i])result|=2048;
     if(ui_state.goal[AF_UTILITY_GOAL])result|=2048;
@@ -266,8 +266,10 @@ __declspec(dllexport) int AutoFurnitureProbeSelfTest(void) {
         const UIBox* b=&panel_boxes[i];double point[2]={b->x+b->w/2,b->y+b->h/2};
         if(ui_target(panel_boxes,PANEL_HIT_COUNT,point)!=(int)i)result|=4096;
     }
-    if(ui_available(1,19)||ui_available(1,20)||!ui_available(1,18))result|=4096;
-    ui_state.selected=0;if(ui_available(1,6)||ui_available(1,18)||ui_available(1,UI_PRIORITY_HIT)||ui_available(1,UI_PRIORITY_HIT+1))result|=4096;
+    if(ui_available(1,19)||ui_available(1,20)||ui_available(1,18))result|=4096;
+    /* With nothing selected, a stat's fields and priority buttons still select it. */
+    if(!ui_available(1,6)||!ui_available(1,UI_PRIORITY_HIT)||!ui_available(1,UI_SELECT_ALL_HIT))result|=4096;
+    ui_state.selected=1;if(!ui_available(1,18))result|=4096;
     ui_state.selected=AF_ALL_STATS;plan_ready=1;
     if(!ui_available(1,19))result|=4096;
     plan_worker=(HANDLE)1;

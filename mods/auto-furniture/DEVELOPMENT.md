@@ -180,6 +180,16 @@ beta.2. Solver fixtures cover stat and utility rankings and validation; UI
 fixtures cover button availability, ranking and labels. The wider panel and the
 Priority header's fit in each language have not been checked in game.
 
+### Selection (0.3.0-beta.5)
+
+At the owner's request, the panel opens and resets with no stat selected.
+Clicking a stat's Min or Max field or either priority button selects that stat,
+and the utility `+` button turns on utility furniture, so those controls stay
+available while unselected. A header checkbox (hit appended after the priority
+buttons) selects all stats, or clears them all and their priorities when all
+were selected; it shows `-` for a partial selection. Calculate stays disabled
+until a stat is selected. The solver is unchanged from beta.4.
+
 Build and run the benchmark from the repository root (`V=1` prints each case).
 A large time budget with an iteration cap gives repeatable output, which is
 useful to check that a refactor leaves the search unchanged:

@@ -33,8 +33,10 @@ launch argument. Furniture you placed remains in the save.
 ## Use
 
 Enter furniture-placement mode and click a room's wand. Select Comfort,
-Stimulation, Health, Mutation, Appeal, or any combination. Click Calculate,
-compare Before and Best found, then Apply. Calculate alone moves nothing.
+Stimulation, Health, Mutation, Appeal, or any combination; no stat is selected
+at first. Setting a stat's Min, Max or priority selects it too, and the box
+above the stats selects or clears all of them. Click Calculate, compare Before
+and Best found, then Apply. Calculate alone moves nothing.
 
 The interface follows your game language: English, Spanish, French, German,
 Italian, Brazilian Portuguese, Russian, Korean, Japanese or Simplified Chinese.

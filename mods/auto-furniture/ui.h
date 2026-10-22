@@ -8,7 +8,7 @@ static HitTest original_hit;
 static Update original_furniture_hover;
 static int ui_enabled;
 typedef struct {
-    byte* renderer;uint64_t generation;char text[4+6*AF_STATS+AF_GOALS][AF_TEXT_BYTES];uint64_t text_written;
+    byte* renderer;uint64_t generation;char text[5+6*AF_STATS+AF_GOALS][AF_TEXT_BYTES];uint64_t text_written;
     byte* feedback[3][40];int feedback_count,visible,content_ready;
 } Control;
 static struct {
@@ -19,9 +19,10 @@ static struct {
     int text_ready;
     byte* rooms[MAX_ROOMS];unsigned count;
     Control icons[MAX_ROOMS],panel,pins,pin_rows[9],hint,shade,stats[AF_STATS],result_stats[AF_STATS];
-} ui_state={.focus=-1,.selected=AF_ALL_STATS};
+} ui_state={.focus=-1};
 #define PANEL_HIT_COUNT (sizeof(panel_boxes)/sizeof(panel_boxes[0]))
-enum {UI_PRIORITY_HIT=24}; /* minus, plus for each AF_GOALS row */
+/* Minus, plus for each AF_GOALS row, then the select-all box. */
+enum {UI_PRIORITY_HIT=24,UI_SELECT_ALL_HIT=UI_PRIORITY_HIT+2*AF_GOALS};
 static double number(void* p,size_t offset) {double n=0;if(p)read_bytes((byte*)p+offset,&n,8);return n;}
 static uint64_t generation(void* p) {uint64_t n=0;if(p)read_bytes((byte*)p-8,&n,8);return n;}
 static int control_valid(Control* c) {
@@ -133,12 +134,9 @@ static int ui_target(const UIBox* boxes,unsigned count,double p[2]) {
 }
 static int ui_available(int modal,int at) {
     if(modal==2)return at!=1&&at!=2?1:at==1?ui_state.pin_page>0:(ui_state.pin_page+1)*9<ui_state.pin_total;
-    if(at>=6&&at<16)return !!(ui_state.selected&(1u<<((at-6)/2)));
-    if(at>=UI_PRIORITY_HIT) {
-        int row=(at-UI_PRIORITY_HIT)/2,plus=(at-UI_PRIORITY_HIT)%2;
-        /* Utility priority only raises the count of utility pieces. */
-        return row==AF_UTILITY_GOAL?include_utilities&&plus:!!(ui_state.selected&(1u<<row));
-    }
+    /* Utility priority only raises the count of utility pieces. */
+    if(at>=UI_PRIORITY_HIT&&at<UI_SELECT_ALL_HIT)
+        return (at-UI_PRIORITY_HIT)/2!=AF_UTILITY_GOAL||(at-UI_PRIORITY_HIT)%2;
     if(at==18)return !plan_worker&&ui_state.selected;
     if(at==19)return !plan_worker&&plan_ready&&af_within_caps(&problem,search.best.stats);
     if(at==20)return !plan_worker&&undo_ready;
@@ -183,7 +181,7 @@ static void ui_close(void) {
 }
 static void ui_invalidate(void) {InterlockedExchange(&plan_cancel,1);plan_ready=0;ui_return_count=0;snprintf(ui_status,sizeof(ui_status),"Ready.");}
 static void ui_reset(void) {
-    ui_state.selected=AF_ALL_STATS;ui_state.focus=-1;ui_state.action=0;ui_state.pin_page=0;
+    ui_state.selected=0;ui_state.focus=-1;ui_state.action=0;ui_state.pin_page=0;
     memset(ui_state.minimum,0,sizeof(ui_state.minimum));memset(ui_state.maximum,0,sizeof(ui_state.maximum));
     memset(ui_state.goal,0,sizeof(ui_state.goal));include_utilities=0;pinned_count=0;ui_invalidate();
 }
@@ -201,6 +199,20 @@ static void ui_press_priority(int row,int direction) {
     if(*goal){*goal=-*goal;return;}
     int ranked=0;for(int i=0;i<AF_GOALS;i++)ranked+=!!ui_state.goal[i];
     *goal=direction*(ranked+1);
+}
+/* Using a stat's Min, Max or priority selects it. */
+static void ui_select_stat(int stat) {
+    if(ui_state.selected&(1u<<stat))return;
+    ui_state.selected|=1u<<stat;ui_invalidate();
+}
+static void ui_select_all(void) {
+    if(ui_state.selected==AF_ALL_STATS) {
+        ui_state.selected=0;for(int i=0;i<AF_STATS;i++)ui_clear_goal(i);
+    } else ui_state.selected=AF_ALL_STATS;
+    ui_invalidate();
+}
+static const char* ui_select_all_mark(void) {
+    return ui_state.selected==AF_ALL_STATS?"X":ui_state.selected?"-":"";
 }
 static void ui_priority_text(int row,char value[40]) {
     value[0]=0;
@@ -318,6 +330,7 @@ static void ui_panel_content(void) {
         char value[40];ui_priority_text(AF_UTILITY_GOAL,value);
         ok&=control_text(&ui_state.panel,4+6*AF_STATS+AF_UTILITY_GOAL,"priority5",value);
     }
+    ok&=control_text(&ui_state.panel,4+6*AF_STATS+AF_GOALS,"check_all",ui_select_all_mark());
     ok&=control_text(&ui_state.panel,3+5*AF_STATS,"change",plan_ready?af_text(AF_CHANGE):"");
     ok&=control_text(&ui_state.panel,1+5*AF_STATS,"utility",include_utilities?"X":"");
     if(strcmp(ui_state.status_source,ui_status)||ui_state.status_count!=ui_return_count||ui_state.text_revision!=af_text_revision) {
@@ -473,11 +486,16 @@ static unsigned char ui_input(void* input,void* event) {
                 if(!(ui_state.selected&(1u<<(at-1))))ui_clear_goal(at-1);
                 ui_invalidate();return 0;
             }
+            if(at==UI_SELECT_ALL_HIT) {
+                ui_select_all();ui_sound(ui_state.selected?UI_CHECK:UI_UNCHECK);return 0;
+            }
             if(at>=UI_PRIORITY_HIT) {
-                int row=(at-UI_PRIORITY_HIT)/2;ui_press_priority(row,(at-UI_PRIORITY_HIT)%2?1:-1);
+                int row=(at-UI_PRIORITY_HIT)/2;
+                if(row==AF_UTILITY_GOAL)include_utilities=1;else ui_select_stat(row);
+                ui_press_priority(row,(at-UI_PRIORITY_HIT)%2?1:-1);
                 ui_sound(ui_state.goal[row]?UI_CHECK:UI_UNCHECK);ui_invalidate();return 0;
             }
-            if(at>=6&&at<16){ui_state.focus=at-6;ui_sound(UI_SELECT);return 0;}
+            if(at>=6&&at<16){ui_select_stat((at-6)/2);ui_state.focus=at-6;ui_sound(UI_SELECT);return 0;}
             if(at==16) {
                 include_utilities=!include_utilities;if(!include_utilities)ui_clear_goal(AF_UTILITY_GOAL);
                 ui_sound(include_utilities?UI_CHECK:UI_UNCHECK);ui_invalidate();
