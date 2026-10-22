@@ -156,8 +156,9 @@ synthetic and are not evidence of in-game results.
 
 ### Ranked priorities (0.3.0-beta.4)
 
-beta.3 used one Goal box per stat that cycled through states; the owner found
-the label unclear and the cycling awkward in game. beta.4 replaces it with a
+beta.3 used one Goal box per stat that cycled through states. In game,
+fredjammes (who maintains the fork these betas came from) found the label
+unclear and the cycling awkward. beta.4 replaces it with a
 Priority column of drawn `-`/`+` buttons around the rank, plus a sixth row for
 utility furniture (`AFProblem.goal`, slot `AF_UTILITY_GOAL`).
 
@@ -182,7 +183,7 @@ Priority header's fit in each language have not been checked in game.
 
 ### Selection (0.3.0-beta.5)
 
-At the owner's request, the panel opens and resets with no stat selected.
+At fredjammes's request, the panel opens and resets with no stat selected.
 Clicking a stat's Min or Max field or either priority button selects that stat,
 and the utility `+` button turns on utility furniture, so those controls stay
 available while unselected. A header checkbox (hit appended after the priority
@@ -192,10 +193,10 @@ until a stat is selected. The solver is unchanged from beta.4.
 
 ### Direction separate from priority (0.3.0-beta.6)
 
-The owner asked to separate maximize/minimize from priority. `AFProblem` now
+fredjammes asked to separate maximize/minimize from priority. `AFProblem` now
 has a `minimize` mask over selected stats and `rank[AF_RANKS]` (0 unranked,
 utility in slot `AF_UTILITY_RANK`) instead of the signed `goal`. Ranked stats
-compare in strict order (owner's choice), multiplied by their direction;
+compare in strict order (fredjammes's choice), multiplied by their direction;
 unranked selected stats are balanced on direction-adjusted values. All repair
 weights take the direction sign; ranked ones also scale by 2^(6-rank).
 
@@ -209,7 +210,7 @@ the Russian header `Направление` have not been checked for fit in gam
 
 ### Floating pieces leave resting space (0.3.0-beta.7)
 
-Owner suggestion: pieces that need no support, such as a balloon, should use
+Suggested by fredjammes: pieces that need no support, such as a balloon, should use
 space that resting furniture cannot. A shape without a resting cell (value 3)
 now picks uniformly among the fitting spots with the lowest resting cost: the
 sum, over its stamped cells, of 1/d for free cells d rows above the nearest
