@@ -63,7 +63,8 @@ static void iq_cache_item(void* drawer,void* item) {
     IQMetadata* metadata=iq_metadata_slot(drawer);
     IQItemTraits traits={consumable,iq_weapon(iq_property(definition,"kind")),
         iq_limited(iq_property(definition,"durability")),iq_int(item,0x5c)};
-    *metadata=(IQMetadata){.drawer=drawer,.id=id,.generation=iq_generation(drawer),.traits=traits};
+    *metadata=(IQMetadata){.drawer=drawer,.id=id,.generation=iq_generation(drawer),.traits=traits,
+        .fx=iq_item_traits_cached(definition)};
     iq_search_metadata(metadata,manager,item,definition);
     iq_metadata_revision++;
 }

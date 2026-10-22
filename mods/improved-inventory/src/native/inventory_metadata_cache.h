@@ -1,5 +1,6 @@
 /* Index follows ring-slot replacement; native identity is checked at lookup. */
-typedef struct {void* drawer;uint64_t id,generation;IQItemTraits traits; wchar_t text[4096]; uint64_t sets[4]; int sets_known;} IQMetadata;
+#include "inventory_trait_match.h"
+typedef struct {void* drawer;uint64_t id,generation;IQItemTraits traits; wchar_t text[4096]; uint64_t sets[4]; int sets_known; IQItemFx fx;} IQMetadata;
 static IQMetadata iq_metadata[IQ_MAX_DRAWERS];
 static unsigned iq_metadata_next;
 static IQIndex iq_metadata_index;

@@ -1,5 +1,16 @@
 # Improved Inventory changelog
 
+## 0.5.0-beta.1
+
+- New Stats filter: find items that raise or lower Strength, Dexterity,
+  Constitution, Intelligence, Charisma, Speed or Luck.
+- New Effects filter: find items that grant or inflict Bleed, Poison, Burn,
+  Freeze, Stun, Bruise, Confusion, Slow, Fear, Weakness, Thorns, Brace,
+  Shield, Holy Shield, Health Regen, Dodge Chance or Charge, including through
+  the ability an item grants. Pick several to match any of them.
+- Stat and effect names appear in the game's language.
+- Includes the 0.4.0-beta.6 grid sizes and adventure Backpack support.
+
 ## 0.4.0-beta.6
 
 - Fixed Improved Inventory no longer appearing at home in 0.4.0-beta.5.

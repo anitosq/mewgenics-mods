@@ -5,10 +5,14 @@
 #include "../src/native/inventory_filter.h"
 #include "../src/native/inventory_search.h"
 #include "../src/native/inventory_grid.h"
-enum { IQ_RARITY_COUNT=5, IQ_POPUP_COUNT=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4, IQ_SET_PAGE=7 };
+#include "../src/native/inventory_trait_ui.h"
+enum { IQ_RARITY_COUNT=5, IQ_STATS_POPUP=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4, IQ_EFFECTS_POPUP=IQ_STATS_POPUP+IQ_STAT_CHOICES,
+       IQ_POPUP_COUNT=IQ_EFFECTS_POPUP+1, IQ_SET_PAGE=7 };
 static struct {int equipment,items[2],row[2],columns[2];double span[2];} iq;
 static IQFilter active_filter;
 static IQSearch iq_search;
+static int iq_stat_filter;
+static uint32_t iq_effect_filter;
 static int filter_popup,iq_focus,iq_cursor,iq_select_all,iq_set_count,iq_set_offset;
 static uint64_t iq_view_revision,iq_metadata_revision;
 static wchar_t iq_set_query[IQ_QUERY_LIMIT];
@@ -21,7 +25,7 @@ static void iq_build_ownership(void) {}
 /* Fake native rendering; exercise the production toolbar update and cache. */
 typedef struct {void* renderer;int hidden;double x,y;wchar_t text[32][200];} IQControl;
 static struct {
-    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,sizes[2];
+    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,sizes[2],fxbar;
     double offset_x,offset_y,scale,grid_x[2],grid_y[2];
 } iq_controls;
 static int open=1,text_calls,formats,feedback,shows,disabled_lookups,missing_text,missing_child;
@@ -43,7 +47,7 @@ static void iq_hide_all(void) {
     for(int i=0;i<IQ_POPUP_COUNT;i++)iq_control_hide(&iq_controls.popups[i]);
     for(int i=0;i<2;i++)iq_control_hide(&iq_controls.search[i]);
 }
-static int iq_popup_index(void) {return filter_popup==1?active_filter.rarity:filter_popup==2?IQ_RARITY_COUNT+active_filter.type:IQ_RARITY_COUNT+IQ_TYPE_COUNT+iq_search.set_mode;}
+static int iq_popup_index(void) {if(filter_popup==4)return IQ_STATS_POPUP+iq_stat_filter;if(filter_popup==5)return IQ_EFFECTS_POPUP;return filter_popup==1?active_filter.rarity:filter_popup==2?IQ_RARITY_COUNT+active_filter.type:IQ_RARITY_COUNT+IQ_TYPE_COUNT+iq_search.set_mode;}
 static int iq_rows(int side) {return iq.equipment?5:iq.columns[side];}
 static int iq_scroll_limit(int side) {return iq_last_row(iq.items[side],iq.columns[side],iq_rows(side));}
 static void* iq_panel_transform(int side) {return panel[side];}
@@ -63,6 +67,13 @@ static int iq_text(IQControl* c,int slot,const char* name,const wchar_t* text) {
     if(missing_text && slot==8)return 0;
     wcscpy(c->text[slot],text);return 1;
 }
+/* Fixed names stand in for the game's localized keyword text. */
+static const wchar_t* iq_trait_label(int index) {
+    static wchar_t names[IQ_STAT_CHOICES+IQ_EFFECT_COUNT][32];
+    if(index<0 || index>=IQ_STAT_CHOICES+IQ_EFFECT_COUNT)return L"";
+    if(!names[index][0])swprintf(names[index],32,index?L"Trait %02d":L"Any",index);
+    return names[index];
+}
 static void iq_rarity_art(double x,double y,double scale) {(void)x;(void)y;(void)scale;}
 static void iq_feedback_update(void) {feedback++;}
 static int counted_format(wchar_t* out,size_t n,const wchar_t* format,...) {
@@ -81,7 +92,7 @@ int main(void) {
     iq.span[0]=iq.span[1]=600;iq_controls.scale=1;
     iq_set_count=10;
     for(int i=0;i<10;i++){swprintf(iq_sets[i].name,160,L"Set %02d",i);iq_owned.counts[i][0]=i+1;}
-    iq_ui_update();assert(text_calls==5 && !wcscmp(iq_controls.sizes[0].text[0],L"Storage 6x6") &&
+    iq_ui_update();assert(text_calls==7 && !wcscmp(iq_controls.fxbar.text[0],L"Stats") && !wcscmp(iq_controls.fxbar.text[1],L"Effects") && !wcscmp(iq_controls.sizes[0].text[0],L"Storage 6x6") &&
            !wcscmp(iq_controls.sizes[1].text[0],L"Trash 6x6"));
     text_calls=formats=feedback=shows=0;
     for(int frame=0;frame<600;frame++){panel[0][0]=frame;iq_ui_update();}
@@ -96,6 +107,16 @@ int main(void) {
     iq.items[0]=399;iq.items[1]=114;changed();assert(wcsstr(iq_controls.count.text[0],L"399"));
     iq_grid_cap[0]=iq_grid_next_within(0,iq_grid_cap[0],0);changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
     iq_grid_cap[1]=0;changed();assert(!wcscmp(iq_controls.sizes[1].text[0],L"Trash Auto"));
+    /* Stats and Effects dropdowns and popups. */
+    iq_stat_filter=3;changed();assert(!wcscmp(iq_controls.fxbar.text[0],L"Trait 03"));
+    filter_popup=4;changed();{IQControl* s=&iq_controls.popups[iq_popup_index()];
+        assert(!s->hidden && !wcscmp(s->text[1],L"Trait 01") && !wcscmp(s->text[1+IQ_STAT_COUNT],L"Trait 08"));}
+    filter_popup=0;iq_stat_filter=0;changed();
+    iq_effect_filter=1u<<2;changed();assert(!wcscmp(iq_controls.fxbar.text[1],L"Trait 17"));
+    iq_effect_filter|=1u<<5;changed();assert(!wcscmp(iq_controls.fxbar.text[1],L"2 effects"));
+    filter_popup=5;changed();{IQControl* e=&iq_controls.popups[IQ_EFFECTS_POPUP];
+        assert(!wcscmp(e->text[2],L"[x] Trait 17") && !wcscmp(e->text[0],L"[ ] Trait 15"));}
+    filter_popup=0;iq_effect_filter=0;changed();
     iq_grid_cap[0]=10;iq_storage_limit=7;changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
     iq_storage_limit=0;changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 10x10"));
     iq_grid_cap[0]=iq_grid_cap[1]=IQ_GRID_DEFAULT;changed();

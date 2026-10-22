@@ -134,11 +134,41 @@ for direction in range(2):
     points=[(7,24),(16,11),(25,24)] if direction==0 else [(7,12),(25,12),(16,25)]
     parts.append(m.polygon(points,(39,37,32,255)))
     m.sprite('IQUp' if direction==0 else 'IQDown',m.feedback(parts,[(0,0,32,36)]))
+# The search row also holds the Stats and Effects dropdowns (IQFxBar).
 for focused in range(2):
-    parts=m.button('',0,0,571,focused)
-    parts+=[(m.field(dynamic_font,10,3,505,31,20,'Search name, description, set...'),'query')]
-    parts+=m.button('x',533,0,38)
-    m.sprite(f'IQSearch{focused}',m.feedback(parts,[(533,0,38,36)]))
+    parts=m.button('',0,0,315,focused)
+    parts+=[(m.field(dynamic_font,10,3,259,31,20,'Search items...'),'query')]
+    parts+=m.button('x',277,0,38)
+    m.sprite(f'IQSearch{focused}',m.feedback(parts,[(277,0,38,36)]))
+parts=[]
+for x in (323,451):parts+=m.dropdown('',x,120)
+parts.append((m.field(dynamic_font,332,3,88,30,20,'Effects'),'stats'))
+parts.append((m.field(dynamic_font,460,3,88,30,20,'Effects'),'effects'))
+m.sprite('IQFxBar',m.feedback(parts,[(323,0,120,36),(451,0,120,36)]))
+# Stats: Any, then bonus/malus per stat. Labels are the game's localized
+# keyword names, set at runtime; the initial text checks the widest one.
+for active in range(15):
+    parts=m.paper(0,0,330,397)+[m.text('Stats',12,29,22)]
+    parts+=m.button('Any',10,43,310,active==0)
+    rectangles=[(10,43,310,36)]
+    for i in range(7):
+        y=86+i*43
+        for column,x in enumerate((10,170)):
+            parts+=m.paper(x,y,150,36,active==1+i+7*column)
+            parts.append((m.field(dynamic_font,x+3,y+5,144,28,16,'Constitution (+)',align=2),f'{"down" if column else "up"}{i}'))
+            rectangles.append((x,y,150,36))
+    m.sprite(f'IQStats{active}',m.feedback(parts,rectangles))
+# Effects: 17 toggles in reading order, two columns; match any selected.
+parts=m.paper(0,0,430,456)+[m.text('Effects (match any)',12,29,22)]
+rectangles=[]
+for i in range(17):
+    x,y=10+(i%2)*210,43+(i//2)*40
+    parts+=m.paper(x,y,200,36)
+    parts.append((m.field(dynamic_font,x+6,y+5,190,28,17,"[x] Chances d'esquive"),f'fx{i}'))
+    rectangles.append((x,y,200,36))
+parts+=m.button('Clear',10,410,90)+m.button('Done',330,410,90)
+rectangles+=[(10,410,90,36),(330,410,90,36)]
+m.sprite('IQEffects',m.feedback(parts,rectangles))
 # Additional inset keeps both counts comfortably inside the lighter panel.
 # The width stops short of the grid-size buttons; the longest count label checks it.
 m.sprite('IQCount',[(m.field(dynamic_font,18,0,310,24,18,'Storage: 0    Trash: 0    No matches'),'count')])

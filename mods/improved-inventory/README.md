@@ -33,7 +33,13 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.4.0-beta.6 candidate](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)
+The [0.5.0-beta.1 candidate](../../docs/releases/improved-inventory/0.5.0-beta.1-candidate.md)
+adds Stats and Effects filters beside the search field. Item stats and
+effects are read from the loaded item definitions; effects granted through
+an item's ability come from `src/native/inventory_trait_tables.h`, generated
+from the supported build by `tools/generate_item_traits.py`; the packager
+checks that table against the installed game. The
+[0.4.0-beta.6 candidate](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)
 fixes the beta.5 regression that kept the mod from appearing. The
 [0.4.0-beta.4 candidate](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md)
 adds the adventure Backpack, capacity-limited Storage sizes and fixed Trash

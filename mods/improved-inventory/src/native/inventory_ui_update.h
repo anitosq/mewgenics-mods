@@ -1,9 +1,16 @@
-static void iq_query_label(wchar_t* label,const wchar_t* query,const wchar_t* placeholder,int focus) {
+static void iq_query_label(wchar_t* label,const wchar_t* query,const wchar_t* placeholder,int focus,int window) {
     if(!focus){swprintf(label,200,L"%ls",*query?query:placeholder);return;}
     /* Keep the caret visible when the query exceeds the field width. */
-    int start=iq_cursor>35?iq_cursor-35:0;
+    int start=iq_cursor>window?iq_cursor-window:0;
     if(iq_select_all)swprintf(label,200,L"> %ls <",query+start);
-    else swprintf(label,200,L"%.*ls|%.35ls",iq_cursor-start,query+start,query+iq_cursor);
+    else swprintf(label,200,L"%.*ls|%.*ls",iq_cursor-start,query+start,window,query+iq_cursor);
+}
+/* Dropdown text: the single selection's name, shortened like the set label. */
+static void iq_trait_summary(wchar_t* label,const wchar_t* idle,int count,const wchar_t* single,const wchar_t* many) {
+    if(!count){wcscpy(label,idle);return;}
+    if(count>1){swprintf(label,200,L"%d %ls",count,many);return;}
+    wcsncpy(label,single,199);label[199]=0;
+    if(wcslen(label)>9)wcscpy(label+7,L"..");
 }
 /* Shared toolbar flow; native rendering boundaries are stubbed in its fixture. */
 static void iq_ui_update(void) {
@@ -28,8 +35,17 @@ static void iq_ui_update(void) {
     int focused=iq_focus==1;iq_control_hide(&iq_controls.search[!focused]);
     snprintf(name,sizeof(name),"IQSearch%d",focused);iq_control_show(&iq_controls.search[focused],name,x,y);
     if(refresh || !iq_label_cache.valid) {
-        iq_query_label(label,iq_search.query,L"Search name, description, set...",focused);
+        iq_query_label(label,iq_search.query,L"Search items...",focused,18);
         ready&=iq_text(&iq_controls.search[focused],0,"query",label);
+    }
+    iq_control_show(&iq_controls.fxbar,"IQFxBar",x,y);
+    if(refresh || !iq_label_cache.valid) {
+        iq_trait_summary(label,L"Stats",iq_stat_filter!=0,iq_trait_label(iq_stat_filter),L"");
+        ready&=iq_text(&iq_controls.fxbar,0,"stats",label);
+        int effects=0,last=0;
+        for(int i=0;i<IQ_EFFECT_COUNT;i++)if(iq_effect_filter&(1u<<i)){effects++;last=i;}
+        iq_trait_summary(label,L"Effects",effects,iq_trait_label(IQ_STAT_CHOICES+last),L"effects");
+        ready&=iq_text(&iq_controls.fxbar,1,"effects",label);
     }
     snprintf(name,sizeof(name),"IQBar%d%d",active_filter.type,active_filter.rarity);
     iq_control_show(&iq_controls.bars[selected],name,x,y-42*s);
@@ -65,11 +81,28 @@ static void iq_ui_update(void) {
             iq_write_double(t,0xa0,s*iq_control_units()*iq_rarity_popup_scale);
         }
     }
+    if(filter_popup==4) {
+        snprintf(name,sizeof(name),"IQStats%d",iq_stat_filter);
+        IQControl* popup=&iq_controls.popups[iq_popup_index()];
+        iq_control_show(popup,name,x+(IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH-IQ_STATS_POPUP_W)*s,y-42*s);
+        if(refresh || !iq_label_cache.valid)for(int i=0;i<IQ_STAT_COUNT;i++) {
+            snprintf(name,sizeof(name),"up%d",i);ready&=iq_text(popup,1+i,name,iq_trait_label(1+i));
+            snprintf(name,sizeof(name),"down%d",i);ready&=iq_text(popup,1+IQ_STAT_COUNT+i,name,iq_trait_label(1+IQ_STAT_COUNT+i));
+        }
+    }
+    if(filter_popup==5) {
+        IQControl* popup=&iq_controls.popups[IQ_EFFECTS_POPUP];
+        iq_control_show(popup,"IQEffects",x+(IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH-IQ_EFFECTS_POPUP_W)*s,y-42*s);
+        if(refresh || !iq_label_cache.valid)for(int i=0;i<IQ_EFFECT_COUNT;i++) {
+            swprintf(label,200,L"[%lc] %ls",(iq_effect_filter&(1u<<i))?L'x':L' ',iq_trait_label(IQ_STAT_CHOICES+i));
+            snprintf(name,sizeof(name),"fx%d",i);ready&=iq_text(popup,i,name,label);
+        }
+    }
     if(filter_popup==3) {
         snprintf(name,sizeof(name),"IQSets%d",iq_search.set_mode);
         IQControl* popup=&iq_controls.popups[iq_popup_index()];iq_control_show(popup,name,x+131*s,y-82*s);
         if(refresh || !iq_label_cache.valid) {
-            iq_query_label(label,iq_set_query,L"Find a set...",iq_focus==2);ready&=iq_text(popup,0,"query",label);
+            iq_query_label(label,iq_set_query,L"Find a set...",iq_focus==2,26);ready&=iq_text(popup,0,"query",label);
             ready&=iq_text(popup,23,"storage_header",iq.equipment?L"Available":L"Storage");
             ready&=iq_text(popup,24,"trash_header",iq.equipment?L"":L"Trash");
             for(int row=0;row<IQ_SET_PAGE;row++) {

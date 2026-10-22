@@ -16,6 +16,9 @@ static unsigned char* game_base;
 static IQFilter active_filter;
 static int filter_popup;
 static IQSearch iq_search;
+/* Stats (0 any, 1..7 bonus, 8..14 malus) and effect bits; see inventory_trait_match.h. */
+static int iq_stat_filter;
+static uint32_t iq_effect_filter;
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets);
 static void iq_filter_view(void);
 static void iq_ui_update(void);
