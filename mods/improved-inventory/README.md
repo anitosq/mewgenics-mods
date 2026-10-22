@@ -33,35 +33,40 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.5.0-beta.1 candidate](../../docs/releases/improved-inventory/0.5.0-beta.1-candidate.md)
-adds Stats and Effects filters beside the search field. Item stats and
-effects are read from the loaded item definitions; effects granted through
-an item's ability come from `src/native/inventory_trait_tables.h`, generated
-from the supported build by `tools/generate_item_traits.py`; the packager
-checks that table against the installed game. The
-[0.4.0-beta.6 candidate](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)
-fixes the beta.5 regression that kept the mod from appearing. The
-[0.4.0-beta.4 candidate](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md)
-adds the adventure Backpack, capacity-limited Storage sizes and fixed Trash
-grids. The [0.4.0-beta.3 candidate](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md)
-added read-only Backpack-screen probes, which betas still include. The
-[0.4.0-beta.2 candidate](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)
-adds per-container grid sizes and localized set names on top of the untested
-0.3.8-beta.1 performance work. It awaits owner testing; 0.3.7 remains the
-public release.
+The [0.5.0-beta.2 candidate](../../docs/releases/improved-inventory/0.5.0-beta.2-candidate.md)
+is the current owner-test build; 0.3.7 remains the public release. Since
+0.3.7, the 0.3.8 and 0.4.0/0.5.0 betas add, in order of the release records:
+large-inventory performance work
+([0.3.8-beta.1](../../docs/releases/improved-inventory/0.3.8-beta.1-candidate.md)),
+per-container grid sizes and localized set names
+([0.4.0-beta.2](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)),
+adventure Backpack research and support
+([0.4.0-beta.3](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md),
+[0.4.0-beta.4](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md),
+[0.4.0-beta.6](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)),
+and Stats/Effects filters
+([0.5.0-beta.1](../../docs/releases/improved-inventory/0.5.0-beta.1-candidate.md)).
 
-The Storage and Trash buttons beside the item counts each cycle through 5x5,
-6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Storage's game grid
-matches its capacity, so its button offers the sizes below the capacity and
-the capacity itself. A smaller size scrolls. A fixed Trash size is a maximum:
-the game's Trash grid grows with its items (from 4x4) up to it, then scrolls.
-Trash Auto never caps, as in the unmodded game. The choices are saved in
-`%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
+**Grid sizes.** The Storage and Trash buttons beside the item counts cycle
+5x5, 6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Storage's game
+grid matches its capacity, so its button offers the sizes below the capacity
+and the capacity itself; a smaller size scrolls. A fixed Trash size is a
+maximum: the game's Trash grid grows with its items (from 4x4) up to it, then
+scrolls. Trash Auto never caps, as in the unmodded game. The mod never writes
+the game's grid size; it only caps what the game built. The choices are saved
+in `%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
+
+**Stats and Effects.** Two dropdowns beside the search field filter by one
+stat bonus or malus and by any of 17 effects, with item counts per choice.
+Item stats and effects are read from the loaded item definitions. Effects
+granted through an item's ability come from `src/native/inventory_trait_tables.h`,
+generated from the supported build by `tools/generate_item_traits.py`; the
+packager checks that table against the installed game. Labels are the game's
+localized keyword names.
 
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
 under "Available".
-
 
 Equipment selection uses the same column cap with five rows for every six
 columns (6x5 by default), with scrolling for the rest. The adventure Backpack

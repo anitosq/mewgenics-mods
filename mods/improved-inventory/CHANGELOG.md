@@ -1,5 +1,13 @@
 # Improved Inventory changelog
 
+## 0.5.0-beta.2
+
+- The Stats and Effects menus show how many items match each choice.
+- A Storage size equal to an unusual capacity (for example 9x9) is now
+  remembered after a restart.
+- Pre-adventure equipment no longer shows more columns than your Storage size.
+- The Effects menu's Done button highlights on hover.
+
 ## 0.5.0-beta.1
 
 - New Stats filter: find items that raise or lower Strength, Dexterity,
