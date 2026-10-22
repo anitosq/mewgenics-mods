@@ -108,14 +108,17 @@ int main(void) {
     iq_grid_cap[0]=iq_grid_next_within(0,iq_grid_cap[0],0);changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
     iq_grid_cap[1]=0;changed();assert(!wcscmp(iq_controls.sizes[1].text[0],L"Trash Auto"));
     /* Stats and Effects dropdowns and popups. */
-    iq_stat_filter=3;changed();assert(!wcscmp(iq_controls.fxbar.text[0],L"Trait 03"));
+    iq_stat_filter=3;changed();assert(!wcscmp(iq_controls.fxbar.text[0],L"Trait +"));
+    iq_stat_filter=1+IQ_STAT_COUNT;changed();assert(!wcscmp(iq_controls.fxbar.text[0],L"Trait -"));
+    iq_stat_filter=3;changed();
     filter_popup=4;changed();{IQControl* s=&iq_controls.popups[iq_popup_index()];
         assert(!s->hidden && !wcscmp(s->text[1],L"Trait 01") && !wcscmp(s->text[1+IQ_STAT_COUNT],L"Trait 08"));}
     filter_popup=0;iq_stat_filter=0;changed();
     iq_effect_filter=1u<<2;changed();assert(!wcscmp(iq_controls.fxbar.text[1],L"Trait 17"));
+    wcscpy((wchar_t*)iq_trait_label(IQ_STAT_CHOICES+2),L"Etourdissement");iq_metadata_revision++;changed();assert(!wcscmp(iq_controls.fxbar.text[1],L"Etourd.."));
     iq_effect_filter|=1u<<5;changed();assert(!wcscmp(iq_controls.fxbar.text[1],L"2 effects"));
     filter_popup=5;changed();{IQControl* e=&iq_controls.popups[IQ_EFFECTS_POPUP];
-        assert(!wcscmp(e->text[2],L"[x] Trait 17") && !wcscmp(e->text[0],L"[ ] Trait 15"));}
+        assert(!wcscmp(e->text[2],L"[x] Etourdissement") && !wcscmp(e->text[0],L"[ ] Trait 15"));}
     filter_popup=0;iq_effect_filter=0;changed();
     iq_grid_cap[0]=10;iq_storage_limit=7;changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 7x7"));
     iq_storage_limit=0;changed();assert(!wcscmp(iq_controls.sizes[0].text[0],L"Storage 10x10"));

@@ -5,12 +5,21 @@ static void iq_query_label(wchar_t* label,const wchar_t* query,const wchar_t* pl
     if(iq_select_all)swprintf(label,200,L"> %ls <",query+start);
     else swprintf(label,200,L"%.*ls|%.*ls",iq_cursor-start,query+start,window,query+iq_cursor);
 }
-/* Dropdown text: the single selection's name, shortened like the set label. */
-static void iq_trait_summary(wchar_t* label,const wchar_t* idle,int count,const wchar_t* single,const wchar_t* many) {
-    if(!count){wcscpy(label,idle);return;}
-    if(count>1){swprintf(label,200,L"%d %ls",count,many);return;}
-    wcsncpy(label,single,199);label[199]=0;
-    if(wcslen(label)>9)wcscpy(label+7,L"..");
+/* Dropdown text fits 88 units of the game font (about eight characters):
+   a stat as its first letters and sign, one effect shortened, or a count. */
+static void iq_stat_summary(wchar_t* label,int stat) {
+    if(!stat){wcscpy(label,L"Stats");return;}
+    const wchar_t* name=iq_trait_label(stat);size_t n=0;
+    while(n<5 && name[n] && name[n]!=L' ' && name[n]!=L'(')n++;
+    swprintf(label,200,L"%.*ls %lc",(int)n,name,stat>IQ_STAT_COUNT?L'-':L'+');
+}
+static void iq_effect_summary(wchar_t* label,uint32_t effects) {
+    int count=0,last=0;
+    for(int i=0;i<IQ_EFFECT_COUNT;i++)if(effects&(1u<<i)){count++;last=i;}
+    if(!count){wcscpy(label,L"Effects");return;}
+    if(count>1){swprintf(label,200,L"%d effects",count);return;}
+    wcsncpy(label,iq_trait_label(IQ_STAT_CHOICES+last),199);label[199]=0;
+    if(wcslen(label)>8)wcscpy(label+6,L"..");
 }
 /* Shared toolbar flow; native rendering boundaries are stubbed in its fixture. */
 static void iq_ui_update(void) {
@@ -40,11 +49,9 @@ static void iq_ui_update(void) {
     }
     iq_control_show(&iq_controls.fxbar,"IQFxBar",x,y);
     if(refresh || !iq_label_cache.valid) {
-        iq_trait_summary(label,L"Stats",iq_stat_filter!=0,iq_trait_label(iq_stat_filter),L"");
+        iq_stat_summary(label,iq_stat_filter);
         ready&=iq_text(&iq_controls.fxbar,0,"stats",label);
-        int effects=0,last=0;
-        for(int i=0;i<IQ_EFFECT_COUNT;i++)if(iq_effect_filter&(1u<<i)){effects++;last=i;}
-        iq_trait_summary(label,L"Effects",effects,iq_trait_label(IQ_STAT_CHOICES+last),L"effects");
+        iq_effect_summary(label,iq_effect_filter);
         ready&=iq_text(&iq_controls.fxbar,1,"effects",label);
     }
     snprintf(name,sizeof(name),"IQBar%d%d",active_filter.type,active_filter.rarity);
