@@ -33,8 +33,8 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.4.0-beta.5 candidate](../../docs/releases/improved-inventory/0.4.0-beta.5-candidate.md)
-fixes fixed Trash sizes. The
+The [0.4.0-beta.6 candidate](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)
+fixes the beta.5 regression that kept the mod from appearing. The
 [0.4.0-beta.4 candidate](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md)
 adds the adventure Backpack, capacity-limited Storage sizes and fixed Trash
 grids. The [0.4.0-beta.3 candidate](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md)
@@ -47,8 +47,8 @@ public release.
 The Storage and Trash buttons beside the item counts each cycle through 5x5,
 6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Storage's game grid
 matches its capacity, so its button offers the sizes below the capacity and
-the capacity itself. A smaller size scrolls. A fixed Trash size raises the
-game's Trash grid to that size before it is built, then scrolls beyond it;
+the capacity itself. A smaller size scrolls. A fixed Trash size is a maximum:
+the game's Trash grid grows with its items (from 4x4) up to it, then scrolls.
 Trash Auto never caps, as in the unmodded game. The choices are saved in
 `%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
 

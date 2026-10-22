@@ -281,17 +281,6 @@ static void iq_layout_house_backgrounds(void) {
     }
 }
 
-/* A fixed Trash size needs that many native backgrounds. The house grid only
-   ever grows its Trash columns from the stored count (minimum 4), so raising
-   the count before the native layout makes it build the chosen grid. A new
-   house menu starts at 0; the 0.4.0-beta.4 log showed that case. */
-static void iq_presize_trash(void* owner) {
-    int cap=iq_grid_cap[1],columns=0;
-    if(!layout_test || cap<=0 || cap>20 || !iq_ptr(owner,0x38) || !iq_ptr(owner,0x40) ||
-       !iq_read((unsigned char*)owner+0x54,&columns,4) || columns<0 || columns>=cap)return;
-    memcpy((unsigned char*)owner+0x54,&cap,4);
-}
-
 static void iq_capture(void* owner) {
     if (!layout_test) return;
     /* Include failed/empty captures: they can also invalidate menu counts. */

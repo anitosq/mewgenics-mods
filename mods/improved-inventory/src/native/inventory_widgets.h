@@ -16,7 +16,6 @@ static int iq_started_text;
 static void iq_refilter(void);
 static void iq_apply_grid_setting(void);
 static void iq_save_settings(void);
-static void __cdecl observe_grid(void* instance);
 static void iq_feedback_update(void);
 static void iq_overlay_camera(IQControl* c);
 static int iq_control_point(IQControl* c,double* output);
@@ -392,11 +391,9 @@ static int iq_ui_event(void* event) {
            p[1]<0 || p[1]>=IQ_GRID_BUTTON_HEIGHT)continue;
         iq_focus_set(0);iq_controls.captured_click=1;iq_sound(IQ_SOUND_SELECT);
         iq_grid_cap[side]=iq_grid_next_within(side,iq_grid_cap[side],side?0:iq_storage_limit);iq_save_settings();
-        /* A larger fixed Trash needs backgrounds the current native grid lacks.
-           Rebuild through the hooked native layout, as opening the menu does. */
-        if(side && iq_grid_cap[1]>iq.native_columns[1] && iq_view_live()){report("Trash grid rebuilt for its new size.");observe_grid(iq.owner);}
-        else iq_apply_grid_setting();
-        iq_ui_update();return 1;
+        /* Never pre-size the native Trash: its layout only builds backgrounds
+           when its column count changes (0.4.0-beta.5 regression). */
+        iq_apply_grid_setting();iq_ui_update();return 1;
     }
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;
     if(iq_control_point(&iq_controls.bars[selected],p) && p[1]>=0 && p[1]<36 && p[0]>=0 && p[0]<571) {

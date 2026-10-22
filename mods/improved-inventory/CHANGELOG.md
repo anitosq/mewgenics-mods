@@ -1,5 +1,12 @@
 # Improved Inventory changelog
 
+## 0.4.0-beta.6
+
+- Fixed Improved Inventory no longer appearing at home in 0.4.0-beta.5.
+- A fixed Trash size is a maximum: Trash grows with its items up to that size,
+  then scrolls. An empty Trash stays at the game's 4x4. This replaces the
+  beta.4/beta.5 attempt to show the full size from the start.
+
 ## 0.4.0-beta.5
 
 - Fixed Trash sizes now apply: 0.4.0-beta.4 kept the game's 4x4 Trash.
