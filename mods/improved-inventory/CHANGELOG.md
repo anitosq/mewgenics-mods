@@ -1,5 +1,10 @@
 # Improved Inventory changelog
 
+## 0.5.0-beta.3
+
+- Item type can now show one equipment slot: Head, Face, Neck, Weapon or
+  Trinket.
+
 ## 0.5.0-beta.2
 
 - The Stats and Effects menus show how many items match each choice.

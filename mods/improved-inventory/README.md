@@ -33,7 +33,7 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.5.0-beta.2 candidate](../../docs/releases/improved-inventory/0.5.0-beta.2-candidate.md)
+The [0.5.0-beta.3 candidate](../../docs/releases/improved-inventory/0.5.0-beta.3-candidate.md)
 is the current owner-test build; 0.3.7 remains the public release. Since
 0.3.7, the 0.3.8 and 0.4.0/0.5.0 betas add, in order of the release records:
 large-inventory performance work
@@ -44,8 +44,11 @@ adventure Backpack research and support
 ([0.4.0-beta.3](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md),
 [0.4.0-beta.4](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md),
 [0.4.0-beta.6](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)),
-and Stats/Effects filters
-([0.5.0-beta.1](../../docs/releases/improved-inventory/0.5.0-beta.1-candidate.md)).
+Stats/Effects filters with counts
+([0.5.0-beta.1](../../docs/releases/improved-inventory/0.5.0-beta.1-candidate.md),
+[0.5.0-beta.2](../../docs/releases/improved-inventory/0.5.0-beta.2-candidate.md))
+and equipment-slot types
+([0.5.0-beta.3](../../docs/releases/improved-inventory/0.5.0-beta.3-candidate.md)).
 
 **Grid sizes.** The Storage and Trash buttons beside the item counts cycle
 5x5, 6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Storage's game
