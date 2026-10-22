@@ -190,6 +190,23 @@ buttons) selects all stats, or clears them all and their priorities when all
 were selected; it shows `-` for a partial selection. Calculate stays disabled
 until a stat is selected. The solver is unchanged from beta.4.
 
+### Direction separate from priority (0.3.0-beta.6)
+
+The owner asked to separate maximize/minimize from priority. `AFProblem` now
+has a `minimize` mask over selected stats and `rank[AF_RANKS]` (0 unranked,
+utility in slot `AF_UTILITY_RANK`) instead of the signed `goal`. Ranked stats
+compare in strict order (owner's choice), multiplied by their direction;
+unranked selected stats are balanced on direction-adjusted values. All repair
+weights take the direction sign; ranked ones also scale by 2^(6-rank).
+
+The panel is 820 px wide. Each stat row gets a Maximize/Minimize toggle
+(`AUTO_FURNITURE_DIRECTION`, `_MAXIMIZE`, `_MINIMIZE`), hit-indexed after the
+select-all box. Priority `+` ranks an unranked row last or swaps it one rank
+up; `-` swaps it one rank down and unranks it below the last rank. `+` is
+disabled at rank 1 and `-` when unranked. Defaults (all Maximize, no ranks)
+keep the beta.2 benchmark output byte-for-byte. The 112 px direction button and
+the Russian header `Направление` have not been checked for fit in game.
+
 Build and run the benchmark from the repository root (`V=1` prints each case).
 A large time budget with an iteration cap gives repeatable output, which is
 useful to check that a refactor leaves the search unchanged:

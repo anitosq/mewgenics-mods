@@ -228,34 +228,36 @@ int main(void) {
     assert(af_start(p,s,NULL)&&s->shape_class[1]==0&&s->shape_class[2]==0);
     for(int i=0;i<20;i++)af_step(p,s);
     assert(s->best.used==2&&s->best.stats[0]==2&&af_rebuild(p,&s->best,s->grid,0));
-    /* Ranked goals: piece 0 adds Comfort, piece 1 trades Comfort for Stimulation, piece 2 adds Stimulation. */
+    /* Directions and ranks: piece 0 adds Comfort, piece 1 trades Comfort for Stimulation,
+       piece 2 adds Stimulation. Unranked stats are balanced in their own direction. */
     memset(p,0,sizeof(*p));p->width=3;p->height=1;p->count=3;p->selected=3;
     for(int i=0;i<3;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
     p->shape[0].stats[0]=3;p->shape[1].stats[0]=-2;p->shape[1].stats[1]=5;p->shape[2].stats[1]=1;
-    static const struct {int goal[AF_STATS];double comfort,stimulation;} goals[]={
-        {{0},1,6},{{1},3,1},{{-1},-2,6},{{-2,1},-2,6},{{2,1},1,6}};
-    for(unsigned k=0;k<sizeof(goals)/sizeof(goals[0]);k++) {
-        memcpy(p->goal,goals[k].goal,sizeof(p->goal));
+    static const struct {unsigned minimize;int comfort_rank,stimulation_rank;double comfort,stimulation;} ranked[]={
+        {0,0,0,1,6},{0,1,0,3,1},{1,1,0,-2,6},{1,2,1,-2,6},{0,2,1,1,6},{1,0,0,-2,6}};
+    for(unsigned k=0;k<sizeof(ranked)/sizeof(ranked[0]);k++) {
+        p->minimize=ranked[k].minimize;p->rank[0]=ranked[k].comfort_rank;p->rank[1]=ranked[k].stimulation_rank;
         assert(af_start(p,s,NULL));for(int i=0;i<100;i++)af_step(p,s);
-        assert(s->best.stats[0]==goals[k].comfort&&s->best.stats[1]==goals[k].stimulation);
+        assert(s->best.stats[0]==ranked[k].comfort&&s->best.stats[1]==ranked[k].stimulation);
     }
-    /* One cell: a Comfort piece competes with a utility piece; the utility priority decides. */
+    /* One cell: a Comfort piece competes with a utility piece; the utility rank decides. */
     memset(p,0,sizeof(*p));p->width=1;p->height=1;p->count=2;p->selected=1;
     for(int i=0;i<2;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
     p->shape[0].stats[0]=2;p->shape[1].utility=1;
-    static const struct {int comfort,utility;double result;} utility_goals[]={{0,0,2},{0,1,0},{1,2,2},{2,1,0}};
-    for(unsigned k=0;k<sizeof(utility_goals)/sizeof(utility_goals[0]);k++) {
-        p->goal[0]=utility_goals[k].comfort;p->goal[AF_UTILITY_GOAL]=utility_goals[k].utility;
+    static const struct {int comfort,utility;double result;} utility_ranks[]={{0,0,2},{0,1,0},{1,2,2},{2,1,0}};
+    for(unsigned k=0;k<sizeof(utility_ranks)/sizeof(utility_ranks[0]);k++) {
+        p->rank[0]=utility_ranks[k].comfort;p->rank[AF_UTILITY_RANK]=utility_ranks[k].utility;
         assert(af_start(p,s,NULL));for(int i=0;i<50;i++)af_step(p,s);
-        assert(s->best.stats[0]==utility_goals[k].result&&s->best.utilities==(utility_goals[k].result==0));
+        assert(s->best.stats[0]==utility_ranks[k].result&&s->best.utilities==(utility_ranks[k].result==0));
     }
-    p->goal[0]=0;p->goal[AF_UTILITY_GOAL]=-1;assert(!af_valid_problem(p));
-    p->selected=3;
+    p->rank[0]=0;p->rank[AF_UTILITY_RANK]=-1;assert(!af_valid_problem(p));
+    p->rank[AF_UTILITY_RANK]=0;p->selected=3;
     double up[AF_STATS]={5,0},down[AF_STATS]={1,9};
-    memset(p->goal,0,sizeof(p->goal));p->goal[0]=1;assert(af_compare(p,up,down)>0);
-    p->goal[0]=-1;assert(af_compare(p,up,down)<0);
-    p->goal[1]=-1;assert(!af_valid_problem(p));
-    p->goal[1]=AF_GOALS+1;assert(!af_valid_problem(p));
-    p->goal[1]=0;p->goal[2]=2;assert(!af_valid_problem(p));
-    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, ranked goals");
+    p->rank[0]=1;assert(af_compare(p,up,down)>0);
+    p->minimize=1;assert(af_compare(p,up,down)<0);
+    p->rank[1]=1;assert(!af_valid_problem(p));
+    p->rank[1]=AF_RANKS+1;assert(!af_valid_problem(p));
+    p->rank[1]=0;p->rank[2]=2;assert(!af_valid_problem(p));
+    p->rank[2]=0;p->minimize=4;assert(!af_valid_problem(p));
+    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, directions and ranks");
 }

@@ -19,12 +19,12 @@ static void* test_function(unsigned rva);
 static unsigned text_writes,child_lookups;
 static int missing_child;
 typedef struct {char name[32];wchar_t text[AF_TEXT_BYTES];} TestField;
-static TestField fields[64];static unsigned field_count;
+static TestField fields[96];static unsigned field_count;
 static void* test_child(void* clip,GameString* name) {
     (void)clip;child_lookups++;
     if(missing_child)return NULL;
     for(unsigned i=0;i<field_count;i++)if(!strcmp(fields[i].name,name->data))return &fields[i];
-    assert(field_count<64);TestField* field=&fields[field_count++];
+    assert(field_count<96);TestField* field=&fields[field_count++];
     strcpy(field->name,name->data);return field;
 }
 static void* test_wide(GameString* string,const wchar_t* value,size_t n) {
@@ -55,7 +55,7 @@ static void content_cache(void) {
     strcpy(ui_state.room,"Attic");strcpy(ui_status,"Ready.");plan_ready=0;
     attach_control(&ui_state.panel,memory,transform);
     missing_child=1;ui_panel_content();assert(!ui_state.panel.content_ready);
-    missing_child=0;ui_panel_content();assert(ui_state.panel.content_ready&&text_writes==60);
+    missing_child=0;ui_panel_content();assert(ui_state.panel.content_ready&&text_writes==66);
     unsigned writes=text_writes;reads=child_lookups=0;
     for(int i=0;i<600;i++)ui_panel_content();
     assert(reads==0&&child_lookups==0&&text_writes==writes);
@@ -67,30 +67,36 @@ static void content_cache(void) {
     plan_ready=1;plan_original_stats[0]=2;search.best.stats[0]=5;ui_panel_content();
     assert(!strcmp(ui_state.panel.text[4],"2.0")&&!strcmp(ui_state.panel.text[5],"5.0")&&!strcmp(ui_state.panel.text[29],"+3.0"));
     plan_ready=0;ui_panel_content();assert(!strcmp(ui_state.panel.text[5],"-"));
-    /* Goal buttons cycle balance -> +rank -> -rank -> balance; ranks close up when one is cleared. */
+    /* Plus ranks an unranked row last or swaps it upward; minus swaps it down, then unranks it. */
     ui_state.selected=0;include_utilities=0;
-    const int utility_minus=UI_PRIORITY_HIT+2*AF_UTILITY_GOAL;
-    assert(ui_available(1,UI_PRIORITY_HIT+2)&&!ui_available(1,utility_minus)&&ui_available(1,utility_minus+1));
+    const int utility_minus=UI_PRIORITY_HIT+2*AF_UTILITY_RANK;
+    assert(!ui_available(1,UI_PRIORITY_HIT)&&ui_available(1,UI_PRIORITY_HIT+1)&&ui_available(1,utility_minus+1));
     /* Select all toggles every stat; partial selection shows "-". */
-    const char* select_all=ui_state.panel.text[4+6*AF_STATS+AF_GOALS];
+    const char* select_all=ui_state.panel.text[4+6*AF_STATS+AF_RANKS];
     ui_select_stat(3);ui_panel_content();assert(ui_state.selected==8&&!strcmp(select_all,"-"));
     ui_select_all();ui_panel_content();assert(ui_state.selected==AF_ALL_STATS&&!strcmp(select_all,"X"));
-    ui_press_priority(1,1);ui_select_all();ui_panel_content();
-    assert(!ui_state.selected&&!ui_state.goal[1]&&!strcmp(select_all,""));
+    ui_raise_rank(1);ui_select_all();ui_panel_content();
+    assert(!ui_state.selected&&!ui_state.rank[1]&&!strcmp(select_all,""));
     ui_state.selected=AF_ALL_STATS;const char (*priority_text)[AF_TEXT_BYTES]=ui_state.panel.text+4+6*AF_STATS;
-    ui_press_priority(2,-1);ui_press_priority(AF_UTILITY_GOAL,1);ui_press_priority(0,1);ui_panel_content();
-    assert(ui_state.goal[2]==-1&&ui_state.goal[AF_UTILITY_GOAL]==2&&ui_state.goal[0]==3);
-    assert(!strcmp(priority_text[2],"-1")&&!strcmp(priority_text[AF_UTILITY_GOAL],"+2")&&!strcmp(priority_text[0],"+3"));
-    ui_press_priority(0,-1);assert(ui_state.goal[0]==-3);
-    ui_press_priority(2,-1);assert(!ui_state.goal[2]&&ui_state.goal[AF_UTILITY_GOAL]==1&&ui_state.goal[0]==-2);
-    ui_clear_goal(AF_UTILITY_GOAL);ui_clear_goal(0);ui_panel_content();
-    assert(!strcmp(priority_text[0],"")&&!strcmp(priority_text[AF_UTILITY_GOAL],""));include_utilities=0;
+    ui_raise_rank(2);ui_raise_rank(AF_UTILITY_RANK);ui_raise_rank(0);ui_panel_content();
+    assert(ui_state.rank[2]==1&&ui_state.rank[AF_UTILITY_RANK]==2&&ui_state.rank[0]==3);
+    assert(!strcmp(priority_text[2],"1")&&!strcmp(priority_text[AF_UTILITY_RANK],"2")&&!strcmp(priority_text[4],""));
+    assert(!ui_available(1,UI_PRIORITY_HIT+2*2+1)&&ui_available(1,UI_PRIORITY_HIT+2*2));
+    ui_raise_rank(0);assert(ui_state.rank[0]==2&&ui_state.rank[AF_UTILITY_RANK]==3);
+    ui_lower_rank(2);assert(ui_state.rank[2]==2&&ui_state.rank[0]==1);
+    ui_lower_rank(AF_UTILITY_RANK);assert(!ui_state.rank[AF_UTILITY_RANK]&&ui_state.rank[2]==2);
+    ui_clear_rank(0);assert(ui_state.rank[2]==1);ui_clear_rank(2);
+    /* Direction is independent of rank and shows the localized label. */
+    const char (*direction_text)[AF_TEXT_BYTES]=ui_state.panel.text+5+6*AF_STATS+AF_RANKS;
+    ui_state.minimize=2;ui_panel_content();
+    assert(!strcmp(direction_text[1],af_text(AF_MINIMIZE))&&!strcmp(direction_text[0],af_text(AF_MAXIMIZE)));
+    ui_state.minimize=0;ui_panel_content();assert(!strcmp(priority_text[0],""));include_utilities=0;
     af_copy(af_strings[AF_CALCULATE],AF_TEXT_BYTES,"Calculate translated");af_text_revision++;
     ui_panel_content();
     unsigned at=0;while(at<field_count&&strcmp(fields[at].name,"calculate"))at++;
     assert(at<field_count&&!wcscmp(fields[at].text,L"Calculate translated"));
     memset(af_strings,0,sizeof(af_strings));af_text_revision++;
-    writes=text_writes;attach_control(&ui_state.panel,memory,transform);ui_panel_content();assert(text_writes==writes+60);
+    writes=text_writes;attach_control(&ui_state.panel,memory,transform);ui_panel_content();assert(text_writes==writes+66);
     ui_state.panel.visible=1;control_hide(&ui_state.panel);assert(!ui_state.panel.content_ready);
     ui_panel_content();assert(ui_state.panel.content_ready);
     writes=child_lookups;text_writes=0;

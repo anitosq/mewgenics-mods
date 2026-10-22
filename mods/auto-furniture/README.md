@@ -47,14 +47,16 @@ After changing language, reopen the room's wand panel.
   Max -5 to keep a stat at -5 or lower. When both are set, Max must exceed Min.
 - Multiple selected stats are balanced, improving the lowest first after
   addressing bounds. Unselected stats may decrease; review all five results.
-- Priority: click + to push a selected stat as high as possible or - to push
-  it as low as possible. The number shows its rank, in the order you set them.
-  After Max and Min, rank 1 is decided first, then 2, and so on; stats without a
-  priority are balanced last. Click the same button again to remove a priority
-  (later ranks move up), or the other button to reverse it. With utility
-  furniture included, + on that row places as many utility pieces as possible
-  at that rank.
   Appeal is the selected room's contribution, not the whole-house total.
+- Direction: each stat's button switches between Maximize and Minimize.
+  Minimize pushes the stat as low as possible, below zero when furniture
+  allows it.
+- Priority: + makes a stat more important and - less important. The number is
+  its rank: after Max and Min, rank 1 is decided first, then 2 only among
+  equally good results for rank 1, and so on. Stats without a rank are balanced
+  last, each in its own direction. Below the last rank, - removes the rank.
+  With utility furniture included, the priority on that row places as many
+  utility pieces as possible at that rank.
 - Pins keep placed pieces and their supports in position.
 - Include utility furniture allows pieces such as food storage boxes to be
   rearranged and added to remaining space. Off leaves placed utility pieces
