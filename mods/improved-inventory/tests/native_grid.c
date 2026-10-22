@@ -6,6 +6,7 @@
 #include <string.h>
 #include "../src/native/inventory_grid.h"
 #include "../src/native/inventory_set_name.h"
+#include "../src/native/inventory_adventure_probe.h"
 
 static void expect_set(const wchar_t* localized,const wchar_t* expected) {
     wchar_t out[160];iq_set_name(out,localized);
@@ -69,5 +70,13 @@ int main(void) {
     expect_set(L"Set Bonus!",L"Set Bonus");
     expect_set(L"",L"");
     puts("Localized set names: en, fr, sp, de, it, pt-br, ru, ko, ja and zh-cn passed.");
+    /* Beta probe de-duplication: bounded, first sighting only. */
+    static IQSeen seen;
+    assert(iq_seen_insert(&seen,1) && !iq_seen_insert(&seen,1));
+    for(uint64_t k=2;k<=IQ_SEEN_CAPACITY;k++)assert(iq_seen_insert(&seen,k));
+    assert(!iq_seen_insert(&seen,IQ_SEEN_CAPACITY+1) && seen.count==IQ_SEEN_CAPACITY);
+    assert(iq_probe_hash("IQBar00",0)==iq_probe_hash("IQBar00",0) && iq_probe_hash("IQBar00",0)!=iq_probe_hash("IQBar00",0x34be50));
+    assert(iq_probe_hash("a",0)!=iq_probe_hash("b",0) && iq_probe_hash(NULL,0)==iq_probe_hash("",0));
+    puts("Adventure probe de-duplication passed.");
     return 0;
 }

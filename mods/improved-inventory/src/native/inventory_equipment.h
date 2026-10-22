@@ -94,6 +94,9 @@ static void iq_apply_grid_setting(void) {
 static void __cdecl iq_equipment_grid(void* owner) {
     iq_before_grid(owner);
     original_equipment_grid(owner);
+#if IQ_ADVENTURE_PROBE
+    if(iq_int(owner,0x58)!=1)iq_probe_equipment_grid(owner,__builtin_return_address(0));
+#endif
     iq_capture_equipment(owner);
 }
 static void __cdecl iq_equipment_bind(void* drawer,void* item) {
@@ -101,8 +104,11 @@ static void __cdecl iq_equipment_bind(void* drawer,void* item) {
 }
 static void __cdecl iq_equipment_drawer_update(void* drawer) {
     original_equipment_drawer_update(drawer);
-    if(!layout_test || !iq.equipment)return;
-    IQDrawer* d=iq_find_in_view(drawer);if(d)iq_present(d);
+    IQDrawer* d=layout_test && iq.equipment?iq_find_in_view(drawer):NULL;
+    if(d)iq_present(d);
+#if IQ_ADVENTURE_PROBE
+    else iq_probe_drawer(drawer,1);
+#endif
 }
 static void __cdecl iq_equipment_update(void* owner) {
     original_equipment_update(owner);

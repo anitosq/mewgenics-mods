@@ -59,6 +59,12 @@ static void report(const char* message) {
     if (log_message) log_message(IQ_RELEASE_BUILD ? "ImprovedInventory" : "ImprovedInventoryProbe", "%s", message);
 }
 
+/* Beta builds add the read-only adventure Backpack probes; see that header. */
+#define IQ_ADVENTURE_PROBE IQ_PROFILE_BUILD
+#if IQ_ADVENTURE_PROBE
+static void iq_probe_drawer(void* drawer,int side);
+static void iq_probe_equipment_grid(void* owner,const void* caller);
+#endif
 #include "inventory_layout.h"
 #include "inventory_controls.h"
 #include "inventory_equipment.h"
@@ -110,6 +116,10 @@ static int read_name(const char* source, char* destination, size_t capacity) {
     return 0;
 }
 
+#if IQ_ADVENTURE_PROBE
+#include "inventory_adventure_probe.h"
+#endif
+
 static void __cdecl observe_grid(void* instance) {
     iq_before_grid(instance);
     original_grid(instance);
@@ -141,6 +151,9 @@ static void* __cdecl observe_renderer(void* scene, void* entity, const char* nam
     /* Always preserve the original call and return value. No item pointers are
        retained or dereferenced; logged renderer addresses are transient hints. */
     void* result = original_renderer(scene, entity, name);
+#if IQ_ADVENTURE_PROBE
+    if(layout_test)iq_probe_renderer(name,__builtin_return_address(0));
+#endif
     char readable[96], message[260];
     if (!IQ_RELEASE_BUILD && event_count < 200 && read_name(name, readable, sizeof(readable))) {
         if (strstr(readable, "Inventory") || strstr(readable, "Storage") || strstr(readable, "Trash")) {

@@ -1,5 +1,11 @@
 # Improved Inventory changelog
 
+## 0.4.0-beta.3
+
+- Diagnostic beta: logs read-only details about the adventure Backpack screen
+  to `mod_logs/chainloader.log`, to prepare inventory tools there. The Backpack
+  itself is unchanged. Otherwise identical to 0.4.0-beta.2.
+
 ## 0.4.0-beta.2
 
 - Choose each grid's size with the new Storage and Trash buttons beside the

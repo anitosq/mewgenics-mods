@@ -33,7 +33,10 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.4.0-beta.2 candidate](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)
+The [0.4.0-beta.3 candidate](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md)
+is the 0.4.0-beta.2 feature set plus read-only Backpack-screen probes for
+adventure inventory research. The
+[0.4.0-beta.2 candidate](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)
 adds per-container grid sizes and localized set names on top of the untested
 0.3.8-beta.1 performance work. It awaits owner testing; 0.3.7 remains the
 public release.

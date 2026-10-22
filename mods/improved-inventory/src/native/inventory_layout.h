@@ -422,6 +422,9 @@ static void iq_update_body(void* instance) {
 }
 #include "inventory_performance.h"
 static void __cdecl iq_update(void* instance) {
+#if IQ_ADVENTURE_PROBE
+    if(iq_index_get(&iq_drawer_index,instance)<0)iq_probe_drawer(instance,0);
+#endif
 #if IQ_PROFILE_BUILD
     iq_profile_update(instance);
 #else
