@@ -25,6 +25,7 @@ static void iq_effect_summary(wchar_t* label,uint32_t effects) {
 static void iq_ui_update(void) {
     if(!iq_is_open()){iq_hide_all();filter_popup=0;if(iq_focus)iq_focus_set(0);return;}
     if(filter_popup==3)iq_build_set_rows();
+    if(filter_popup==4 || filter_popup==5)iq_build_trait_counts();
     int refresh=!iq_labels_match(),ready=1;
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;
     for(int i=0;i<IQ_TYPE_COUNT*IQ_RARITY_COUNT;i++)if(i!=selected)iq_control_hide(&iq_controls.bars[i]);
@@ -92,16 +93,18 @@ static void iq_ui_update(void) {
         snprintf(name,sizeof(name),"IQStats%d",iq_stat_filter);
         IQControl* popup=&iq_controls.popups[iq_popup_index()];
         iq_control_show(popup,name,x+(IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH-IQ_STATS_POPUP_W)*s,y-42*s);
-        if(refresh || !iq_label_cache.valid)for(int i=0;i<IQ_STAT_COUNT;i++) {
-            snprintf(name,sizeof(name),"up%d",i);ready&=iq_text(popup,1+i,name,iq_trait_label(1+i));
-            snprintf(name,sizeof(name),"down%d",i);ready&=iq_text(popup,1+IQ_STAT_COUNT+i,name,iq_trait_label(1+IQ_STAT_COUNT+i));
+        if(refresh || !iq_label_cache.valid)for(int i=0;i<2*IQ_STAT_COUNT;i++) {
+            int choice=1+i;
+            swprintf(label,200,L"%ls (%d)",iq_trait_label(choice),iq_trait_counts.counts.stats[choice]);
+            snprintf(name,sizeof(name),i<IQ_STAT_COUNT?"up%d":"down%d",i%IQ_STAT_COUNT);ready&=iq_text(popup,choice,name,label);
         }
     }
     if(filter_popup==5) {
         IQControl* popup=&iq_controls.popups[IQ_EFFECTS_POPUP];
         iq_control_show(popup,"IQEffects",x+(IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH-IQ_EFFECTS_POPUP_W)*s,y-42*s);
         if(refresh || !iq_label_cache.valid)for(int i=0;i<IQ_EFFECT_COUNT;i++) {
-            swprintf(label,200,L"[%lc] %ls",(iq_effect_filter&(1u<<i))?L'x':L' ',iq_trait_label(IQ_STAT_CHOICES+i));
+            swprintf(label,200,L"[%lc] %ls (%d)",(iq_effect_filter&(1u<<i))?L'x':L' ',iq_trait_label(IQ_STAT_CHOICES+i),
+                     iq_trait_counts.counts.effects[i]);
             snprintf(name,sizeof(name),"fx%d",i);ready&=iq_text(popup,i,name,label);
         }
     }

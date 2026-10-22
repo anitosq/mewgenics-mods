@@ -67,14 +67,19 @@ int main(void) {
     assert(iq_trait_match(0,0,&fx) && iq_trait_match(7,0,&fx) && !iq_trait_match(1,0,&fx));
     assert(iq_trait_match(1+IQ_STAT_COUNT+5,0,&fx) && !iq_trait_match(1+IQ_STAT_COUNT+6,0,&fx));
     assert(iq_trait_match(0,poison|bleed,&fx) && !iq_trait_match(0,poison,&fx) && !iq_trait_match(7,poison,&fx));
+    /* Menu counts: every known item, then each bonus, malus and effect. */
+    IQTraitCounts counts={{0},{0}};IQItemFx none={0,0,0};
+    iq_trait_tally(&counts,&fx);iq_trait_tally(&counts,&fx);iq_trait_tally(&counts,&none);
+    assert(counts.stats[0]==3 && counts.stats[7]==2 && counts.stats[1+IQ_STAT_COUNT+5]==2 && !counts.stats[1]);
+    assert(counts.effects[0]==2 && counts.effects[14]==2 && !counts.effects[1]);
     /* Popup geometry agrees with its feedback rectangles. */
     double r[4];
     for(int i=0;i<IQ_STAT_CHOICES;i++){iq_stat_rect(i,r);int c=iq_stat_choice(r[0]+1,r[1]+1);assert(c==(i?(((i-1)%2)?1+IQ_STAT_COUNT+(i-1)/2:1+(i-1)/2):0));}
-    assert(iq_stat_choice(165,90)==-1 && iq_stat_choice(20,82)==-1 && iq_stat_choice(20,86+7*43)==-1);
+    assert(iq_stat_choice(185,90)==-1 && iq_stat_choice(20,82)==-1 && iq_stat_choice(20,86+7*43)==-1);
     for(int i=0;i<IQ_EFFECT_COUNT;i++){iq_effect_rect(i,r);assert(iq_effect_choice(r[0]+1,r[1]+1)==i && iq_effect_choice(r[0]+r[2]-1,r[1]+r[3]-1)==i);}
     iq_effect_rect(IQ_EFFECT_COUNT,r);assert(iq_effect_choice(r[0]+1,r[1]+1)==IQ_EFFECT_CLEAR);
     iq_effect_rect(IQ_EFFECT_COUNT+1,r);assert(iq_effect_choice(r[0]+1,r[1]+1)==IQ_EFFECT_DONE);
-    assert(iq_effect_choice(215,50)==IQ_EFFECT_GAP && iq_effect_choice(220,43+8*40+1)==IQ_EFFECT_GAP);
+    assert(iq_effect_choice(240,50)==IQ_EFFECT_GAP && iq_effect_choice(250,43+8*40+1)==IQ_EFFECT_GAP);
     puts("Trait tables, matching and popup geometry passed.");
 
     /* An armor piece: +lck, -spd, armor shield, a bleed-on-hit passive, a set

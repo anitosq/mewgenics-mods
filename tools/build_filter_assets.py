@@ -148,26 +148,26 @@ m.sprite('IQFxBar',m.feedback(parts,[(323,0,120,36),(451,0,120,36)]))
 # Stats: Any, then bonus/malus per stat. Labels are the game's localized
 # keyword names, set at runtime; the initial text checks the widest one.
 for active in range(15):
-    parts=m.paper(0,0,330,397)+[m.text('Stats',12,29,22)]
-    parts+=m.button('Any',10,43,310,active==0)
-    rectangles=[(10,43,310,36)]
+    parts=m.paper(0,0,370,397)+[m.text('Stats',12,29,22)]
+    parts+=m.button('Any',10,43,350,active==0)
+    rectangles=[(10,43,350,36)]
     for i in range(7):
         y=86+i*43
-        for column,x in enumerate((10,170)):
-            parts+=m.paper(x,y,150,36,active==1+i+7*column)
-            parts.append((m.field(dynamic_font,x+3,y+5,144,28,16,'Constitution (+)',align=2),f'{"down" if column else "up"}{i}'))
-            rectangles.append((x,y,150,36))
+        for column,x in enumerate((10,190)):
+            parts+=m.paper(x,y,170,36,active==1+i+7*column)
+            parts.append((m.field(dynamic_font,x+3,y+5,164,28,16,'Constitution (+) (99)',align=2),f'{"down" if column else "up"}{i}'))
+            rectangles.append((x,y,170,36))
     m.sprite(f'IQStats{active}',m.feedback(parts,rectangles))
 # Effects: 17 toggles in reading order, two columns; match any selected.
-parts=m.paper(0,0,430,456)+[m.text('Effects (match any)',12,29,22)]
+parts=m.paper(0,0,482,456)+[m.text('Effects (match any)',12,29,22)]
 rectangles=[]
 for i in range(17):
-    x,y=10+(i%2)*210,43+(i//2)*40
-    parts+=m.paper(x,y,200,36)
-    parts.append((m.field(dynamic_font,x+6,y+5,190,28,17,"[x] Chances d'esquive"),f'fx{i}'))
-    rectangles.append((x,y,200,36))
-parts+=m.button('Clear',10,410,90)+m.button('Done',330,410,90)
-rectangles+=[(10,410,90,36),(330,410,90,36)]
+    x,y=10+(i%2)*236,43+(i//2)*40
+    parts+=m.paper(x,y,226,36)
+    parts.append((m.field(dynamic_font,x+5,y+5,216,28,16,'[x] Régénération de PV (99)'),f'fx{i}'))
+    rectangles.append((x,y,226,36))
+parts+=m.button('Clear',10,410,90)+m.button('Done',382,410,90)
+rectangles+=[(10,410,90,36),(382,410,90,36)]
 m.sprite('IQEffects',m.feedback(parts,rectangles))
 # Additional inset keeps both counts comfortably inside the lighter panel.
 # The width stops short of the grid-size buttons; the longest count label checks it.

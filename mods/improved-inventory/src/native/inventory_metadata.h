@@ -79,6 +79,7 @@ static void iq_search_metadata(IQMetadata* m,void* manager,void* item,void* defi
 }
 #include "inventory_ownership.h"
 #include "inventory_traits.h"
+#include "inventory_trait_counts.h"
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets) {
     IQMetadata* m=iq_find_metadata(drawer,id);
     if(!m)return !iq_search.query[0] && (!include_sets || (!iq_search.set_mode && !iq_stat_filter && !iq_effect_filter));
