@@ -6,6 +6,16 @@
 #include "skills.h"
 
 int main(void) {
+    assert(birth_mirror_source(0, 0, 0.0) == 1);
+    assert(birth_mirror_source(0, 0, 0.499999) == 1);
+    assert(birth_mirror_source(0, 0, 0.5) == 0);
+    assert(birth_mirror_source(0, 0, 0.999999) == 0);
+    for (int left = -1; left <= 1; ++left)
+        for (int right = -1; right <= 1; ++right)
+            if (left || right) {
+                assert(birth_mirror_source(left, right, 0.0) == -1);
+                assert(birth_mirror_source(left, right, 0.9) == -1);
+            }
     InheritedSkills skills = {0};
     assert(add_inherited_skill(&skills, "None", 0) && skills.count == 0);
     assert(add_inherited_skill(&skills, "", 0) && skills.count == 0);

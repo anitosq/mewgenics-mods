@@ -3,8 +3,9 @@
 Pass parental skills, mutations and higher base stats to kittens, and protect
 occupied mutation slots during events and combat.
 
-Version 0.3.1. [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
-[GitHub release](https://github.com/anitosq/mewgenics-mods/releases/tag/good-genes/v0.3.1)
+Version 0.3.2.
+[Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
+[Published releases](https://github.com/anitosq/mewgenics-mods/releases)
 
 ## Breeding
 
@@ -25,10 +26,12 @@ Version 0.3.1. [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/547) |
 - New birth defects and newly generated birth disorders are prevented.
   Existing parental defects and disorders can still be inherited.
 
-Left and right arms, legs, eyes, eyebrows and ears inherit separately. A
-mutation on one side is no longer overwritten by the opposite side at birth.
-Ordinary parts also keep their separate inherited appearances. If both parents
-have different mutations on the same side, the kitten inherits one of them.
+Left and right arms, legs, eyes, eyebrows and ears retain separate inherited
+parts when either side has a mutation. When both inherited sides are ordinary,
+the pair uses the game's normal mirroring, keeping their appearances matched.
+This is decided separately for each pair. Unknown part definitions retain
+their separate inherited appearances. If both parents have different mutations
+on the same side, the kitten inherits one of them.
 Matching paired mutations still count once, and the inherited head can hide
 facial parts and their effects. No extra mutation slots are added.
 
@@ -89,7 +92,7 @@ loaded text.
 
 ## Checking activation
 
-In `mod_logs/chainloader.log`, look for `[GoodGenes] 0.3.1 enabled`.
+In `mod_logs/chainloader.log`, look for `[GoodGenes] 0.3.2 enabled`.
 Each birth also logs the higher parental base stats, selected parental skills
 and inherited part IDs. Paired IDs are listed left/right before the game's
 head visibility update; they do not count active mutation effects. An unknown

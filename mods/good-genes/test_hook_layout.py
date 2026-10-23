@@ -48,11 +48,10 @@ def check_birth_hooks():
         assert match and bytes(map(int, match[1].split(","))) == bytes.fromhex(expected)
     gates = header.split("BIRTH_GATES[] = {", 1)[1].split("};", 1)[0]
     rows = re.findall(r"\{0x([0-9a-f]+), (\d+), \{([0-9,]+)\}, \{([0-9,]+)\}\}", gates)
-    assert len(rows) == 10
+    assert len(rows) == 6
     targets = {0xa927e: 0xa9380, 0xa9389: 0xa94e1,
                0xa9580: 0xa9636, 0xa9728: 0xa97c1, 0xa9e42: 0xa9fad,
-               0xa9c00: 0xa9c26, 0xa9c31: 0xa9c57, 0xa9c62: 0xa9c88,
-               0xa9c93: 0xa9cb9, 0xa9cc4: 0xa9cea}
+               0xa9bf5: 0xa9cea}
     assert {int(row[0], 16) for row in rows} == set(targets)
     for address, size, before, after in rows:
         address, size = int(address, 16), int(size)
@@ -65,12 +64,23 @@ def check_birth_hooks():
             # first gate and xmm9=0.5 at 0xa9380 for later paired-part rolls.
             expected = "f2 0f 10 55 f0" if address == 0xa927e else "f2 0f 10 55 f8"
             assert bytes(map(int, before.split(","))) == bytes.fromhex(expected)
-        if 0xa9c00 <= address <= 0xa9cc4:
-            # The RNG call ends at this COMISD. Both directions of each pair's
-            # copy lie before the target, so split and single-sided IDs survive.
-            assert size == 5
-            assert bytes(map(int, before.split(","))) == bytes.fromhex("66 41 0f 2f c1")
-            assert targets[address] - address == 0x26
+        if address == 0xa9bf5:
+            # Two complete argument-setup instructions. The final part hook
+            # replaces all five draws; resume before the unrelated sixth draw.
+            assert size == 6
+            assert bytes(map(int, before.split(","))) == bytes.fromhex("48 8b d6 0f 28 c7")
+            assert targets[address] == 0xa9cea
+    source = (root / "breeding.h").read_text(encoding="ascii")
+    final_part = source.split("if (caller == 0xa9bec) {", 1)[1]
+    assert final_part.index("mirror_ordinary_birth_parts(cat)") < final_part.index("Birth paired IDs")
+    mirror = source.split("static void mirror_ordinary_birth_parts(", 1)[1].split("static void choose_part(", 1)[0]
+    assert re.findall(r"\{(0x[0-9a-f]+), (0x[0-9a-f]+)\}", mirror) == [
+        ("0x18c", "0x1e0"), ("0x234", "0x288"), ("0x42c", "0x480"),
+        ("0x2dc", "0x330"), ("0x384", "0x3d8")]
+    assert mirror.count("0x1595a0)(1.0, rng)") == 1
+    assert mirror.index("0x1595a0)(1.0, rng)") < mirror.index("int source = birth_mirror_source")
+    assert "int kinds[2] = {-1, -1}" in mirror
+    assert "part[0x18]" not in mirror, "Classify raw selected IDs before head visibility"
 
 
 def check_skill_inheritance():

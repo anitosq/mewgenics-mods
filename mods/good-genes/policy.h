@@ -8,6 +8,12 @@ typedef struct {
     double stats[MUTATION_STATS];
 } MutationQuality;
 
+/* Only confirmed ordinary pairs mirror; unknowns must not erase mutations. */
+static int birth_mirror_source(int left, int right, double roll) {
+    if (left != 0 || right != 0) return -1;
+    return roll < 0.5 ? 1 : 0;
+}
+
 /* -1 leaves selection to the native roll (or native fallback for unknowns). */
 static int inherited_parent(int first, int second) {
     if (first < 0 || second < 0) return -1;
