@@ -1,4 +1,4 @@
-# Change Soul Well's range and summon passives
+# Customize Soul Well
 
 Close the game and open this file in a text editor:
 
@@ -42,6 +42,27 @@ to newly created shades.
 Keep `SafeDoomed` and `InjuryImmunity` unless you intend to change the normal
 temporary-shade behavior. The effects of removing them are untested.
 
+## Item settings
+
+Edit `SoulWell/data/items/trinkets.gon.merge` to change durability, display
+name, description, icon frame, rarity or item passives. You can add fields and
+reorder them. The DLL no longer requires an exact copy of the shipped item.
+This lets you apply your own unbreakable-item settings without disabling it.
+The supplied item still uses its original durability behavior.
+
+Keep exactly one `SoulWell` definition and these fields, each appearing once:
+
+```gon
+kind trinket
+ability tk_SoulWell
+aux -1
+```
+
+The DLL checks these values and basic structure. The game determines whether
+other fields and values are valid and how they behave; acceptance by the DLL
+does not prove an edit makes the item unbreakable. Test your durability change
+in-game, including after saving and reloading.
+
 ## Where to edit
 
 - Manual install: edit the file under the game's `mods/SoulWell` folder.
@@ -50,7 +71,7 @@ temporary-shade behavior. The effects of removing them are untested.
   the deployed copy can be overwritten on the next deployment.
 
 Keep a copy of your edits before updating or reinstalling the mod. Replace the
-DLL and data together, then reapply your range and passive changes.
+DLL and data together, then reapply your item, range and passive changes.
 
 ## What stays fixed
 
@@ -62,10 +83,11 @@ The native code depends on the surrounding summon definition, particularly
 `template spawn`, `lob false`, `catdata item_aux_catid`, the shade object and
 single-target setup. Apart from `max_range` and the contents of
 `additional_passives`, keep the supplied settings and their order unchanged.
-The startup check also expects the supplied item and shop definitions.
+The item follows the rules above. The shop definition must keep its supplied
+settings.
 If a required setting changes, the DLL shows a startup error and records the
 reason in `mod_logs/chainloader.log`. Restore the named file from this ZIP,
 reapply supported edits and restart.
 
 All files remain plain text. The source repository includes the DLL builder
-for changes that go beyond passive customization; see `DEVELOPMENT.md` there.
+for changes to the protected summon settings; see `DEVELOPMENT.md` there.

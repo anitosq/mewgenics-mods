@@ -130,6 +130,34 @@ static void passive_edit_check(void) {
     assert(!data_text_matches(broken, sizeof(broken) - 1, "", 0));
 }
 static int notice_calls, notice_status;
+static void item_edit_check(void) {
+    const char* accepted[] = {
+        ITEM_TEXT,
+        "SoulWell { durability -1 kind trinket ability tk_SoulWell aux -1 }",
+        "\xef\xbb\xbf// edit\r\nSoulWell { aux -1 name \"Well }\" frame 42 rarity common ability tk_SoulWell kind trinket passives { Test { nested [1 { a 2 }] } } }"
+    };
+    for (unsigned i = 0; i < sizeof(accepted) / sizeof(*accepted); i++)
+        assert(item_text_matches(accepted[i], strlen(accepted[i])));
+    const char* rejected[] = {
+        "Other { kind trinket ability tk_SoulWell aux -1 }",
+        "SoulWell { kind weapon ability tk_SoulWell aux -1 }",
+        "SoulWell { kind trinket ability tk_SoulJar aux -1 }",
+        "SoulWell { kind trinket ability tk_SoulWell aux 7 }",
+        "SoulWell { kind trinket aux -1 }",
+        "SoulWell { kind trinket ability tk_SoulWell ability tk_SoulJar aux -1 }",
+        "SoulWell { kind trinket ability tk_SoulWell aux -1 aux -1 }",
+        "SoulWell { kind trinket ability tk_SoulWell aux -1 passives { kind trinket ] } }",
+        "SoulWell { kind trinket aux -1 passives { ability tk_SoulWell } }",
+        "SoulWell { kind trinket ability tk_SoulWell aux -1 durability }",
+        "SoulWell { kind trinket ability tk_SoulWell aux -1 } SoulWell {}",
+        "SoulWell { kind trinket ability tk_SoulWell aux -1 } /* unfinished",
+        "SoulWell { kind trinket ability tk_SoulWell aux -1 name \"unfinished"
+    };
+    for (unsigned i = 0; i < sizeof(rejected) / sizeof(*rejected); i++)
+        assert(!item_text_matches(rejected[i], strlen(rejected[i])));
+    char hidden[] = "SoulWell { kind trinket ability tk_SoulWell aux -1 }\0hidden";
+    assert(!item_text_matches(hidden, sizeof(hidden) - 1));
+}
 static int WINAPI notice_fixture(HWND window, LPCSTR message, LPCSTR title, UINT flags) {
     assert(!window && !strcmp(title, "Soul Well is inactive"));
     assert(strstr(message, startup_reason(notice_status)) && strstr(message, "mod_logs/chainloader.log"));
@@ -183,6 +211,7 @@ int main(void) {
     passive_edit_check();
     notice_check();
     inactive_cast_check();
+    item_edit_check();
     reported_inventory_check();
     byte one[0x60], duplicate[0x60], other[0x60], empty[0x60], well[0x60];
     item(one, "SoulJar_Full", 7); item(duplicate, "SoulJar_Full", 7);

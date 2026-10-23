@@ -76,8 +76,12 @@ strings/comments and mismatched delimiters are rejected. Passive nesting is
 bounded at 64 delimiters, file size below 64 KiB. The game's parser still owns
 passive key/value semantics. Source generation embeds the complete baseline,
 so nested passive definitions no longer confuse a first-closing-brace search.
+Beta.3 checks the item separately: one SoulWell root, kind trinket, ability
+tk_SoulWell and aux -1, with no duplicate protected fields. Other fields may
+change or be added/reordered; nested values use the same bounded delimiter
+check. Item value semantics remain the game's responsibility.
 Later mods can still override effective definitions; this is not a runtime
-load-order validator. Other settings/order changes require a matching build.
+load-order validator. Other ability/shop settings or order changes require a matching build.
 
 Failures log a specific reason and queue a single Windows MessageBox on a new
 thread. The DLL holds a module reference until the notice finishes. DllMain
@@ -117,3 +121,7 @@ behavior. For beta.2, test range 10 plus customized passives; deliberately
 change a core value, confirm the startup dialog and that no generic shade
 spawns, then restore it and restart. Full-board outcomes, large collections
 and removal remain unverified.
+
+Beta.3 adds item-edit acceptance without changing the shipped item or native
+hooks. Test the recipient's unbreakable settings with normal summons and a
+save/reload. Offline acceptance alone does not verify durability behavior.

@@ -85,6 +85,15 @@ def gate_check(module, assets, other_module):
         custom = original.decode().replace('InjuryImmunity 1', 'InjuryImmunity 2\n            // User edit: } is harmless in a comment').replace('max_range 1', 'max_range 10')
         assert parse_gon(custom)['tk_SoulWell']['spawn']['additional_passives']['InjuryImmunity'] == '2'
         path.write_text(custom, encoding='utf-8'); check(enabled, 1)
+        item_path = assets / ITEM; original_item = item_path.read_bytes()
+        edited_item = original_item.decode().replace('frame 206', 'frame 42\n    durability -1\n    passives { Test { nested [1 { a 2 }] } }')
+        item_path.write_text(edited_item, encoding='utf-8'); check(enabled, 1, reason=1)
+        for before, after in (('SoulWell {', 'Other {'), ('kind trinket', 'kind weapon'),
+                              ('ability tk_SoulWell', 'ability tk_SoulJar'), ('aux -1', 'aux 7'),
+                              ('ability tk_SoulWell', ''), ('aux -1', 'aux -1 aux -1')):
+            item_path.write_text(edited_item.replace(before, after), encoding='utf-8'); check(enabled, 0, reason=4)
+        item_path.write_text(edited_item + '\nSoulWell {}', encoding='utf-8'); check(enabled, 0, reason=4)
+        item_path.write_bytes(original_item)
         path.write_bytes(b'\xef\xbb\xbf' + custom.replace('\r\n', '\n').replace('\n', '\r\n').encode()); check(enabled, 1)
         path.write_text(custom.replace('lob false', 'lob true')); check(enabled, 0)
         path.write_text(custom.replace('item_aux_catid', 'other')); check(enabled, 0)
@@ -95,7 +104,7 @@ def gate_check(module, assets, other_module):
     finally:
         ctypes.windll.kernel32.FreeLibrary.argtypes = [ctypes.c_void_p]
         ctypes.windll.kernel32.FreeLibrary(dll._handle)
-    print('PASS: DLL layouts, exact paths, specific failure reasons, range 10/passives, formatting/CRLF/BOM, invalid range/core override rejection.')
+    print('PASS: DLL layouts, exact paths, specific failure reasons, item edits with range 10/passives, formatting/CRLF/BOM, invalid range/core override rejection.')
 
 
 def package_check(archive, manifest):

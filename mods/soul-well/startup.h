@@ -51,9 +51,8 @@ static Token next_token(Gon* g) {
 static int token_is(Token t, const char* value) {
     return t.length == strlen(value) && t.text && !memcmp(t.text, value, t.length);
 }
-static int skip_passives(Gon* g) {
-    if (!token_is(next_token(g), "{")) return 0;
-    char closes[64] = {'}'}; unsigned depth = 1;
+static int skip_container(Gon* g, char close) {
+    char closes[64] = {close}; unsigned depth = 1;
     while (depth) {
         Token t = next_token(g);
         if (!t.length) return 0;
@@ -65,6 +64,32 @@ static int skip_passives(Gon* g) {
         }
     }
     return !g->invalid;
+}
+static int skip_passives(Gon* g) {
+    return token_is(next_token(g), "{") && skip_container(g, '}');
+}
+static int item_text_matches(const char* text, size_t length) {
+    if (memchr(text, 0, length)) return 0;
+    size_t start = length >= 3 && !memcmp(text, "\xef\xbb\xbf", 3) ? 3 : 0;
+    Gon g = {text, start, length, 0};
+    if (!token_is(next_token(&g), "SoulWell") || !token_is(next_token(&g), "{")) return 0;
+    unsigned required = 0;
+    for (;;) {
+        Token key = next_token(&g);
+        if (token_is(key, "}")) break;
+        if (!key.length || strchr("{}[]\"", key.text[0])) return 0;
+        Token value = next_token(&g);
+        if (!value.length || token_is(value, "}") || token_is(value, "]")) return 0;
+        unsigned bit = token_is(key, "kind") ? 1 : token_is(key, "ability") ? 2 : token_is(key, "aux") ? 4 : 0;
+        if (bit) {
+            const char* expected = bit == 1 ? "trinket" : bit == 2 ? "tk_SoulWell" : "-1";
+            if ((required & bit) || !token_is(value, expected)) return 0;
+            required |= bit;
+        } else if (token_is(value, "{") || token_is(value, "[")) {
+            if (!skip_container(&g, value.text[0] == '{' ? '}' : ']')) return 0;
+        }
+    }
+    return !next_token(&g).length && !g.invalid && required == 7;
 }
 static int positive_range(Token t) {
     unsigned value = 0;
@@ -101,7 +126,8 @@ static int data_file_matches(const wchar_t* path, const char* expected, int edit
     DWORD size = GetFileSize(file, NULL), got = 0;
     char* text = size < 65536 ? malloc((size_t)size + 1) : NULL;
     int ok = text && ReadFile(file, text, size, &got, NULL) && got == size &&
-        (editable ? ability_text_matches(text, size) : data_text_matches(text, size, expected, 0));
+        (editable == 2 ? item_text_matches(text, size) :
+         editable == 1 ? ability_text_matches(text, size) : data_text_matches(text, size, expected, 0));
     free(text); CloseHandle(file);
     return ok;
 }
@@ -116,7 +142,7 @@ static const char* startup_reason(int status) {
         case SW_PATH: return "The Soul Well installation path could not be read.";
         case SW_DISABLED: return "Soul Well data is not enabled in -modpaths. Enable Soul Well in your manager and launch through it.";
         case SW_AMBIGUOUS: return "Two possible Soul Well data folders are enabled. Keep one installation.";
-        case SW_ITEM: return "data/items/trinkets.gon.merge is missing or incompatible. Restore it from this beta ZIP.";
+        case SW_ITEM: return "data/items/trinkets.gon.merge is missing or incompatible. Keep one SoulWell definition with kind trinket, ability tk_SoulWell and aux -1. Other item fields may change. Check braces and values, or restore it from this beta ZIP.";
         case SW_SHOP: return "data/shops/tracy_house_shop.gon.patch is missing or incompatible. Restore it from this beta ZIP.";
         case SW_ABILITY: return "data/abilities/item_abilities.gon.merge is missing or incompatible. max_range must be a positive integer. Only max_range and additional_passives may change; restore other settings from this beta ZIP.";
         case SW_LOADER: return "Mewjector API 3 or newer is required. Install or enable Mewjector.";
@@ -160,7 +186,7 @@ __declspec(dllexport) int SoulWellAssetStatusW(const wchar_t* dll_path, const wc
     const wchar_t* root = enabled == 1 ? parent : sibling;
     if (wcslen(root) + 64 >= MAX_PATH) return SW_PATH;
     wcscpy(actual, root); wcscat(actual, L"\\data\\items\\trinkets.gon.merge");
-    if (!data_file_matches(actual, ITEM_TEXT, 0)) return SW_ITEM;
+    if (!data_file_matches(actual, ITEM_TEXT, 2)) return SW_ITEM;
     wcscpy(actual, root); wcscat(actual, L"\\data\\shops\\tracy_house_shop.gon.patch");
     if (!data_file_matches(actual, SHOP_TEXT, 0)) return SW_SHOP;
     wcscpy(actual, root); wcscat(actual, L"\\data\\abilities\\item_abilities.gon.merge");

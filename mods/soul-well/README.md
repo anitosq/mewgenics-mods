@@ -5,14 +5,14 @@ trinket use. Soul Well scans home storage, the adventure backpack and jars
 equipped by allied campaign cats on the battlefield. The jars stay where they
 are. Duplicate jars summon their cat only once per cast.
 
-This is **0.1.0-beta.2**, for Windows x64, Mewgenics **1.1.21239** (Steam build
+This is **0.1.0-beta.3**, for Windows x64, Mewgenics **1.1.21239** (Steam build
 25143593) and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218) API 3 or
-newer. This beta's range customization and startup warning have not yet been
+newer. This beta's item/range customization and startup warning have not yet been
 tested in-game. Back up your saves before testing.
 
-Install `SoulWell-0.1.0-beta.2.zip` supplied with this candidate. This version
-has not been published. Preserve your edited passive block before updating,
-then copy it into the new ability file. Replace both the DLL and data files.
+Install `SoulWell-0.1.0-beta.3.zip` supplied with this candidate. This version
+has not been published. Preserve your GON edits before updating,
+then reapply them to the new files. Replace both the DLL and data files.
 
 ## Install
 
@@ -57,14 +57,17 @@ Soul Well scans them again on every cast. It does not store permanent soul
 bindings or consume jars. Empty jars and missing cat IDs are skipped.
 Jars equipped by cats left at home are not included.
 
-## Edit the range and summon passives
+## Edit the item, range and summon passives
 
 The ZIP contains loose `.gon.merge` and `.gon.patch` files, with no `.gpak`.
 Edit `target.max_range` or the contents of `spawn.additional_passives` inside
 `data/abilities/item_abilities.gon.merge`, then restart the game. These edits
 do not require rebuilding the DLL. See [CUSTOMIZE.md](CUSTOMIZE.md) for the
 exact location and manager-specific notes. For example, `max_range 10` keeps
-the DLL active. Comments, indentation and Windows line endings are accepted.
+the DLL active. You can also edit durability, appearance and passives in the
+item file. Keep its
+`SoulWell` ID, `kind trinket`, `ability tk_SoulWell` and `aux -1`. Comments,
+indentation and Windows line endings are accepted.
 
 Soul Well has its own ability, `tk_SoulWell`. Changes to the default Soul
 Jar's ability do not automatically carry over.
@@ -80,8 +83,9 @@ more than 1,024 unique IDs.
 Only the stated executable is supported. Other mods that replace item or
 ability definitions can interfere with Soul Well. Keep the summon structure
 outside `additional_passives` and `max_range` unchanged; this beta checks that
-structure at startup. Other gameplay-setting edits require rebuilding the
-matching DLL. Formatting changes are accepted in all three supplied GON files.
+structure at startup. The item check protects only its ID, kind, ability link
+and aux value; other item settings are editable. The supplied shop definition
+remains checked. Formatting changes are accepted in all three supplied GON files.
 
 ## If Soul Well is inactive
 
