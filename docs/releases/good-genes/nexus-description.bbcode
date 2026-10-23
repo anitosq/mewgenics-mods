@@ -13,7 +13,7 @@ Pass parental skills, mutations and higher base stats to kittens, and protect oc
 [*]Random loss of part inheritance at birth is disabled.
 [*]New birth defects and newly generated birth disorders are prevented. Existing parental defects and disorders can still be inherited.
 [/list]
-Left and right arms, legs, eyes, eyebrows and ears inherit separately. A mutation on one side is no longer overwritten by the opposite side at birth. Ordinary parts also keep their separate inherited appearances. If both parents have different mutations on the same side, the kitten inherits one of them. Matching paired mutations still count once, and the inherited head can hide facial parts and their effects. No extra mutation slots are added.
+Left and right arms, legs, eyes, eyebrows and ears retain separate inherited parts when either side has a mutation. When both inherited sides are ordinary, the pair uses the game's normal mirroring, keeping their appearances matched. This is decided separately for each pair. Unknown part definitions retain their separate inherited appearances. If both parents have different mutations on the same side, the kitten inherits one of them. Matching paired mutations still count once, and the inherited head can hide facial parts and their effects. No extra mutation slots are added.
 
 [b]Event and combat mutations[/b]
 Stat-only replacements happen automatically when no stat decreases and at least one increases. Equal changes and pure downgrades keep the current mutation. Trade-offs that increase some stats and decrease others open a Keep Existing / Replace comparison. Matching paired mutations count once when comparing bonuses.
@@ -36,7 +36,7 @@ The mod disables itself on unsupported game builds or when its matching UI asset
 Comparison labels are English. Mutation descriptions use the game's loaded text.
 
 [b]Checking activation[/b]
-In mod_logs/chainloader.log, look for [GoodGenes] 0.3.1 enabled. Each birth also logs inherited base stats, selected parental skills and part IDs, with paired IDs listed left/right before head visibility is applied. An unknown parental definition logs a fallback to native inheritance. A DLL-loading line alone does not confirm activation.
+In mod_logs/chainloader.log, look for [GoodGenes] 0.3.2 enabled. Each birth also logs inherited base stats, selected parental skills and part IDs, with paired IDs listed left/right before head visibility is applied. An unknown parental definition logs a fallback to native inheritance. A DLL-loading line alone does not confirm activation.
 
 Not every scenario has been tested. Bug reports and feedback are welcome in the Bugs and Posts tabs.
 

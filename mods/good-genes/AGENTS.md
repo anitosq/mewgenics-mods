@@ -122,3 +122,8 @@
   definition. Match native allocation/construction and destruction ownership;
   never reuse a library-definition virtual call on an internal data pointer.
   Retain the deferred sprite-construction check in `test_hook_layout.py`.
+
+- Owner release approval, 2026-10-23: release 0.3.2 from the existing beta
+  implementation. This authorizes removing the beta label and publishing on
+  GitHub and Nexus. Approval is not gameplay-test evidence; preserve the
+  installed game and saves. See docs/releases/good-genes/0.3.2-publication.md.
