@@ -10,9 +10,10 @@ This is **0.1.0-beta.3**, for Windows x64, Mewgenics **1.1.21239** (Steam build
 newer. This beta's item/range customization and startup warning have not yet been
 tested in-game. Back up your saves before testing.
 
-Install `SoulWell-0.1.0-beta.3.zip` supplied with this candidate. This version
-has not been published. Preserve your GON edits before updating,
-then reapply them to the new files. Replace both the DLL and data files.
+Download `SoulWell-0.1.0-beta.3.zip` from the
+[GitHub prerelease](https://github.com/anitosq/mewgenics-mods/releases/tag/soul-well/v0.1.0-beta.3).
+Preserve your GON edits before updating, then reapply them to the new files.
+Replace both the DLL and data files.
 
 ## Install
 

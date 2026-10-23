@@ -4,7 +4,7 @@ Mewgenics mods by anitosq. Each mod has its own source, tests and documentation.
 
 | Mod | Purpose | Status |
 | --- | --- | --- |
-| [Soul Well](mods/soul-well/) | Summon unique cats from Soul Jars, including home storage; editable summon passives | [GitHub prerelease](https://github.com/anitosq/mewgenics-mods/releases/tag/soul-well/v0.1.0-beta.1) |
+| [Soul Well](mods/soul-well/) | Summon unique cats from Soul Jars, including home storage; editable summon passives | [GitHub prerelease](https://github.com/anitosq/mewgenics-mods/releases/tag/soul-well/v0.1.0-beta.3) |
 | [Good Genes](mods/good-genes/) | Mutation inheritance and event/combat replacement choices | 0.1.0 candidate; Nexus unpublished; awaiting owner testing |
 | [Auto Furniture](mods/auto-furniture/) | Automatic room layouts with stat targets, pins, bulk return and Undo | [GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/auto-furniture/v0.1.1) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/538) |
 | [Guaranteed Boss Loot](mods/guaranteed-boss-loot/) | Guaranteed act-ending loot without losing the searching cat | [GitHub](https://github.com/anitosq/mewgenics-mods/releases/tag/guaranteed-boss-loot/v0.1.1) / [Nexus Mods](https://www.nexusmods.com/mewgenics/mods/536) |
