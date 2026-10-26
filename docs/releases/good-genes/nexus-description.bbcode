@@ -29,7 +29,21 @@ Empty parts behave normally unless a head change also affects an existing facial
 [b]Installation and compatibility[/b]
 Requires the native loader listed under Requirements (API 3 or later) and Windows Steam build 1.1.21239 / 25143593.
 
-Install and enable the archive through your mod manager. Enable both its native DLL and asset entry. Close the game before installing, updating, or removing it, and back up your saves.
+The download includes the DLL and UI assets. There is no separate asset download or mod named "Assets". The two asset files, good_genes.swf and swflist.gon.append, are inside GoodGenes/swfs/ in the ZIP. Close the game before installing, updating, or removing it, and back up your saves.
+
+[b]Vortex[/b]
+[list=1]
+[*]Install the complete Good Genes ZIP, enable it under Mods, and deploy.
+[*]Open Load Order and enable the entry containing GoodGenes. This is the bundled asset folder; it may display the full mod title followed by (GoodGenes).
+[*]Launch Mewgenics through Vortex so it supplies the enabled asset paths.
+[/list]
+If the Load Order entry is missing, check for mods/GoodGenes/description.json and mods/GoodGenes/swfs/ in the game folder. If those files are missing, reinstall the complete ZIP and deploy again. Installing only GoodGenes.dll is insufficient.
+
+[b]Mewtator[/b]
+Import the complete ZIP and enable Good Genes, including its assets if the manager shows separate native-code and asset controls. Keep the bundled GoodGenes folder intact and launch through Mewtator.
+
+[b]Manual installation[/b]
+Place GoodGenes.dll in the game's mods directory and the GoodGenes folder beside it, with description.json and the swfs folder inside. Move the DLL out of the extracted GoodGenes folder for this layout; keep only one installed copy of the DLL. Add -modpaths mods/GoodGenes to the launch arguments, preserving the paths for any other enabled assets. For Steam, use Mewgenics > Properties > General > Launch Options. An entry in modlist.txt alone does not supply this argument.
 
 The mod disables itself on unsupported game builds or when its matching UI assets are not enabled. Native mods that change the same breeding functions may conflict. Removing this mod does not undo changes already saved.
 

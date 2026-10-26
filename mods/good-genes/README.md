@@ -72,13 +72,40 @@ Ordinary overnight house mutations are unchanged.
 Requires the Mewjector native loader, API 3 or later, and the supported Windows
 Steam game build: 1.1.21239 / Steam build 25143593.
 
-Install and enable the archive through your mod manager. Enable its asset
-entry in the game's mod load order as well as the native DLL.
+The download includes the DLL and the UI assets. There is no separate asset
+download or mod named "Assets". The assets are `good_genes.swf` and
+`swflist.gon.append` inside the archive's `GoodGenes/swfs/` folder.
+
+### Vortex
+
+1. Install the complete Good Genes ZIP, enable it under Mods, and deploy.
+2. Open Load Order and enable the entry containing `GoodGenes`. This is the
+   bundled asset folder; it may display the full mod title followed by
+   `(GoodGenes)`.
+3. Launch Mewgenics through Vortex so it supplies the enabled asset paths.
+
+If that entry is missing, check that deployment created
+`mods/GoodGenes/description.json` and `mods/GoodGenes/swfs/` in the game folder.
+If those files are missing, reinstall the complete ZIP and deploy again.
+Installing only `GoodGenes.dll` is insufficient.
+
+### Mewtator
+
+Import the complete ZIP and enable Good Genes, including its assets if the
+manager shows separate native-code and asset controls. Keep the bundled
+`GoodGenes` folder intact and launch through Mewtator.
+
+### Manual installation
 
 For manual installation, place GoodGenes.dll in the game's mods
-directory and the GoodGenes folder beside it. Launch with
+directory and the GoodGenes folder beside it, retaining `description.json`,
+`swfs/good_genes.swf`, and `swfs/swflist.gon.append` inside that folder.
+Move the DLL out of the extracted GoodGenes folder for this layout; keep only
+one installed copy of the DLL. Launch with
 `-modpaths mods/GoodGenes` included among the enabled asset paths.
 Preserve the paths for any other enabled assets.
+For a Steam launch, add this argument in Mewgenics > Properties > General >
+Launch Options. An entry in `modlist.txt` alone does not supply this argument.
 
 Close the game before installing, updating, or removing the mod. Back up
 your saves. Removing the mod does not undo mutations or kittens already saved.
