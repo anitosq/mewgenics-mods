@@ -16,16 +16,19 @@ static unsigned pinned_count;
 static double plan_original_stats[AF_STATS];
 static HANDLE plan_worker;
 static volatile LONG plan_cancel;
+#define SEARCH_BUDGET_MS 2500
+#define SEARCH_UTILITY_MS 100
+#define SEARCH_MAX_ITERATIONS 50000
 static int search_stopped(void* deadline) {
     return InterlockedCompareExchange(&plan_cancel,0,0)||GetTickCount64()>=*(ULONGLONG*)deadline;
 }
 static DWORD WINAPI search_worker(void* ignored) {
-    (void)ignored;ULONGLONG until=GetTickCount64()+1200;
+    (void)ignored;ULONGLONG until=GetTickCount64()+SEARCH_BUDGET_MS;
     /* Reserve part of the same budget for utility fill; closing cancels both phases. */
     int utilities=0;for(int i=0;i<problem.count;i++)utilities|=problem.shape[i].utility;
-    ULONGLONG deadline=until-(utilities?100:0);
+    ULONGLONG deadline=until-(utilities?SEARCH_UTILITY_MS:0);
     search.stop=search_stopped;search.stop_context=&deadline;
-    while(search.iterations<3000&&!af_stopped(&search))af_step(&problem,&search);
+    while(search.iterations<SEARCH_MAX_ITERATIONS&&!af_stopped(&search))af_step(&problem,&search);
     deadline=until;
     if(!af_stopped(&search))af_fill_utilities(&problem,&search);
     search.stop=NULL;search.stop_context=NULL;
@@ -96,7 +99,8 @@ static int room_stats(byte* room,double stats[AF_STATS]) {
     }
     return 1;
 }
-static void preview(void* ui,const char* room_name,unsigned selected,unsigned targets,const double minimum[AF_STATS],unsigned caps,const double maximum[AF_STATS]) {
+static void preview(void* ui,const char* room_name,unsigned selected,unsigned targets,const double minimum[AF_STATS],
+                    unsigned caps,const double maximum[AF_STATS],const int rank[AF_RANKS],unsigned minimize) {
     if(plan_worker){report("Searching...");return;}
     plan_ready=0;
     void* inv=NULL;byte* live[MAX_ITEMS];unsigned n=0;byte* scene=ptr(ptr(ui,0x18),8);
@@ -115,6 +119,8 @@ static void preview(void* ui,const char* room_name,unsigned selected,unsigned ta
     problem.width=integer(plan_room,0xf0);problem.height=integer(plan_room,0xf4);
     problem.selected=selected;problem.targets=targets;memcpy(problem.minimum,minimum,sizeof(problem.minimum));
     problem.caps=caps;if(maximum)memcpy(problem.maximum,maximum,sizeof(problem.maximum));
+    if(rank)memcpy(problem.rank,rank,sizeof(problem.rank));
+    problem.minimize=minimize&selected;
     if(problem.width<1||problem.width>64||problem.height<1||problem.height>64||
        !read_bytes(ptr(plan_room,0x108),problem.grid,(size_t)problem.width*problem.height)) {
         report("Cannot read the room layout.");return;

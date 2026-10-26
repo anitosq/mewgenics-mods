@@ -105,7 +105,9 @@ int main(void) {
     double value;
     assert(af_parse_bound("",&value)==0&&af_parse_bound("0",&value)==1&&value==0);
     assert(af_parse_bound("12.5",&value)==1&&value==12.5);
-    assert(af_parse_bound(".",&value)==-1&&af_parse_bound("-1",&value)==-1);
+    assert(af_parse_bound(".",&value)==-1&&af_parse_bound("-1",&value)==1&&value==-1);
+    assert(af_parse_bound("-1000001",&value)==-1&&af_parse_bound("-",&value)==-1);
+    assert(af_correct_max(-5,-8)==-4&&af_correct_max(-5,-2)==-2);
     assert(af_parse_bound("nan",&value)==-1&&af_parse_bound("inf",&value)==-1);
     assert(af_parse_bound("1000001",&value)==-1&&af_parse_bound("5junk",&value)==-1);
     assert(af_correct_max(10,5)==11&&af_correct_max(10,10)==11&&af_correct_max(0,0)==1);
@@ -210,5 +212,65 @@ int main(void) {
     assert(s->best.used==1&&af_rebuild(p,&s->best,s->grid,0));
     p->width=2;af_fill_utilities(p,s);
     assert(s->best.used==2&&s->best.placement[0].x==1&&af_rebuild(p,&s->best,s->grid,0));
-    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts");
+    /* Negative bounds: Max -1 keeps Comfort at or below -1 using a stat-lowering piece. */
+    memset(p,0,sizeof(*p));p->width=3;p->height=1;p->count=3;p->selected=3;p->caps=1;p->maximum[0]=-1;
+    for(int i=0;i<3;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
+    p->shape[0].stats[0]=-3;p->shape[1].stats[0]=2;p->shape[1].stats[1]=4;p->shape[2].stats[1]=1;
+    assert(af_start(p,s,NULL));for(int i=0;i<100;i++)af_step(p,s);
+    assert(af_within_caps(p,s->best.stats)&&s->best.stats[0]==-1&&s->best.stats[1]==5);
+    p->targets=1;p->minimum[0]=-2;assert(af_start(p,s,NULL));
+    p->maximum[0]=-3;assert(!af_start(p,s,NULL));
+    /* Identical shapes share a failed-fit cache that a new surface must invalidate. */
+    memset(p,0,sizeof(*p));p->width=1;p->height=3;p->count=3;p->selected=1;p->grid[0]=2;
+    p->shape[0].count=2;p->shape[0].solid=1;p->shape[0].stats[0]=1;
+    p->shape[0].cells[0]=(AFCell){0,0,3};p->shape[0].cells[1]=(AFCell){0,1,2};
+    p->shape[1]=p->shape[2]=p->shape[0];
+    assert(af_start(p,s,NULL)&&s->shape_class[1]==0&&s->shape_class[2]==0);
+    for(int i=0;i<20;i++)af_step(p,s);
+    assert(s->best.used==2&&s->best.stats[0]==2&&af_rebuild(p,&s->best,s->grid,0));
+    /* Directions and ranks: piece 0 adds Comfort, piece 1 trades Comfort for Stimulation,
+       piece 2 adds Stimulation. Unranked stats are balanced in their own direction. */
+    memset(p,0,sizeof(*p));p->width=3;p->height=1;p->count=3;p->selected=3;
+    for(int i=0;i<3;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
+    p->shape[0].stats[0]=3;p->shape[1].stats[0]=-2;p->shape[1].stats[1]=5;p->shape[2].stats[1]=1;
+    static const struct {unsigned minimize;int comfort_rank,stimulation_rank;double comfort,stimulation;} ranked[]={
+        {0,0,0,1,6},{0,1,0,3,1},{1,1,0,-2,6},{1,2,1,-2,6},{0,2,1,1,6},{1,0,0,-2,6}};
+    for(unsigned k=0;k<sizeof(ranked)/sizeof(ranked[0]);k++) {
+        p->minimize=ranked[k].minimize;p->rank[0]=ranked[k].comfort_rank;p->rank[1]=ranked[k].stimulation_rank;
+        assert(af_start(p,s,NULL));for(int i=0;i<100;i++)af_step(p,s);
+        assert(s->best.stats[0]==ranked[k].comfort&&s->best.stats[1]==ranked[k].stimulation);
+    }
+    /* One cell: a Comfort piece competes with a utility piece; the utility rank decides. */
+    memset(p,0,sizeof(*p));p->width=1;p->height=1;p->count=2;p->selected=1;
+    for(int i=0;i<2;i++){p->shape[i].count=p->shape[i].solid=1;p->shape[i].cells[0]=(AFCell){0,0,1};}
+    p->shape[0].stats[0]=2;p->shape[1].utility=1;
+    static const struct {int comfort,utility;double result;} utility_ranks[]={{0,0,2},{0,1,0},{1,2,2},{2,1,0}};
+    for(unsigned k=0;k<sizeof(utility_ranks)/sizeof(utility_ranks[0]);k++) {
+        p->rank[0]=utility_ranks[k].comfort;p->rank[AF_UTILITY_RANK]=utility_ranks[k].utility;
+        assert(af_start(p,s,NULL));for(int i=0;i<50;i++)af_step(p,s);
+        assert(s->best.stats[0]==utility_ranks[k].result&&s->best.utilities==(utility_ranks[k].result==0));
+    }
+    p->rank[0]=0;p->rank[AF_UTILITY_RANK]=-1;assert(!af_valid_problem(p));
+    p->rank[AF_UTILITY_RANK]=0;p->selected=3;
+    double up[AF_STATS]={5,0},down[AF_STATS]={1,9};
+    p->rank[0]=1;assert(af_compare(p,up,down)>0);
+    p->minimize=1;assert(af_compare(p,up,down)<0);
+    p->rank[1]=1;assert(!af_valid_problem(p));
+    p->rank[1]=AF_RANKS+1;assert(!af_valid_problem(p));
+    p->rank[1]=0;p->rank[2]=2;assert(!af_valid_problem(p));
+    p->rank[2]=0;p->minimize=4;assert(!af_valid_problem(p));
+    /* Floating pieces: a column with a floor surface, one resting piece and one balloon. The
+       balloon costs less high up, leaving the cell above the floor to the resting piece. */
+    memset(p,0,sizeof(*p));p->width=1;p->height=3;p->count=2;p->selected=1;p->grid[0]=2;
+    p->shape[0].count=2;p->shape[0].solid=1;p->shape[0].stats[0]=1;
+    p->shape[0].cells[0]=(AFCell){0,0,3};p->shape[0].cells[1]=(AFCell){0,1,1};
+    p->shape[1].count=p->shape[1].solid=1;p->shape[1].stats[0]=1;p->shape[1].cells[0]=(AFCell){0,0,1};
+    assert(af_start(p,s,NULL)&&s->up==1);af_list_reach(p,s);
+    assert(s->reach[0]==0&&s->reach[1]==1&&s->reach[2]==2);
+    assert(af_resting_cost(p,s,&p->shape[1],(AFPlacement){0,2,1,1,1})<af_resting_cost(p,s,&p->shape[1],(AFPlacement){0,1,1,1,1}));
+    for(int i=0;i<20;i++)af_step(p,s);
+    assert(s->best.used==2&&s->best.placement[1].y==2&&af_rebuild(p,&s->best,s->grid,0));
+    p->shape[0].cells[0]=(AFCell){0,1,3};p->shape[0].cells[1]=(AFCell){0,0,1};
+    assert(af_up_direction(p)==-1);
+    free(s);free(p);puts("PASS: five-stat scoring, Appeal targets/caps, empty/zero, range correction, scarcity, secondary fill, utility gap fill, support, bounds, reserved cells, overlap, input validation, horizontal-only flips, legacy inverted layouts, negative bounds, shared fit cache, directions and ranks, floating pieces");
 }

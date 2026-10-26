@@ -33,18 +33,30 @@ launch argument. Furniture you placed remains in the save.
 ## Use
 
 Enter furniture-placement mode and click a room's wand. Select Comfort,
-Stimulation, Health, Mutation, Appeal, or any combination. Click Calculate,
-compare Before and Best found, then Apply. Calculate alone moves nothing.
+Stimulation, Health, Mutation, Appeal, or any combination; no stat is selected
+at first. Setting a stat's Min, Max or priority selects it too, and the box
+above the stats selects or clears all of them. Click Calculate, compare Before
+and Best found, then Apply. Calculate alone moves nothing.
 
 The interface follows your game language: English, Spanish, French, German,
 Italian, Brazilian Portuguese, Russian, Korean, Japanese or Simplified Chinese.
 After changing language, reopen the room's wand panel.
 
 - Min is a best-effort target; Max is a limit. Leave either blank for no bound.
-  Zero is an explicit bound. When both are set, Max must exceed Min.
+  Zero is an explicit bound, and negative values are allowed, for example
+  Max -5 to keep a stat at -5 or lower. When both are set, Max must exceed Min.
 - Multiple selected stats are balanced, improving the lowest first after
   addressing bounds. Unselected stats may decrease; review all five results.
   Appeal is the selected room's contribution, not the whole-house total.
+- Direction: each stat's button switches between Maximize and Minimize.
+  Minimize pushes the stat as low as possible, below zero when furniture
+  allows it.
+- Priority: + makes a stat more important and - less important. The number is
+  its rank: after Max and Min, rank 1 is decided first, then 2 only among
+  equally good results for rank 1, and so on. Stats without a rank are balanced
+  last, each in its own direction. Below the last rank, - removes the rank.
+  With utility furniture included, the priority on that row places as many
+  utility pieces as possible at that rank.
 - Pins keep placed pieces and their supports in position.
 - Include utility furniture allows pieces such as food storage boxes to be
   rearranged and added to remaining space. Off leaves placed utility pieces
@@ -59,8 +71,11 @@ After changing language, reopen the room's wand panel.
 
 Only loose inventory and the selected room are used. Furniture is never taken
 from other rooms. The search uses horizontal mirroring, not rotation or
-vertical flipping. Shapes, supports and inventory limits can leave gaps.
-Best found is not a guaranteed mathematical optimum.
+vertical flipping. Pieces that need no support, such as balloons, prefer spots
+high above floors and tables, leaving room for furniture that must stand on
+something. Shapes, supports and inventory limits can still leave gaps.
+Best found is not a guaranteed mathematical optimum. A calculation takes up to
+about 2.5 seconds.
 
 Mouse and keyboard required. The mod stays inactive on unsupported game builds
 or missing, disabled or mismatched UI assets. If room contents change after

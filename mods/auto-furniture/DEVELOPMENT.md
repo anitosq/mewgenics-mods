@@ -131,3 +131,108 @@ for utility filling when utility candidates exist. This is a cooperative budget,
 not a hard wall-clock guarantee; capture/preparation and Apply/Undo are separate.
 Tests retain cancellation-free helpers for deterministic fixed-iteration checks.
 See the [candidate record](../../docs/releases/auto-furniture/0.2.2-beta.1-candidate.md).
+
+## 0.3.0 search-quality candidate (untested in game)
+
+- Min/Max accept negative values (-1000000 to 1000000). The UI already allowed
+  typing `-`; only parsing and problem validation rejected it.
+- Placement picks uniformly among all fitting spots. The old one-in-three
+  first-fit pass was dropped: on `bench_solver.c` it scored lower, and so did a
+  compact contact-scoring variant that was tried and removed.
+- Pieces that rest on a surface only try spots where their first resting cell
+  meets a surface cell, instead of every room cell. Identical shapes share a
+  failed-fit cache, invalidated whenever a new surface is stamped. Together
+  these roughly halve trial time and stop large rooms from hitting the
+  100,000-evaluation cap before most of the inventory has been tried.
+- Repairs clear either random pieces or a vertical band of the room. Half of
+  them weight the weakest selected stat and unmet Min targets, and avoid stats
+  already at Max. Fresh starts dropped from one in 4 to one in 8 iterations.
+- The worker budget is 2.5 s (was 1.2 s), capped at 50,000 iterations (was 3,000).
+
+Synthetic benchmark (`bench_solver.c`, 36 cases, 0.6 s each): TOTAL 2726 → 2821
+for 150 items in 16–24 × 9 rooms, and 5978 → 6352 for 400 items in 30–42 × 16
+rooms. Old code at 3 s still scores below the new code at 1.2 s. These rooms are
+synthetic and are not evidence of in-game results.
+
+### Ranked priorities (0.3.0-beta.4)
+
+beta.3 used one Goal box per stat that cycled through states. In game,
+fredjammes (who maintains the fork these betas came from) found the label
+unclear and the cycling awkward. beta.4 replaces it with a
+Priority column of drawn `-`/`+` buttons around the rank, plus a sixth row for
+utility furniture (`AFProblem.goal`, slot `AF_UTILITY_GOAL`).
+
+- Plus or minus sets `+rank`/`-rank` at the next free rank; the same button
+  clears it (later ranks close up) and the other one reverses it. Deselecting a
+  stat or unticking utility furniture clears its priority. Utility only has `+`.
+- Layouts compare Max excess, Min shortfall, then each rank in order (stat
+  higher for `+`, lower for `-`; utility: more utility pieces placed), then the
+  remaining selected stats balanced, then unselected stats.
+- Repair weights scale ranked stats by 2^(6-rank) with their sign; ranked
+  utility adds a random weight of the same scale to utility pieces. Balance
+  focus only considers unranked stats. Utility fill skips pieces that would
+  raise a minimized stat.
+- The panel is 704 px wide. Priority hits (minus, plus per row) are appended
+  after the original 24 so earlier hit indices keep their meaning; signs are
+  drawn shapes, so they do not depend on font glyphs.
+
+With no priorities set, the iteration-capped benchmark output is identical to
+beta.2. Solver fixtures cover stat and utility rankings and validation; UI
+fixtures cover button availability, ranking and labels. The wider panel and the
+Priority header's fit in each language have not been checked in game.
+
+### Selection (0.3.0-beta.5)
+
+At fredjammes's request, the panel opens and resets with no stat selected.
+Clicking a stat's Min or Max field or either priority button selects that stat,
+and the utility `+` button turns on utility furniture, so those controls stay
+available while unselected. A header checkbox (hit appended after the priority
+buttons) selects all stats, or clears them all and their priorities when all
+were selected; it shows `-` for a partial selection. Calculate stays disabled
+until a stat is selected. The solver is unchanged from beta.4.
+
+### Direction separate from priority (0.3.0-beta.6)
+
+fredjammes asked to separate maximize/minimize from priority. `AFProblem` now
+has a `minimize` mask over selected stats and `rank[AF_RANKS]` (0 unranked,
+utility in slot `AF_UTILITY_RANK`) instead of the signed `goal`. Ranked stats
+compare in strict order (fredjammes's choice), multiplied by their direction;
+unranked selected stats are balanced on direction-adjusted values. All repair
+weights take the direction sign; ranked ones also scale by 2^(6-rank).
+
+The panel is 820 px wide. Each stat row gets a Maximize/Minimize toggle
+(`AUTO_FURNITURE_DIRECTION`, `_MAXIMIZE`, `_MINIMIZE`), hit-indexed after the
+select-all box. Priority `+` ranks an unranked row last or swaps it one rank
+up; `-` swaps it one rank down and unranks it below the last rank. `+` is
+disabled at rank 1 and `-` when unranked. Defaults (all Maximize, no ranks)
+keep the beta.2 benchmark output byte-for-byte. The 112 px direction button and
+the Russian header `Направление` have not been checked for fit in game.
+
+### Floating pieces leave resting space (0.3.0-beta.7)
+
+Suggested by fredjammes: pieces that need no support, such as a balloon, should use
+space that resting furniture cannot. A shape without a resting cell (value 3)
+now picks uniformly among the fitting spots with the lowest resting cost: the
+sum, over its stamped cells, of 1/d for free cells d rows above the nearest
+surface in their column (`af_list_reach`), so cells just above floors and tables
+cost most and overlays on furniture bodies cost nothing. Which way is up is not
+documented in the game data, so `af_up_direction` infers it from resting
+shapes (body cells on the far side of their resting cells).
+
+`bench_solver.c` gained `FLOAT=1`, turning one piece in ten into a floating
+block. Timed runs (0.6 s per case, 50,000-iteration cap, repeated) gave:
+small rooms with floating pieces TOTAL 2999-3006 before, 3023-3028 after;
+small rooms without them and large rooms with them were within run-to-run
+noise. A 50% mix was no better. Synthetic rooms only; in-game balloons and
+room geometry may differ. Default output is no longer identical to beta.2,
+so refactor checks should take a fresh iteration-capped baseline.
+
+Build and run the benchmark from the repository root (`V=1` prints each case).
+A large time budget with an iteration cap gives repeatable output, which is
+useful to check that a refactor leaves the search unchanged:
+
+```powershell
+& "<toolchain>/zig.exe" cc -O2 -Wall -Wextra -Werror -Wno-unused-function mods/auto-furniture/bench_solver.c -o mods/auto-furniture/build/bench.exe
+./mods/auto-furniture/build/bench.exe 0.6 150
+$env:BIG=1; ./mods/auto-furniture/build/bench.exe 600 400 600
+```
