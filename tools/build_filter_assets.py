@@ -100,7 +100,7 @@ class Movie:
         path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'FWS\x0a'+struct.pack('<I',len(body)+8)+body)
 
 m=Movie(); names=['Any rarity','Common','Uncommon','Rare','Very rare']
-types=['All','Weapon consumables','Item consumables','Worn','Broken','Reusable weapons','Head','Face','Neck','Weapon','Trinket']
+types=['All','Weapon consumables','Item consumables','Worn','Broken','Reusable weapons','Weapon','Head','Neck','Face','Trinket']
 # Popup layout mirrors iq_type_rect: categories left, equipment slots right.
 type_rect=lambda i:(10,43+i*43,260,36) if i<6 else (280,43+(i-6)*43,260,36)
 dynamic_font='Edmundm'

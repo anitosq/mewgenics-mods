@@ -2,13 +2,13 @@
 #include <string.h>
 /* Categories first, then the equipment slots from each item's "kind". */
 enum { IQ_ALL, IQ_WEAPON_CONSUMABLES, IQ_ITEM_CONSUMABLES, IQ_WORN, IQ_BROKEN,
-       IQ_REUSABLE_WEAPONS, IQ_HEAD, IQ_FACE, IQ_NECK, IQ_WEAPON, IQ_TRINKET, IQ_TYPE_COUNT };
-enum { IQ_FIRST_SLOT_TYPE=IQ_HEAD };
-/* slot: 0 unknown or other kind, then head, face, neck, weapon, trinket. */
+       IQ_REUSABLE_WEAPONS, IQ_WEAPON, IQ_HEAD, IQ_NECK, IQ_FACE, IQ_TRINKET, IQ_TYPE_COUNT };
+enum { IQ_FIRST_SLOT_TYPE=IQ_WEAPON };
+/* slot: 0 unknown or other kind, then weapon, head, neck, face, trinket. */
 typedef struct { int type; int rarity; } IQFilter;
 typedef struct { int consumable, weapon, limited, condition, slot; } IQItemTraits;
 static int iq_slot_index(const char* kind) {
-    static const char* kinds[]={"head","face","neck","weapon","trinket"};
+    static const char* kinds[]={"weapon","head","neck","face","trinket"};
     for(int i=0;i<5;i++)if(kind && !strcmp(kind,kinds[i]))return i+1;
     return 0;
 }
