@@ -125,6 +125,7 @@ def main():
     game_hash = digest((game / 'Mewgenics.exe').read_bytes())
     for script, extra in [
         ('test_improved_inventory.py', []),
+        ('generate_item_traits.py', ['--game', str(game), '--check']),
         ('build_filter_assets.py', []),
         ('validate_native_assets.py', ['--game', str(game)]),
         ('build_native_probe.py', ['--game', str(game), '--release']),

@@ -1,12 +1,32 @@
-/* InventoryScreen2 uses world-space InventoryItemBox drawers. Only the
- * pre-adventure Storage grid is adapted; equipped slots remain native. */
+/* InventoryScreen2 uses world-space InventoryItemBox drawers. Mode 1 is
+ * pre-adventure equipment selection (Storage sizes); mode 0 is the adventure
+ * Backpack (Trash sizes: no capacity limit there). Equipped slots remain
+ * native in both. Other modes are left unchanged. */
 static LayoutGrid original_equipment_grid;
 static DrawerUpdate original_equipment_update,original_equipment_drawer_update;
 static BindItem original_equipment_bind;
 
+static void iq_layout_equipment_backgrounds(void) {
+    int cols=iq.columns[0];double width=iq.span[0];
+    for(int j=0;j<iq.background_count;j++) {
+        IQBackground* b=&iq.backgrounds[j];
+        if(!iq_background_live(b))continue;
+        int visible=j<cols*iq_rows(0);
+        *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
+        if(!visible)continue;
+        double pitch=width/cols*0.90,factor=(double)iq.native_columns[0]/cols*0.90;
+        iq_write_double(b->transform,0x80,iq.left[0]+pitch*(j%cols+0.5));
+        iq_write_double(b->transform,0x88,iq.bottom[0]+width-pitch*(cols-j/cols-0.5)+width*0.072);
+        iq_write_double(b->transform,0x98,b->sx*factor);iq_write_double(b->transform,0xa0,b->sy*factor);
+    }
+}
+/* Equipment selection follows Storage, limited to its capacity grid. */
+static int iq_equipment_cap_for(int backpack) {return backpack?iq_grid_cap[1]:iq_grid_effective(iq_grid_cap[0],iq_storage_limit);}
+static int iq_equipment_cap(void) {return iq_equipment_cap_for(iq.backpack);}
 static void iq_capture_equipment(void* owner) {
     if(!layout_test)return;
-    if(iq_int(owner,0x58)!=1) {
+    int mode=iq_int(owner,0x58);
+    if(mode!=0 && mode!=1) {
         if(iq.owner==owner){iq_hide_all();memset(&iq,0,sizeof(iq));}
         return;
     }
@@ -15,7 +35,7 @@ static void iq_capture_equipment(void* owner) {
     if(iq.owner==owner && iq_view_live())pending_view.row[0]=iq.row[0];
     memset(&iq,0,sizeof(iq));
 #define iq pending_view
-    iq.owner=owner;iq.equipment=1;iq.panels[0]=owner;
+    iq.owner=owner;iq.equipment=1;iq.backpack=mode==0;iq.panels[0]=owner;
     iq.owner_ref=iq_reference(owner);iq.panel_refs[0]=iq.owner_ref;
     iq.entity_ref=iq_reference(iq_ptr(owner,0x18));
     iq.scene_ref=iq_reference(iq_ptr(iq_ptr(owner,0x18),8));
@@ -28,8 +48,9 @@ static void iq_capture_equipment(void* owner) {
     ((void*(__cdecl*)(void*,double*,void*))(void*)(game_base+0x97cb30))(iq_ptr(owner,0x40),bounds,&key);
     double width=bounds[1]-bounds[0];
     if(!isfinite(width) || width<=0 || width>10000)return;
-    int cols=columns<IQ_COLUMNS?columns:IQ_COLUMNS;
-    iq.columns[0]=cols;iq.columns[1]=1;
+    /* iq is pending_view here, so pass its mode explicitly. */
+    int cols=iq_grid_columns(columns,iq_equipment_cap_for(iq.backpack));
+    iq.columns[0]=cols;iq.columns[1]=1;iq.native_columns[0]=columns;
     iq.left[0]=bounds[0];iq.bottom[0]=bounds[2];iq.span[0]=width;
     for(int j=0;j<backgrounds;j++) {
         void* renderer=NULL;if(!iq_read(cells+j,&renderer,8))return;
@@ -43,7 +64,7 @@ static void iq_capture_equipment(void* owner) {
     }
     /* The native item targets supply the icon scale; background art has its
        own scale. Capture both rather than assuming their symbols match. */
-    iq.scale[0]=4.0/cols;
+    iq.native_scale[0]=4.0;
     for(int j=0;j<n;j++) {
         void* drawer=NULL;if(!iq_read(drawers+j,&drawer,8))return;
         uint64_t id=0;if(!iq_read((unsigned char*)drawer+0x58,&id,8))return;
@@ -52,28 +73,40 @@ static void iq_capture_equipment(void* owner) {
         IQDrawer* d=&iq.drawers[iq.count++];d->drawer=drawer;d->reference=iq_reference(drawer);d->item_id=id;
         d->traits=iq_traits(drawer,id);d->rarity=iq_int(drawer,0xfc);
         d->ordinal=-1;
-        iq.scale[0]=iq_double(drawer,0xc8)*columns/cols;
+        iq.native_scale[0]=iq_double(drawer,0xc8)*columns;
     }
+    iq.scale[0]=iq.native_scale[0]/cols;
 #undef iq
     iq=pending_view;
     iq_index_view();
     iq_filter_view();
-    for(int j=0;j<iq.background_count;j++) {
-        IQBackground* b=&iq.backgrounds[j];int visible=j<cols*iq_rows(0);
-        *((unsigned char*)b->renderer+0x51)=(unsigned char)visible;
-        if(!visible)continue;
-        double pitch=width/cols*0.90,factor=(double)columns/cols*0.90;
-        iq_write_double(b->transform,0x80,iq.left[0]+pitch*(j%cols+0.5));
-        iq_write_double(b->transform,0x88,iq.bottom[0]+width-pitch*(cols-j/cols-0.5)+width*0.072);
-        iq_write_double(b->transform,0x98,b->sx*factor);iq_write_double(b->transform,0xa0,b->sy*factor);
-    }
+    iq_layout_equipment_backgrounds();
     for(int j=0;j<iq.count;j++)iq_present(&iq.drawers[j]);
     iq_ui_capture();
-    char msg[160];snprintf(msg,sizeof(msg),"Equipment layout: %d available, %d matching, %d columns; bounds %.1f %.1f %.1f",iq.count,iq.items[0],cols,iq.left[0],iq.bottom[0],width);report(msg);
+    char msg[180];snprintf(msg,sizeof(msg),"%s layout: %d available, %d matching, %d of %d columns; bounds %.1f %.1f %.1f",
+        iq.backpack?"Backpack":"Equipment",iq.count,iq.items[0],cols,columns,iq.left[0],iq.bottom[0],width);report(msg);
+}
+/* Applies a new grid setting to the open view without a native grid rebuild.
+   Backgrounds and drawers are only repositioned; nothing is allocated. */
+static void iq_apply_grid_setting(void) {
+    if(!layout_test || !iq_view_live())return;
+    for(int side=0;side<(iq.equipment?1:2);side++) {
+        if(!iq.native_columns[side])return;
+        iq.columns[side]=iq_grid_columns(iq.native_columns[side],iq.equipment?iq_equipment_cap():iq_grid_cap[side]);
+        iq.scale[side]=iq.native_scale[side]/iq.columns[side];
+    }
+    iq_view_revision++;memset(iq.row,0,sizeof(iq.row));
+    iq_filter_view();
+    if(iq.equipment)iq_layout_equipment_backgrounds();else iq_layout_house_backgrounds();
+    for(int i=0;i<iq.count;i++)iq_present(&iq.drawers[i]);
+    char msg[100];snprintf(msg,sizeof(msg),"Grid setting applied: columns %d/%d.",iq.columns[0],iq.columns[1]);report(msg);
 }
 static void __cdecl iq_equipment_grid(void* owner) {
     iq_before_grid(owner);
     original_equipment_grid(owner);
+#if IQ_ADVENTURE_PROBE
+    if(iq_int(owner,0x58)!=0 && iq_int(owner,0x58)!=1)iq_probe_equipment_grid(owner,__builtin_return_address(0));
+#endif
     iq_capture_equipment(owner);
 }
 static void __cdecl iq_equipment_bind(void* drawer,void* item) {
@@ -81,8 +114,11 @@ static void __cdecl iq_equipment_bind(void* drawer,void* item) {
 }
 static void __cdecl iq_equipment_drawer_update(void* drawer) {
     original_equipment_drawer_update(drawer);
-    if(!layout_test || !iq.equipment)return;
-    IQDrawer* d=iq_find_in_view(drawer);if(d)iq_present(d);
+    IQDrawer* d=layout_test && iq.equipment?iq_find_in_view(drawer):NULL;
+    if(d)iq_present(d);
+#if IQ_ADVENTURE_PROBE
+    else iq_probe_drawer(drawer,1);
+#endif
 }
 static void __cdecl iq_equipment_update(void* owner) {
     original_equipment_update(owner);

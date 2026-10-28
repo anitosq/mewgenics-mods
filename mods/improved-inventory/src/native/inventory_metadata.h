@@ -42,7 +42,8 @@ static int iq_register_set(void* manager,const char* id) {
     void* def=((void*(__cdecl*)(void*,void*))(void*)(game_base+0x942da0))((unsigned char*)manager+0x668,&key);
     void* name=iq_property(def,"name");char label[256];wchar_t translated[160];
     if(iq_int(name,0xa8)==1 && iq_string_read((unsigned char*)name+0x68,label,sizeof(label))) {
-        iq_localize(label,translated,160);iq_plain_text(iq_sets[i].name,160,translated);
+        wchar_t plain[160];iq_localize(label,translated,160);
+        iq_plain_text(plain,160,translated);iq_set_name(iq_sets[i].name,plain);
     }
     if(!iq_sets[i].name[0])MultiByteToWideChar(CP_UTF8,0,id,-1,iq_sets[i].name,160);
     return i;
@@ -77,10 +78,13 @@ static void iq_search_metadata(IQMetadata* m,void* manager,void* item,void* defi
     }
 }
 #include "inventory_ownership.h"
+#include "inventory_traits.h"
+#include "inventory_trait_counts.h"
 static int iq_extended_match(void* drawer,uint64_t id,int include_sets) {
     IQMetadata* m=iq_find_metadata(drawer,id);
-    if(!m)return !iq_search.query[0] && (!include_sets || !iq_search.set_mode);
-    return iq_query_match(m->text,iq_search.query) && (!include_sets || iq_set_match(&iq_search,m->sets,m->sets_known));
+    if(!m)return !iq_search.query[0] && (!include_sets || (!iq_search.set_mode && !iq_stat_filter && !iq_effect_filter));
+    return iq_query_match(m->text,iq_search.query) && (!include_sets ||
+        (iq_set_match(&iq_search,m->sets,m->sets_known) && iq_trait_match(iq_stat_filter,iq_effect_filter,&m->fx)));
 }
 static void iq_filter_view(void) {
     memset(iq.items,0,sizeof(iq.items));

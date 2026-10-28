@@ -100,7 +100,9 @@ class Movie:
         path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'FWS\x0a'+struct.pack('<I',len(body)+8)+body)
 
 m=Movie(); names=['Any rarity','Common','Uncommon','Rare','Very rare']
-types=['All','Weapon consumables','Item consumables','Worn','Broken','Reusable weapons']
+types=['All','Weapon consumables','Item consumables','Worn','Broken','Reusable weapons','Weapon','Head','Neck','Face','Trinket']
+# Popup layout mirrors iq_type_rect: categories left, equipment slots right.
+type_rect=lambda i:(10,43+i*43,260,36) if i<6 else (280,43+(i-6)*43,260,36)
 dynamic_font='Edmundm'
 for category,category_label in enumerate(types):
     for rarity,label in enumerate(names):
@@ -126,21 +128,56 @@ for i,label in enumerate(names[1:]):
     parts.append(m.field(dynamic_font,x+4,y+60,142,30,20,label,align=2))
 m.sprite('IQRarityLabels',parts)
 for active in range(len(types)):
-    parts=m.paper(0,0,280,311)+[m.text('Item type',12,29,22)]
-    for i,label in enumerate(types):parts+=m.button(label,10,43+i*43,260,i==active)
-    m.sprite(f'IQType{active}',m.feedback(parts,[(10,43+i*43,260,36) for i in range(len(types))]))
+    parts=m.paper(0,0,550,311)+[m.text('Item type',12,29,22),m.text('Slot',282,29,22)]
+    for i,label in enumerate(types):parts+=m.button(label,*type_rect(i)[:2],260,i==active)
+    m.sprite(f'IQType{active}',m.feedback(parts,[type_rect(i) for i in range(len(types))]))
 for direction in range(2):
     parts=m.button('',0,0,32)
     points=[(7,24),(16,11),(25,24)] if direction==0 else [(7,12),(25,12),(16,25)]
     parts.append(m.polygon(points,(39,37,32,255)))
     m.sprite('IQUp' if direction==0 else 'IQDown',m.feedback(parts,[(0,0,32,36)]))
+# The search row also holds the Stats and Effects dropdowns (IQFxBar).
 for focused in range(2):
-    parts=m.button('',0,0,571,focused)
-    parts+=[(m.field(dynamic_font,10,3,505,31,20,'Search name, description, set...'),'query')]
-    parts+=m.button('x',533,0,38)
-    m.sprite(f'IQSearch{focused}',m.feedback(parts,[(533,0,38,36)]))
+    parts=m.button('',0,0,315,focused)
+    parts+=[(m.field(dynamic_font,10,3,259,31,20,'Search items...'),'query')]
+    parts+=m.button('x',277,0,38)
+    m.sprite(f'IQSearch{focused}',m.feedback(parts,[(277,0,38,36)]))
+parts=[]
+for x in (323,451):parts+=m.dropdown('',x,120)
+parts.append((m.field(dynamic_font,332,3,88,30,20,'Stats'),'stats'))
+parts.append((m.field(dynamic_font,460,3,88,30,20,'Effects'),'effects'))
+m.sprite('IQFxBar',m.feedback(parts,[(323,0,120,36),(451,0,120,36)]))
+# Stats: Any, then bonus/malus per stat. Labels are the game's localized
+# keyword names, set at runtime; the initial text checks the widest one.
+for active in range(15):
+    parts=m.paper(0,0,370,397)+[m.text('Stats',12,29,22)]
+    parts+=m.button('Any',10,43,350,active==0)
+    rectangles=[(10,43,350,36)]
+    for i in range(7):
+        y=86+i*43
+        for column,x in enumerate((10,190)):
+            parts+=m.paper(x,y,170,36,active==1+i+7*column)
+            parts.append((m.field(dynamic_font,x+3,y+5,164,28,16,'Constitution (+) (99)',align=2),f'{"down" if column else "up"}{i}'))
+            rectangles.append((x,y,170,36))
+    m.sprite(f'IQStats{active}',m.feedback(parts,rectangles))
+# Effects: 17 toggles in reading order, two columns; match any selected.
+parts=m.paper(0,0,482,456)+[m.text('Effects (match any)',12,29,22)]
+rectangles=[]
+for i in range(17):
+    x,y=10+(i%2)*236,43+(i//2)*40
+    parts+=m.paper(x,y,226,36)
+    parts.append((m.field(dynamic_font,x+5,y+5,216,28,16,'[x] Régénération de PV (99)'),f'fx{i}'))
+    rectangles.append((x,y,226,36))
+parts+=m.button('Clear',10,410,90)+m.button('Done',382,410,90)
+rectangles+=[(10,410,90,36),(382,410,90,36)]
+m.sprite('IQEffects',m.feedback(parts,rectangles))
 # Additional inset keeps both counts comfortably inside the lighter panel.
-m.sprite('IQCount',[(m.field(dynamic_font,18,0,562,24,18,'Matches'),'count')])
+# The width stops short of the grid-size buttons; the longest count label checks it.
+m.sprite('IQCount',[(m.field(dynamic_font,18,0,300,24,18,'Storage: 0    Trash: 0    No matches'),'count')])
+# Storage/Trash grid-size toggles on the count row; 22 units tall so they stay
+# clear of the first item row. Starts with the widest label for width checks.
+parts=m.paper(0,0,118,22)+[(m.field(dynamic_font,3,1,112,22,16,'Storage 10x10',align=2),'label')]
+m.sprite('IQGrid',m.feedback(parts,[(0,0,118,22)]))
 for active in range(4):
     parts=m.paper(0,0,440,443)+[m.text('Sets (match any selected)',12,28,22)]
     for i,label in enumerate(['All','Any','No set']):parts+=m.button(label,10+i*142,38,136,active==i,center=True)

@@ -1,14 +1,31 @@
-static void iq_query_label(wchar_t* label,const wchar_t* query,const wchar_t* placeholder,int focus) {
+static void iq_query_label(wchar_t* label,const wchar_t* query,const wchar_t* placeholder,int focus,int window) {
     if(!focus){swprintf(label,200,L"%ls",*query?query:placeholder);return;}
     /* Keep the caret visible when the query exceeds the field width. */
-    int start=iq_cursor>35?iq_cursor-35:0;
+    int start=iq_cursor>window?iq_cursor-window:0;
     if(iq_select_all)swprintf(label,200,L"> %ls <",query+start);
-    else swprintf(label,200,L"%.*ls|%.35ls",iq_cursor-start,query+start,query+iq_cursor);
+    else swprintf(label,200,L"%.*ls|%.*ls",iq_cursor-start,query+start,window,query+iq_cursor);
+}
+/* Dropdown text fits 88 units of the game font (about eight characters):
+   a stat as its first letters and sign, one effect shortened, or a count. */
+static void iq_stat_summary(wchar_t* label,int stat) {
+    if(!stat){wcscpy(label,L"Stats");return;}
+    const wchar_t* name=iq_trait_label(stat);size_t n=0;
+    while(n<5 && name[n] && name[n]!=L' ' && name[n]!=L'(')n++;
+    swprintf(label,200,L"%.*ls %lc",(int)n,name,stat>IQ_STAT_COUNT?L'-':L'+');
+}
+static void iq_effect_summary(wchar_t* label,uint32_t effects) {
+    int count=0,last=0;
+    for(int i=0;i<IQ_EFFECT_COUNT;i++)if(effects&(1u<<i)){count++;last=i;}
+    if(!count){wcscpy(label,L"Effects");return;}
+    if(count>1){swprintf(label,200,L"%d effects",count);return;}
+    wcsncpy(label,iq_trait_label(IQ_STAT_CHOICES+last),199);label[199]=0;
+    if(wcslen(label)>8)wcscpy(label+6,L"..");
 }
 /* Shared toolbar flow; native rendering boundaries are stubbed in its fixture. */
 static void iq_ui_update(void) {
     if(!iq_is_open()){iq_hide_all();filter_popup=0;if(iq_focus)iq_focus_set(0);return;}
     if(filter_popup==3)iq_build_set_rows();
+    if(filter_popup==4 || filter_popup==5)iq_build_trait_counts();
     int refresh=!iq_labels_match(),ready=1;
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;
     for(int i=0;i<IQ_TYPE_COUNT*IQ_RARITY_COUNT;i++)if(i!=selected)iq_control_hide(&iq_controls.bars[i]);
@@ -28,25 +45,39 @@ static void iq_ui_update(void) {
     int focused=iq_focus==1;iq_control_hide(&iq_controls.search[!focused]);
     snprintf(name,sizeof(name),"IQSearch%d",focused);iq_control_show(&iq_controls.search[focused],name,x,y);
     if(refresh || !iq_label_cache.valid) {
-        iq_query_label(label,iq_search.query,L"Search name, description, set...",focused);
+        iq_query_label(label,iq_search.query,L"Search items...",focused,18);
         ready&=iq_text(&iq_controls.search[focused],0,"query",label);
+    }
+    iq_control_show(&iq_controls.fxbar,"IQFxBar",x,y);
+    if(refresh || !iq_label_cache.valid) {
+        iq_stat_summary(label,iq_stat_filter);
+        ready&=iq_text(&iq_controls.fxbar,0,"stats",label);
+        iq_effect_summary(label,iq_effect_filter);
+        ready&=iq_text(&iq_controls.fxbar,1,"effects",label);
     }
     snprintf(name,sizeof(name),"IQBar%d%d",active_filter.type,active_filter.rarity);
     iq_control_show(&iq_controls.bars[selected],name,x,y-42*s);
     if(refresh || !iq_label_cache.valid) {
         int selected_sets=0,last=0;
         for(int j=0;j<iq_set_count;j++)if(iq_search.sets[j/64]&(UINT64_C(1)<<(j%64))){selected_sets++;last=j;}
-        if(iq_search.set_mode==3 && selected_sets==1){iq_set_name(label,iq_sets[last].name);if(wcslen(label)>6)wcscpy(label+4,L"..");}
+        if(iq_search.set_mode==3 && selected_sets==1){wcscpy(label,iq_sets[last].name);if(wcslen(label)>6)wcscpy(label+4,L"..");}
         else if(iq_search.set_mode==3)swprintf(label,200,L"%d sets",selected_sets);
         else swprintf(label,200,L"%ls",iq_search.set_mode==1?L"Any set":iq_search.set_mode==2?L"No set":L"All sets");
         ready&=iq_text(&iq_controls.bars[selected],0,"sets",label);
     }
-    if(iq.equipment)iq_control_hide(&iq_controls.count);
+    if(iq.equipment){iq_control_hide(&iq_controls.count);for(int side=0;side<2;side++)iq_control_hide(&iq_controls.sizes[side]);}
     else {
         iq_control_show(&iq_controls.count,"IQCount",x+12*s,y-80*s);
         if(refresh || !iq_label_cache.valid) {
             swprintf(label,200,L"Storage: %d    Trash: %d%ls",iq.items[0],iq.items[1],iq.items[0]+iq.items[1]==0?L"    No matches":L"");
             ready&=iq_text(&iq_controls.count,0,"count",label);
+        }
+        for(int side=0;side<2;side++) {
+            iq_control_show(&iq_controls.sizes[side],"IQGrid",x+(IQ_GRID_BUTTON_X+side*IQ_GRID_BUTTON_PITCH)*s,y-80*s);
+            if(refresh || !iq_label_cache.valid) {
+                iq_grid_label(label,200,side,side?iq_grid_cap[1]:iq_grid_effective(iq_grid_cap[0],iq_storage_limit));
+                ready&=iq_text(&iq_controls.sizes[side],0,"label",label);
+            }
         }
     }
     if(filter_popup==1 || filter_popup==2) {
@@ -58,18 +89,37 @@ static void iq_ui_update(void) {
             iq_write_double(t,0xa0,s*iq_control_units()*iq_rarity_popup_scale);
         }
     }
+    if(filter_popup==4) {
+        snprintf(name,sizeof(name),"IQStats%d",iq_stat_filter);
+        IQControl* popup=&iq_controls.popups[iq_popup_index()];
+        iq_control_show(popup,name,x+(IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH-IQ_STATS_POPUP_W)*s,y-42*s);
+        if(refresh || !iq_label_cache.valid)for(int i=0;i<2*IQ_STAT_COUNT;i++) {
+            int choice=1+i;
+            swprintf(label,200,L"%ls (%d)",iq_trait_label(choice),iq_trait_counts.counts.stats[choice]);
+            snprintf(name,sizeof(name),i<IQ_STAT_COUNT?"up%d":"down%d",i%IQ_STAT_COUNT);ready&=iq_text(popup,choice,name,label);
+        }
+    }
+    if(filter_popup==5) {
+        IQControl* popup=&iq_controls.popups[IQ_EFFECTS_POPUP];
+        iq_control_show(popup,"IQEffects",x+(IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH-IQ_EFFECTS_POPUP_W)*s,y-42*s);
+        if(refresh || !iq_label_cache.valid)for(int i=0;i<IQ_EFFECT_COUNT;i++) {
+            swprintf(label,200,L"[%lc] %ls (%d)",(iq_effect_filter&(1u<<i))?L'x':L' ',iq_trait_label(IQ_STAT_CHOICES+i),
+                     iq_trait_counts.counts.effects[i]);
+            snprintf(name,sizeof(name),"fx%d",i);ready&=iq_text(popup,i,name,label);
+        }
+    }
     if(filter_popup==3) {
         snprintf(name,sizeof(name),"IQSets%d",iq_search.set_mode);
         IQControl* popup=&iq_controls.popups[iq_popup_index()];iq_control_show(popup,name,x+131*s,y-82*s);
         if(refresh || !iq_label_cache.valid) {
-            iq_query_label(label,iq_set_query,L"Find a set...",iq_focus==2);ready&=iq_text(popup,0,"query",label);
+            iq_query_label(label,iq_set_query,L"Find a set...",iq_focus==2,26);ready&=iq_text(popup,0,"query",label);
             ready&=iq_text(popup,23,"storage_header",iq.equipment?L"Available":L"Storage");
             ready&=iq_text(popup,24,"trash_header",iq.equipment?L"":L"Trash");
             for(int row=0;row<IQ_SET_PAGE;row++) {
                 int at=iq_set_offset+row,j=at<iq_set_rows_count?iq_set_rows[at]:-1;label[0]=0;
                 if(j>=0) {
                     int checked=iq_search.set_mode==3 && (iq_search.sets[j/64]&(UINT64_C(1)<<(j%64)))!=0;
-                    wchar_t short_name[160];iq_set_name(short_name,iq_sets[j].name);
+                    wchar_t short_name[160];wcscpy(short_name,iq_sets[j].name);
                     if(wcslen(short_name)>22)wcscpy(short_name+20,L"..");
                     swprintf(label,200,L"[%lc] %ls",checked?L'x':L' ',short_name);
                 } else if(!row)wcscpy(label,L"No matching sets");

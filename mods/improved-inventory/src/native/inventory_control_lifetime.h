@@ -1,10 +1,12 @@
 /* Mod-owned control visibility, independent of drawer animation and input. */
+/* Hover/pressed overlays per control; the Effects popup has 19. */
+#define IQ_FEEDBACK_LIMIT 24
 typedef struct {
     void* renderer;
     uint64_t generation;
     IQReference reference;
     wchar_t cached[32][200];
-    void* feedback[2][18];
+    void* feedback[2][IQ_FEEDBACK_LIMIT];
     int feedback_count,hidden;
 } IQControl;
 

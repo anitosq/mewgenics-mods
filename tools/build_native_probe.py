@@ -15,14 +15,18 @@ root = Path(__file__).resolve().parents[1]
 version = (root / 'mods/improved-inventory/VERSION').read_text().strip()
 if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[a-z0-9.]+)?', version):
     raise RuntimeError('Invalid Improved Inventory version')
-probe = json.loads((root / 'work/inventory-probe/probe-report.json').read_text())
 binary = (args.game / 'Mewgenics.exe').read_bytes()
 sha = hashlib.sha256(binary).hexdigest()
 compatibility = json.loads((root / 'mods/improved-inventory/compatibility.json').read_text())
 if args.release and sha != compatibility['game_sha256']:
     raise RuntimeError('Executable is not in the reviewed release compatibility baseline')
-if sha != probe['binary']['sha256'] or probe['binary']['matched'] != 44:
-    raise RuntimeError('Current image does not match the researched baseline')
+report = root / 'work/inventory-probe/probe-report.json'
+# The reviewed release hash pins the same bytes the probe report checked, so a
+# release build on a machine without the research report needs no save access.
+if report.exists() or not args.release:
+    probe = json.loads(report.read_text())
+    if sha != probe['binary']['sha256'] or probe['binary']['matched'] != 44:
+        raise RuntimeError('Current image does not match the researched baseline')
 pe = struct.unpack_from('<I', binary, 0x3c)[0]
 optional = struct.unpack_from('<H', binary, pe + 20)[0]
 rva = 0x5A3D0  # ABI/address research from cat-table; validated against this image.

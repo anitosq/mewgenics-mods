@@ -33,17 +33,48 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.3.8-beta.1 candidate](../../docs/releases/improved-inventory/0.3.8-beta.1-candidate.md)
-targets remaining large-inventory overhead while Storage or Trash is open.
-It awaits owner testing; 0.3.7 remains the public release.
+The [0.5.0-beta.4 candidate](../../docs/releases/improved-inventory/0.5.0-beta.4-candidate.md)
+is the current owner-test build; 0.3.7 remains the public release. Since
+0.3.7, the 0.3.8 and 0.4.0/0.5.0 betas add, in order of the release records:
+large-inventory performance work
+([0.3.8-beta.1](../../docs/releases/improved-inventory/0.3.8-beta.1-candidate.md)),
+per-container grid sizes and localized set names
+([0.4.0-beta.2](../../docs/releases/improved-inventory/0.4.0-beta.2-candidate.md)),
+adventure Backpack research and support
+([0.4.0-beta.3](../../docs/releases/improved-inventory/0.4.0-beta.3-candidate.md),
+[0.4.0-beta.4](../../docs/releases/improved-inventory/0.4.0-beta.4-candidate.md),
+[0.4.0-beta.6](../../docs/releases/improved-inventory/0.4.0-beta.6-candidate.md)),
+Stats/Effects filters with counts
+([0.5.0-beta.1](../../docs/releases/improved-inventory/0.5.0-beta.1-candidate.md),
+[0.5.0-beta.2](../../docs/releases/improved-inventory/0.5.0-beta.2-candidate.md))
+and equipment-slot types
+([0.5.0-beta.3](../../docs/releases/improved-inventory/0.5.0-beta.3-candidate.md)).
+
+**Grid sizes.** The Storage and Trash buttons beside the item counts cycle
+5x5, 6x6 (default), 7x7, 8x8 and 10x10; Trash also offers Auto. Storage's game
+grid matches its capacity, so its button offers the sizes below the capacity
+and the capacity itself; a smaller size scrolls. A fixed Trash size is a
+maximum: the game's Trash grid grows with its items (from 4x4) up to it, then
+scrolls. Trash Auto never caps, as in the unmodded game. The mod never writes
+the game's grid size; it only caps what the game built. The choices are saved
+in `%LOCALAPPDATA%\ImprovedInventory\settings.ini`, outside the mod folders.
+
+**Stats and Effects.** Two dropdowns beside the search field filter by one
+stat bonus or malus and by any of 17 effects, with item counts per choice.
+Item stats and effects are read from the loaded item definitions. Effects
+granted through an item's ability come from `src/native/inventory_trait_tables.h`,
+generated from the supported build by `tools/generate_item_traits.py`; the
+packager checks that table against the installed game. Labels are the game's
+localized keyword names.
 
 Set counts include duplicate copies and use all items in each container,
 independent of search and filters. Equipment selection counts unassigned items
 under "Available".
 
-
-Equipment selection shows up to six columns and five rows, with scrolling for
-the rest. The Backpack screen during an adventure is unchanged.
+Equipment selection uses the same column cap with five rows for every six
+columns (6x5 by default), with scrolling for the rest. The adventure Backpack
+is the same native screen in another mode. It gets the same toolbar and grid
+and follows the Trash size, since adventures have no capacity limit.
 
 Run commands from the repository root. Python 3.10+, Node.js and Windows x64
 are used for development. The pinned native compiler is Zig 0.15.2; download

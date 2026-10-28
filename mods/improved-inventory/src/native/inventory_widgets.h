@@ -1,9 +1,12 @@
 #include "inventory_control_lifetime.h"
-enum { IQ_RARITY_COUNT=5, IQ_POPUP_COUNT=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4 };
+#include "inventory_trait_ui.h"
+/* Popups: rarity, type, set modes, Stats per selection, then Effects. */
+enum { IQ_RARITY_COUNT=5, IQ_STATS_POPUP=IQ_RARITY_COUNT+IQ_TYPE_COUNT+4,
+       IQ_EFFECTS_POPUP=IQ_STATS_POPUP+IQ_STAT_CHOICES, IQ_POPUP_COUNT=IQ_EFFECTS_POPUP+1 };
 static const double iq_rarity_popup_scale=0.70;
 static struct {
     void* owner;uint64_t generation;
-    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,rarity_art[3],rarity_labels;
+    IQControl bars[IQ_TYPE_COUNT*IQ_RARITY_COUNT],popups[IQ_POPUP_COUNT],arrows[2][2],search[2],count,sizes[2],fxbar,rarity_art[3],rarity_labels;
     double offset_x,offset_y,scale,grid_x[2],grid_y[2];
     int captured_click;
 } iq_controls;
@@ -14,12 +17,40 @@ static unsigned char iq_captured_keys[512];
 static void* iq_text_window;
 static int iq_started_text;
 static void iq_refilter(void);
+static void iq_apply_grid_setting(void);
+static void iq_save_settings(void);
 static void iq_feedback_update(void);
 static void iq_overlay_camera(IQControl* c);
 static int iq_control_point(IQControl* c,double* output);
 static double iq_control_units(void) {return iq.equipment?1.0:32.0;}
 static int iq_popup_index(void) {
+    if(filter_popup==4)return IQ_STATS_POPUP+iq_stat_filter;
+    if(filter_popup==5)return IQ_EFFECTS_POPUP;
     return filter_popup==1?active_filter.rarity:filter_popup==2?IQ_RARITY_COUNT+active_filter.type:IQ_RARITY_COUNT+IQ_TYPE_COUNT+iq_search.set_mode;
+}
+/* Stat and effect names in the game's language; 0 is "Any", then the bonus
+   and malus names, then effects. Resolved once on the game thread. */
+static wchar_t iq_trait_names[IQ_STAT_CHOICES+IQ_EFFECT_COUNT][64];
+static void iq_trait_localize(wchar_t* out,const char* key,const wchar_t* fallback,const wchar_t* suffix) {
+    wchar_t raw[96],key_text[64];iq_localize(key,raw,96);
+    MultiByteToWideChar(CP_UTF8,0,key,-1,key_text,64);
+    size_t n=0;
+    for(const wchar_t* in=raw;*in && n<63;) {
+        if(!wcsncmp(in,L"&nbsp;",6)){out[n++]=L' ';in+=6;}else out[n++]=*in++;
+    }
+    out[n]=0;
+    if(!out[0] || !wcscmp(raw,key_text))swprintf(out,64,L"%ls%ls",fallback,suffix);
+}
+static const wchar_t* iq_trait_label(int index) {
+    if(!iq_trait_names[0][0]) {
+        wcscpy(iq_trait_names[0],L"Any");
+        for(int i=0;i<IQ_STAT_COUNT;i++) {
+            iq_trait_localize(iq_trait_names[1+i],iq_stat_keys[i][0],iq_stat_fallbacks[i],L" (+)");
+            iq_trait_localize(iq_trait_names[1+IQ_STAT_COUNT+i],iq_stat_keys[i][1],iq_stat_fallbacks[i],L" (-)");
+        }
+        for(int i=0;i<IQ_EFFECT_COUNT;i++)iq_trait_localize(iq_trait_names[IQ_STAT_CHOICES+i],iq_effect_keys[i],iq_effect_fallbacks[i],L"");
+    }
+    return index>=0 && index<IQ_STAT_CHOICES+IQ_EFFECT_COUNT?iq_trait_names[index]:L"";
 }
 enum { IQ_SOUND_SELECT, IQ_SOUND_RESET, IQ_SOUND_CLOSE, IQ_SOUND_CHECK, IQ_SOUND_UNCHECK };
 static void iq_sound(int action) {
@@ -40,14 +71,6 @@ static void iq_control_layer(IQControl* c,int layer) {
     if(*((unsigned char*)c->renderer+0x11)) {
         void* notify=iq_ptr(iq_ptr(c->renderer,0),0x30);
         if(notify)((void(__cdecl*)(void*))notify)(c->renderer);
-    }
-}
-static void iq_set_name(wchar_t* out,const wchar_t* name) {
-    wcsncpy(out,name,159);out[159]=0;
-    const wchar_t* suffixes[]={L" Set Bonus!",L" Set Bonus",L" set bonus!",L" set bonus"};
-    for(int i=0;i<4;i++) {
-        size_t n=wcslen(out),s=wcslen(suffixes[i]);
-        if(n>=s && !_wcsicmp(out+n-s,suffixes[i])){out[n-s]=0;break;}
     }
 }
 static void iq_focus_set(int focus) {
@@ -72,7 +95,8 @@ static void iq_hide_all(void) {
     for(int i=0;i<IQ_TYPE_COUNT*IQ_RARITY_COUNT;i++)iq_control_hide(&iq_controls.bars[i]);
     for(int i=0;i<IQ_POPUP_COUNT;i++)iq_control_hide(&iq_controls.popups[i]);
     for(int i=0;i<2;i++){iq_control_hide(&iq_controls.search[i]);for(int j=0;j<2;j++)iq_control_hide(&iq_controls.arrows[i][j]);}
-    iq_control_hide(&iq_controls.count);
+    iq_control_hide(&iq_controls.count);iq_control_hide(&iq_controls.fxbar);
+    for(int side=0;side<2;side++)iq_control_hide(&iq_controls.sizes[side]);
     for(int i=0;i<3;i++)iq_control_hide(&iq_controls.rarity_art[i]);
     iq_control_hide(&iq_controls.rarity_labels);
 }
@@ -103,18 +127,20 @@ static void iq_control_show(IQControl* c,const char* name,double x,double y) {
         c->reference=iq_reference(c->renderer);
         c->generation=iq_generation(c->renderer);memset(c->cached,0,sizeof(c->cached));
         c->feedback_count=0;memset(c->feedback,0,sizeof(c->feedback));
-        int popup=!strncmp(name,"IQRarity",8) || !strncmp(name,"IQType",6) || !strncmp(name,"IQSets",6);
+        int popup=!strncmp(name,"IQRarity",8) || !strncmp(name,"IQType",6) || !strncmp(name,"IQSets",6) ||
+            !strncmp(name,"IQStats",7) || !strcmp(name,"IQEffects");
         iq_control_layer(c,popup?40:39);
         char msg[100];snprintf(msg,sizeof(msg),"Control %s created",name);report(msg);
     }
     /* Native movie children can become available on the following frame.
        Resolve feedback lazily, just like dynamic text fields. */
     if(!c->feedback_count && (!strncmp(name,"IQBar",5) || !strncmp(name,"IQSearch",8) ||
-       !strncmp(name,"IQType",6) || !strncmp(name,"IQSets",6) ||
+       !strncmp(name,"IQType",6) || !strncmp(name,"IQSets",6) || !strncmp(name,"IQStats",7) ||
+       !strcmp(name,"IQEffects") || !strcmp(name,"IQFxBar") ||
        (!strncmp(name,"IQRarity",8) && strcmp(name,"IQRarityLabels")) ||
-       !strcmp(name,"IQUp") || !strcmp(name,"IQDown"))) {
+       !strcmp(name,"IQUp") || !strcmp(name,"IQDown") || !strcmp(name,"IQGrid"))) {
         void* clip=iq_ptr(c->renderer,0x80);
-        for(int i=0;clip && i<18;i++) {
+        for(int i=0;clip && i<IQ_FEEDBACK_LIMIT;i++) {
             for(int pressed=0;pressed<2;pressed++) {
                 char child[24];snprintf(child,sizeof(child),"fx%d_%d",pressed,i);
                 IQGameString key=iq_borrow(child);
@@ -279,7 +305,14 @@ static void iq_feedback_update(void) {
             if(iq_feedback_rect(&sample,popup,0,10,61,310,36/0.70))return;
             for(int i=0;i<4;i++)if(iq_feedback_rect(&sample,popup,i+1,10+(i%2)*160,126+(i/2)*160,150,150))return;
         } else if(filter_popup==2) {
-            for(int i=0;i<IQ_TYPE_COUNT;i++)if(iq_feedback_rect(&sample,popup,i,10,43+i*43,260,36))return;
+            double r[4];
+            for(int i=0;i<IQ_TYPE_COUNT;i++){iq_type_rect(i,r);if(iq_feedback_rect(&sample,popup,i,r[0],r[1],r[2],r[3]))return;}
+        } else if(filter_popup==4) {
+            double r[4];
+            for(int i=0;i<IQ_STAT_CHOICES;i++){iq_stat_rect(i,r);if(iq_feedback_rect(&sample,popup,i,r[0],r[1],r[2],r[3]))return;}
+        } else if(filter_popup==5) {
+            double r[4];
+            for(int i=0;i<IQ_EFFECT_COUNT+2;i++){iq_effect_rect(i,r);if(iq_feedback_rect(&sample,popup,i,r[0],r[1],r[2],r[3]))return;}
         } else {
             for(int i=0;i<3;i++)if(iq_feedback_rect(&sample,popup,i,10+i*142,38,136,36))return;
             if(iq_feedback_rect(&sample,popup,3,396,82,34,36) || iq_feedback_rect(&sample,popup,4,10,82,386,36))return;
@@ -291,10 +324,13 @@ static void iq_feedback_update(void) {
         return;
     }
     IQControl* search=&iq_controls.search[iq_focus==1];
-    if(iq_feedback_rect(&sample,search,0,533,0,38,36))return;
+    if(iq_feedback_rect(&sample,search,0,IQ_SEARCH_CLEAR_X,0,38,36))return;
+    if(iq_feedback_rect(&sample,&iq_controls.fxbar,0,IQ_FXBAR_STATS_X,0,IQ_FXBAR_WIDTH,36) ||
+       iq_feedback_rect(&sample,&iq_controls.fxbar,1,IQ_FXBAR_EFFECTS_X,0,IQ_FXBAR_WIDTH,36))return;
     IQControl* bar=&iq_controls.bars[active_filter.type*IQ_RARITY_COUNT+active_filter.rarity];
     const double fields[][2]={{0,230},{238,135},{381,114},{503,68}};
     for(int i=0;i<4;i++)if(iq_feedback_rect(&sample,bar,i,fields[i][0],0,fields[i][1],36))return;
+    for(int side=0;side<2 && !iq.equipment;side++)if(iq_feedback_rect(&sample,&iq_controls.sizes[side],0,0,0,IQ_GRID_BUTTON_WIDTH,IQ_GRID_BUTTON_HEIGHT))return;
     for(int side=0;side<2;side++)for(int dir=0;dir<2;dir++)if(iq_feedback_rect(&sample,&iq_controls.arrows[side][dir],0,0,0,32,36))return;
 }
 static void iq_edit_insert(const wchar_t* text) {
@@ -377,25 +413,57 @@ static int iq_ui_event(void* event) {
         }
         iq_ui_update();return 1;
     }
+    if(filter_popup==5) {
+        iq_controls.captured_click=1;
+        int choice=button==1 && iq_control_point(&iq_controls.popups[IQ_EFFECTS_POPUP],p) &&
+            p[0]>=0 && p[0]<IQ_EFFECTS_POPUP_W && p[1]>=0 && p[1]<IQ_EFFECTS_POPUP_H?iq_effect_choice(p[0],p[1]):IQ_EFFECT_DONE;
+        if(choice>=0) {
+            iq_effect_filter^=1u<<choice;iq_sound(iq_effect_filter&(1u<<choice)?IQ_SOUND_CHECK:IQ_SOUND_UNCHECK);iq_refilter();
+        } else if(choice==IQ_EFFECT_CLEAR){iq_sound(IQ_SOUND_RESET);iq_effect_filter=0;iq_refilter();}
+        else if(choice==IQ_EFFECT_DONE){iq_sound(IQ_SOUND_CLOSE);filter_popup=0;iq_ui_update();}
+        return 1;
+    }
+    if(filter_popup==4) {
+        int choice=-1,previous=iq_stat_filter;iq_controls.captured_click=1;
+        if(button==1 && iq_control_point(&iq_controls.popups[iq_popup_index()],p))choice=iq_stat_choice(p[0],p[1]);
+        if(choice>=0)iq_stat_filter=choice;
+        iq_sound(choice>=0?IQ_SOUND_SELECT:IQ_SOUND_CLOSE);filter_popup=0;
+        if(previous!=iq_stat_filter)iq_refilter();else iq_ui_update();
+        return 1;
+    }
     if(filter_popup) {
         IQFilter previous=active_filter;int choice=0;iq_controls.captured_click=1;
         if(button==1 && iq_control_point(&iq_controls.popups[iq_popup_index()],p)) {
             if(filter_popup==1){int index=iq_rarity_choice(p[0],p[1]);if(index>=0){active_filter.rarity=index;choice=1;}}
-            else if(filter_popup==2 && p[0]>=10 && p[0]<270 && p[1]>=43 && p[1]<301){int row=(int)((p[1]-43)/43);if((p[1]-43)-row*43<36 && row<IQ_TYPE_COUNT){active_filter.type=row;choice=1;}}
+            else if(filter_popup==2){int index=iq_type_choice(p[0],p[1]);if(index>=0){active_filter.type=index;choice=1;}}
         }
         iq_sound(choice?IQ_SOUND_SELECT:IQ_SOUND_CLOSE);filter_popup=0;if(previous.type!=active_filter.type || previous.rarity!=active_filter.rarity)iq_refilter();else iq_ui_update();return 1;
     }
     if(button!=1){if(iq_focus){iq_focus_set(0);iq_controls.captured_click=1;return 1;}return 0;}
-    if(iq_control_point(&iq_controls.search[iq_focus==1],p) && p[0]>=0 && p[0]<571 && p[1]>=0 && p[1]<36) {
+    if(iq_control_point(&iq_controls.search[iq_focus==1],p) && p[0]>=0 && p[0]<IQ_SEARCH_WIDTH && p[1]>=0 && p[1]<36) {
         iq_controls.captured_click=1;
-        if(p[0]>=533){iq_sound(IQ_SOUND_RESET);iq_search.query[0]=0;iq_focus_set(0);iq_refilter();}else {if(iq_focus!=1)iq_sound(IQ_SOUND_SELECT);iq_focus_set(1);iq_ui_update();}return 1;
+        if(p[0]>=IQ_SEARCH_CLEAR_X){iq_sound(IQ_SOUND_RESET);iq_search.query[0]=0;iq_focus_set(0);iq_refilter();}else {if(iq_focus!=1)iq_sound(IQ_SOUND_SELECT);iq_focus_set(1);iq_ui_update();}return 1;
+    }
+    if(iq_control_point(&iq_controls.fxbar,p) && p[1]>=0 && p[1]<36) {
+        int popup=p[0]>=IQ_FXBAR_STATS_X && p[0]<IQ_FXBAR_STATS_X+IQ_FXBAR_WIDTH?4:
+            p[0]>=IQ_FXBAR_EFFECTS_X && p[0]<IQ_FXBAR_EFFECTS_X+IQ_FXBAR_WIDTH?5:0;
+        if(popup){iq_focus_set(0);iq_controls.captured_click=1;filter_popup=popup;iq_sound(IQ_SOUND_SELECT);iq_ui_update();return 1;}
+    }
+    for(int side=0;side<2 && !iq.equipment;side++) {
+        IQControl* size=&iq_controls.sizes[side];
+        if(size->hidden || !iq_control_point(size,p) || p[0]<0 || p[0]>=IQ_GRID_BUTTON_WIDTH ||
+           p[1]<0 || p[1]>=IQ_GRID_BUTTON_HEIGHT)continue;
+        iq_focus_set(0);iq_controls.captured_click=1;iq_sound(IQ_SOUND_SELECT);
+        iq_grid_cap[side]=iq_grid_next_within(side,iq_grid_cap[side],side?0:iq_storage_limit);iq_save_settings();
+        iq_apply_grid_setting();iq_ui_update();return 1;
     }
     int selected=active_filter.type*IQ_RARITY_COUNT+active_filter.rarity;
     if(iq_control_point(&iq_controls.bars[selected],p) && p[1]>=0 && p[1]<36 && p[0]>=0 && p[0]<571) {
         iq_focus_set(0);iq_controls.captured_click=1;
         if(p[0]<230)filter_popup=2;else if(p[0]>=238 && p[0]<373)filter_popup=1;
         else if(p[0]>=381 && p[0]<495){filter_popup=3;iq_set_offset=0;}
-        else if(p[0]>=503){iq_sound(IQ_SOUND_RESET);active_filter=(IQFilter){0,0};memset(&iq_search,0,sizeof(iq_search));iq_set_query[0]=0;iq_refilter();}
+        else if(p[0]>=503){iq_sound(IQ_SOUND_RESET);active_filter=(IQFilter){0,0};memset(&iq_search,0,sizeof(iq_search));iq_set_query[0]=0;
+            iq_stat_filter=0;iq_effect_filter=0;iq_refilter();}
         if(filter_popup)iq_sound(IQ_SOUND_SELECT);iq_ui_update();return 1;
     }
     if(iq_focus){iq_focus_set(0);iq_controls.captured_click=1;iq_ui_update();return 1;}
