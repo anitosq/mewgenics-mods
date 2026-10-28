@@ -1,6 +1,6 @@
 # Improved Inventory installation
 
-Version 0.5.0-beta.3 requires Windows x64, Mewgenics 1.1.21239 (Steam build
+Version 0.5.0-beta.4 requires Windows x64, Mewgenics 1.1.21239 (Steam build
 25143593), and [Mewjector](https://www.nexusmods.com/mewgenics/mods/218)
 API v3. The same ZIP works with Vortex and Mewtator.
 

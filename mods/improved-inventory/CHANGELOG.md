@@ -1,5 +1,9 @@
 # Improved Inventory changelog
 
+## 0.5.0-beta.4
+
+- Slot types are listed as Weapon, Head, Neck, Face, then Trinket.
+
 ## 0.5.0-beta.3
 
 - Item type can now show one equipment slot: Head, Face, Neck, Weapon or

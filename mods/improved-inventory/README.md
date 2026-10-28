@@ -33,7 +33,7 @@ for updates to Nexus Mods and GitHub.
 
 ## Development
 
-The [0.5.0-beta.3 candidate](../../docs/releases/improved-inventory/0.5.0-beta.3-candidate.md)
+The [0.5.0-beta.4 candidate](../../docs/releases/improved-inventory/0.5.0-beta.4-candidate.md)
 is the current owner-test build; 0.3.7 remains the public release. Since
 0.3.7, the 0.3.8 and 0.4.0/0.5.0 betas add, in order of the release records:
 large-inventory performance work
